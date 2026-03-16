@@ -6,6 +6,7 @@ import {
   getDrugsInClass,
   getDrugByNdc,
   DrugApiError,
+  clearRequestCache,
 } from "./api-client";
 
 const mockFetch = vi.fn();
@@ -21,6 +22,7 @@ function jsonResponse(data: unknown, status = 200) {
 
 beforeEach(() => {
   mockFetch.mockReset();
+  clearRequestCache();
 });
 
 afterEach(() => {
