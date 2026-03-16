@@ -319,6 +319,43 @@ describe("MatchingQuiz", () => {
     expect(onNext).toHaveBeenCalledOnce();
   });
 
+  it("renders long item names with a title attribute for tooltip", () => {
+    const longName =
+      "Measles, Mumps, Rubella and Varicella Virus Vaccine Live (MMRV) - ProQuad Combination";
+    const longQuestion: MatchingQuestion = {
+      kind: "matching",
+      leftItems: [longName, "lisinopril"],
+      rightItems: ["Live Vaccine", "ACE Inhibitor"],
+      correctPairs: {
+        [longName]: "Live Vaccine",
+        lisinopril: "ACE Inhibitor",
+      },
+    };
+
+    render(
+      <MatchingQuiz
+        question={longQuestion}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        questionNumber={1}
+        totalQuestions={5}
+        leftLabel="Drugs"
+        rightLabel="Classes"
+      />,
+    );
+
+    const longButton = screen.getByText(longName).closest("button");
+    expect(longButton).toHaveAttribute("title", longName);
+
+    // Short names should also have title attributes
+    const shortButton = screen.getByText("lisinopril").closest("button");
+    expect(shortButton).toHaveAttribute("title", "lisinopril");
+
+    // Right-side items too
+    const rightButton = screen.getByText("Live Vaccine").closest("button");
+    expect(rightButton).toHaveAttribute("title", "Live Vaccine");
+  });
+
   it("shows See Results on last question after submission", async () => {
     const user = userEvent.setup();
     render(

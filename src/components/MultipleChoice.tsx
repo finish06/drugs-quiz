@@ -72,6 +72,7 @@ export function MultipleChoice({
             key={option}
             onClick={() => handleSelect(option)}
             disabled={answered}
+            title={option}
             className={getOptionStyle(option)}
           >
             {option}
