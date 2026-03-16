@@ -1,6 +1,7 @@
 import { getDrugClasses, getDrugsInClass } from "./api-client";
 import type { DrugClass } from "@/types/api";
 import type { MultipleChoiceQuestion, MatchingQuestion } from "@/types/quiz";
+import { toTitleCase } from "@/utils/text";
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -54,7 +55,7 @@ export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQues
       const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
       const drug = drugsResponse.data[0];
       if (drug) {
-        drugName = drug.generic_name;
+        drugName = toTitleCase(drug.generic_name);
         correctClass = cls.name;
         break;
       }
@@ -104,7 +105,7 @@ export async function generateMatchDrugToClassQuestion(): Promise<MatchingQuesti
       const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
       const drug = drugsResponse.data[0];
       if (drug) {
-        pairs.push({ drug: drug.generic_name, className: cls.name });
+        pairs.push({ drug: toTitleCase(drug.generic_name), className: cls.name });
       }
     } catch {
       continue;
@@ -159,7 +160,7 @@ export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuest
         if (pairs.length >= 4) break;
         const genericKey = drug.generic_name.toLowerCase();
         if (hasRealBrandName(drug) && !usedGenerics.has(genericKey)) {
-          pairs.push({ generic: drug.generic_name, brand: drug.brand_name });
+          pairs.push({ generic: toTitleCase(drug.generic_name), brand: toTitleCase(drug.brand_name) });
           usedGenerics.add(genericKey);
         }
       }
