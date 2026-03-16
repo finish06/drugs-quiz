@@ -169,16 +169,33 @@ describe("generateMatchDrugToClassQuestion", () => {
 
 describe("generateBrandGenericMatchQuestion", () => {
   it("returns a matching question with 4 brand/generic pairs", async () => {
-    mockedApi.getDrugsInClass.mockResolvedValueOnce({
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
       data: [
-        { generic_name: "simvastatin", brand_name: "Zocor" },
-        { generic_name: "atorvastatin calcium", brand_name: "Lipitor" },
-        { generic_name: "rosuvastatin calcium", brand_name: "Crestor" },
-        { generic_name: "pravastatin sodium", brand_name: "Pravachol" },
-        { generic_name: "lovastatin", brand_name: "Mevacor" },
+        { name: "Class A", type: "epc" },
+        { name: "Class B", type: "epc" },
+        { name: "Class C", type: "epc" },
+        { name: "Class D", type: "epc" },
       ],
-      pagination: { page: 1, limit: 20, total: 5, total_pages: 1 },
+      pagination: { page: 1, limit: 100, total: 4, total_pages: 1 },
     });
+    // Each class returns 1 drug with a real brand name
+    mockedApi.getDrugsInClass
+      .mockResolvedValueOnce({
+        data: [{ generic_name: "simvastatin", brand_name: "Zocor" }],
+        pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+      })
+      .mockResolvedValueOnce({
+        data: [{ generic_name: "atorvastatin", brand_name: "Lipitor" }],
+        pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+      })
+      .mockResolvedValueOnce({
+        data: [{ generic_name: "rosuvastatin", brand_name: "Crestor" }],
+        pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+      })
+      .mockResolvedValueOnce({
+        data: [{ generic_name: "pravastatin", brand_name: "Pravachol" }],
+        pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+      });
 
     const question = await generateBrandGenericMatchQuestion();
 
@@ -188,26 +205,52 @@ describe("generateBrandGenericMatchQuestion", () => {
     expect(Object.keys(question.correctPairs)).toHaveLength(4);
   });
 
-  it("skips classes with fewer than 4 drugs with brand names", async () => {
-    // First class: not enough brand names
-    mockedApi.getDrugsInClass.mockResolvedValueOnce({
+  it("skips drugs where brand name equals generic name", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
       data: [
-        { generic_name: "drug-a", brand_name: "Brand-A" },
-        { generic_name: "drug-b", brand_name: "" },
-        { generic_name: "drug-c", brand_name: "Brand-C" },
+        { name: "Class A", type: "epc" },
+        { name: "Class B", type: "epc" },
+        { name: "Class C", type: "epc" },
+        { name: "Class D", type: "epc" },
+        { name: "Class E", type: "epc" },
       ],
-      pagination: { page: 1, limit: 20, total: 3, total_pages: 1 },
+      pagination: { page: 1, limit: 100, total: 5, total_pages: 1 },
     });
-    // Second class: enough brand names
-    mockedApi.getDrugsInClass.mockResolvedValueOnce({
+    mockedApi.getDrugsInClass.mockImplementation(async (params) => {
+      // Class A has brand = generic (should skip)
+      if (params.class === "Class A") {
+        return {
+          data: [{ generic_name: "SIMVASTATIN", brand_name: "SIMVASTATIN" }],
+          pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+        };
+      }
+      return {
+        data: [{ generic_name: `drug-${params.class}`, brand_name: `Brand-${params.class}` }],
+        pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+      };
+    });
+
+    const question = await generateBrandGenericMatchQuestion();
+
+    expect(question.leftItems).toHaveLength(4);
+    // SIMVASTATIN should not appear
+    expect(question.leftItems).not.toContain("SIMVASTATIN");
+  });
+
+  it("collects pairs from multiple classes", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
       data: [
-        { generic_name: "drug-x", brand_name: "Brand-X" },
-        { generic_name: "drug-y", brand_name: "Brand-Y" },
-        { generic_name: "drug-z", brand_name: "Brand-Z" },
-        { generic_name: "drug-w", brand_name: "Brand-W" },
+        { name: "Class A", type: "epc" },
+        { name: "Class B", type: "epc" },
+        { name: "Class C", type: "epc" },
+        { name: "Class D", type: "epc" },
       ],
-      pagination: { page: 1, limit: 20, total: 4, total_pages: 1 },
+      pagination: { page: 1, limit: 100, total: 4, total_pages: 1 },
     });
+    mockedApi.getDrugsInClass.mockImplementation(async (params) => ({
+      data: [{ generic_name: `gen-${params.class}`, brand_name: `brand-${params.class}` }],
+      pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+    }));
 
     const question = await generateBrandGenericMatchQuestion();
 
@@ -215,17 +258,22 @@ describe("generateBrandGenericMatchQuestion", () => {
     expect(question.rightItems).toHaveLength(4);
   });
 
-  it("throws when no class has enough brand names", async () => {
-    // All classes return too few drugs
-    for (let i = 0; i < 10; i++) {
-      mockedApi.getDrugsInClass.mockResolvedValueOnce({
-        data: [{ generic_name: "only-one", brand_name: "Only-Brand" }],
-        pagination: { page: 1, limit: 20, total: 1, total_pages: 1 },
-      });
-    }
+  it("throws when not enough drugs with distinct brand names", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "Class A", type: "epc" },
+        { name: "Class B", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 2, total_pages: 1 },
+    });
+    // All return brand = generic
+    mockedApi.getDrugsInClass.mockResolvedValue({
+      data: [{ generic_name: "same", brand_name: "same" }],
+      pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+    });
 
     await expect(generateBrandGenericMatchQuestion()).rejects.toThrow(
-      "No popular class found",
+      "Could not find 4 drugs with distinct brand names",
     );
   });
 });

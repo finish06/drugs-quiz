@@ -1,20 +1,6 @@
 import { getDrugClasses, getDrugsInClass } from "./api-client";
 import type { MultipleChoiceQuestion, MatchingQuestion } from "@/types/quiz";
 
-/** Popular EPC classes for exam prep — used as seeds for brand/generic matching */
-const POPULAR_CLASSES = [
-  "HMG-CoA Reductase Inhibitor",
-  "ACE Inhibitor",
-  "Proton Pump Inhibitor",
-  "Beta Adrenergic Blocker",
-  "Angiotensin 2 Receptor Blocker",
-  "Selective Serotonin Reuptake Inhibitor",
-  "Calcium Channel Blocker",
-  "Benzodiazepine",
-  "Thiazide Diuretic",
-  "Opioid Agonist",
-];
-
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -46,12 +32,17 @@ export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQues
 
   // Find a class that has at least one drug
   for (const cls of shuffledClasses) {
-    const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
-    const drug = drugsResponse.data[0];
-    if (drug) {
-      drugName = drug.generic_name;
-      correctClass = cls.name;
-      break;
+    try {
+      const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
+      const drug = drugsResponse.data[0];
+      if (drug) {
+        drugName = drug.generic_name;
+        correctClass = cls.name;
+        break;
+      }
+    } catch {
+      // Skip classes that fail (e.g., 502 upstream error)
+      continue;
     }
   }
 
@@ -96,10 +87,15 @@ export async function generateMatchDrugToClassQuestion(): Promise<MatchingQuesti
   for (const cls of shuffledClasses) {
     if (pairs.length >= 4) break;
 
-    const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
-    const drug = drugsResponse.data[0];
-    if (drug) {
-      pairs.push({ drug: drug.generic_name, className: cls.name });
+    try {
+      const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
+      const drug = drugsResponse.data[0];
+      if (drug) {
+        pairs.push({ drug: drug.generic_name, className: cls.name });
+      }
+    } catch {
+      // Skip classes that fail (e.g., 502 upstream error)
+      continue;
     }
   }
 
@@ -121,41 +117,64 @@ export async function generateMatchDrugToClassQuestion(): Promise<MatchingQuesti
 }
 
 /**
+ * Check if a drug has a real brand name (not just the generic name repeated).
+ */
+function hasRealBrandName(d: { generic_name: string; brand_name: string }): boolean {
+  const generic = d.generic_name.toLowerCase().trim();
+  const brand = d.brand_name.toLowerCase().trim();
+  return brand !== "" && brand !== generic && brand.length < 50;
+}
+
+/**
  * Generate a "Brand/Generic Match" question.
  *
- * Recipe:
- * 1. Pick a popular EPC class
- * 2. Fetch drugs with brand names
- * 3. Pick 4 with non-empty brand names
- * 4. Present generic vs brand as matching exercise
+ * Collects drugs with distinct brand names from across multiple EPC
+ * classes, since most classes only have 1 drug in the API. Needs 4
+ * unique brand/generic pairs per question.
  */
 export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuestion> {
-  const shuffledPopular = shuffle(POPULAR_CLASSES);
+  // Fetch EPC classes and shuffle
+  const classesResponse = await getDrugClasses({ type: "epc", limit: 100 });
+  const shuffledClasses = shuffle(classesResponse.data);
 
-  for (const className of shuffledPopular) {
-    const drugsResponse = await getDrugsInClass({ class: className, limit: 20 });
-    const withBrand = drugsResponse.data.filter(
-      (d) => d.brand_name && d.brand_name.trim() !== "",
-    );
+  const pairs: { generic: string; brand: string }[] = [];
+  const usedGenerics = new Set<string>();
 
-    if (withBrand.length >= 4) {
-      const selected = shuffle(withBrand).slice(0, 4);
+  for (const cls of shuffledClasses) {
+    if (pairs.length >= 4) break;
 
-      const correctPairs: Record<string, string> = {};
-      for (const drug of selected) {
-        correctPairs[drug.generic_name] = drug.brand_name;
+    try {
+      const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 10 });
+
+      for (const drug of drugsResponse.data) {
+        if (pairs.length >= 4) break;
+        const genericKey = drug.generic_name.toLowerCase();
+        if (hasRealBrandName(drug) && !usedGenerics.has(genericKey)) {
+          pairs.push({ generic: drug.generic_name, brand: drug.brand_name });
+          usedGenerics.add(genericKey);
+        }
       }
-
-      return {
-        kind: "matching",
-        leftItems: shuffle(selected.map((d) => d.generic_name)),
-        rightItems: shuffle(selected.map((d) => d.brand_name)),
-        correctPairs,
-      };
+    } catch {
+      // Skip classes that fail (e.g., 502 upstream error)
+      continue;
     }
   }
 
-  throw new Error("No popular class found with 4+ drugs having brand names");
+  if (pairs.length < 4) {
+    throw new Error("Could not find 4 drugs with distinct brand names");
+  }
+
+  const correctPairs: Record<string, string> = {};
+  for (const pair of pairs) {
+    correctPairs[pair.generic] = pair.brand;
+  }
+
+  return {
+    kind: "matching",
+    leftItems: shuffle(pairs.map((p) => p.generic)),
+    rightItems: shuffle(pairs.map((p) => p.brand)),
+    correctPairs,
+  };
 }
 
 /**
