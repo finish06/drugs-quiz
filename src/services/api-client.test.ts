@@ -218,3 +218,49 @@ describe("error handling", () => {
     }
   });
 });
+
+describe("request caching", () => {
+  it("returns cached response on second call with same params", async () => {
+    const mockData = {
+      data: [{ name: "Simvastatin", type: "generic" }],
+      pagination: { page: 1, limit: 50, total: 1, total_pages: 1 },
+    };
+    mockFetch.mockResolvedValueOnce(jsonResponse(mockData));
+
+    const result1 = await getDrugNames({ type: "generic", limit: 50 });
+    const result2 = await getDrugNames({ type: "generic", limit: 50 });
+
+    // fetch should only be called once — second call hits cache
+    expect(mockFetch).toHaveBeenCalledOnce();
+    expect(result1).toEqual(result2);
+  });
+
+  it("does not cache error responses", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ error: "not_found", message: "Not found" }, 404),
+    );
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ data: [], pagination: { page: 1, limit: 50, total: 0, total_pages: 0 } }),
+    );
+
+    await expect(getDrugClass("bad")).rejects.toThrow(DrugApiError);
+    // Second call should hit network again (error not cached)
+    const result = await getDrugClass("bad");
+    expect(result).toBeDefined();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("cache is cleared by clearRequestCache", async () => {
+    const mockData = {
+      data: [{ name: "Test", type: "generic" }],
+      pagination: { page: 1, limit: 50, total: 1, total_pages: 1 },
+    };
+    mockFetch.mockResolvedValue(jsonResponse(mockData));
+
+    await getDrugNames();
+    clearRequestCache();
+    await getDrugNames();
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+});
