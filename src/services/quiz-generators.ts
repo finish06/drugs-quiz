@@ -218,12 +218,6 @@ export async function generateQuestions(
   };
 
   const generator = generators[type];
-  const questions: (MultipleChoiceQuestion | MatchingQuestion)[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const question = await generator();
-    questions.push(question);
-  }
-
-  return questions;
+  const promises = Array.from({ length: count }, () => generator());
+  return Promise.all(promises);
 }
