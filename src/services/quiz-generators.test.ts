@@ -68,6 +68,31 @@ describe("generateNameTheClassQuestion", () => {
     expect(question.correctAnswer).not.toBe("Empty Class");
   });
 
+  it("skips classes that throw errors (502 upstream)", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "Failing Class", type: "epc" },
+        { name: "Good Class", type: "epc" },
+        { name: "Distractor-A", type: "epc" },
+        { name: "Distractor-B", type: "epc" },
+        { name: "Distractor-C", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 5, total_pages: 1 },
+    });
+    mockedApi.getDrugsInClass.mockImplementation(async (params) => {
+      if (params.class === "Failing Class") {
+        throw new Error("upstream_error");
+      }
+      return {
+        data: [{ generic_name: `drug-for-${params.class}`, brand_name: "" }],
+        pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+      };
+    });
+
+    const question = await generateNameTheClassQuestion();
+    expect(question.correctAnswer).not.toBe("Failing Class");
+  });
+
   it("throws when no classes have drugs", async () => {
     mockedApi.getDrugClasses.mockResolvedValueOnce({
       data: [
@@ -164,6 +189,30 @@ describe("generateMatchDrugToClassQuestion", () => {
     for (const item of question.rightItems) {
       expect(item).not.toMatch(/^Empty/);
     }
+  });
+
+  it("skips classes that throw errors (502 upstream)", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "Failing", type: "epc" },
+        { name: "Class A", type: "epc" },
+        { name: "Class B", type: "epc" },
+        { name: "Class C", type: "epc" },
+        { name: "Class D", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 5, total_pages: 1 },
+    });
+    mockedApi.getDrugsInClass.mockImplementation(async (params) => {
+      if (params.class === "Failing") throw new Error("upstream_error");
+      return {
+        data: [{ generic_name: `drug-${params.class}`, brand_name: `Brand-${params.class}` }],
+        pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+      };
+    });
+
+    const question = await generateMatchDrugToClassQuestion();
+    expect(question.leftItems).toHaveLength(4);
+    expect(question.rightItems).not.toContain("Failing");
   });
 });
 
@@ -275,6 +324,29 @@ describe("generateBrandGenericMatchQuestion", () => {
     await expect(generateBrandGenericMatchQuestion()).rejects.toThrow(
       "Could not find 4 drugs with distinct brand names",
     );
+  });
+
+  it("skips classes that throw errors (502 upstream)", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "Failing", type: "epc" },
+        { name: "Class A", type: "epc" },
+        { name: "Class B", type: "epc" },
+        { name: "Class C", type: "epc" },
+        { name: "Class D", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 5, total_pages: 1 },
+    });
+    mockedApi.getDrugsInClass.mockImplementation(async (params) => {
+      if (params.class === "Failing") throw new Error("upstream_error");
+      return {
+        data: [{ generic_name: `gen-${params.class}`, brand_name: `brand-${params.class}` }],
+        pagination: { page: 1, limit: 10, total: 1, total_pages: 1 },
+      };
+    });
+
+    const question = await generateBrandGenericMatchQuestion();
+    expect(question.leftItems).toHaveLength(4);
   });
 });
 
