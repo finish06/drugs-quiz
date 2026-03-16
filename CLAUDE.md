@@ -1,6 +1,6 @@
 # drugs-quiz
 
-A React frontend app that quizzes pharmacy professionals (students, pharmacists, technicians) on drug names, brand/generic pairs, and pharmacological classes. Powered by the drug-gate API with real FDA/DailyMed data.
+A React frontend app that quizzes pharmacy professionals (students, pharmacists, technicians) on drug names, brand/generic pairs, and pharmacological classes. Powered by the drug-gate API with real FDA/DailyMed data. Features dark mode with OS preference detection and an in-memory API response cache.
 
 ## Methodology
 
@@ -54,7 +54,8 @@ npx tsc --noEmit                 # Type check
 ```
 src/                             # React application source
   components/                    # UI components (QuizConfig, MultipleChoice, MatchingQuiz, QuizResults)
-  hooks/                         # Custom React hooks (useQuizSession)
+  hooks/                         # Custom React hooks (useQuizSession, useTheme)
+  utils/                         # Utility functions (text.ts)
   services/                      # API client (api-client.ts) and question generators (quiz-generators.ts)
   types/                         # TypeScript type definitions (api.ts, quiz.ts)
 specs/                           # Feature specifications (5 spec files)
@@ -78,7 +79,7 @@ The app consumes the drug-gate API (see `frontend-api-contract.md`):
 - `GET /v1/drugs/classes/drugs?class={name}` — list drugs in a class
 - `GET /v1/drugs/ndc/{ndc}` — look up drug by NDC
 
-All endpoints require `X-API-Key` header.
+All endpoints require `X-API-Key` header. Responses are cached in-memory for 5 minutes (`requestCache` in `api-client.ts`) to avoid redundant network calls during quiz generation.
 
 ### Environments
 

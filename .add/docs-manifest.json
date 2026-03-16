@@ -81,20 +81,31 @@
         "resetQuiz": "() => void"
       },
       "testFile": "src/hooks/useQuizSession.test.ts"
+    },
+    {
+      "name": "useTheme",
+      "path": "src/hooks/useTheme.ts",
+      "description": "Dark mode hook. Resolves initial theme from localStorage or OS preference (prefers-color-scheme). Toggles .dark class on documentElement. Listens for OS preference changes when no explicit override is stored.",
+      "returns": {
+        "theme": "Theme ('light' | 'dark')",
+        "toggleTheme": "() => void"
+      },
+      "testFile": "src/hooks/useTheme.test.ts"
     }
   ],
   "services": [
     {
       "name": "api-client",
       "path": "src/services/api-client.ts",
-      "description": "Typed wrapper around the drug-gate API. All requests go through /api proxy (Vite dev server adds X-API-Key header and forwards to drug-gate). Exports 5 functions matching the 5 API endpoints. Throws DrugApiError on non-OK responses.",
+      "description": "Typed wrapper around the drug-gate API. All requests go through /api proxy (Vite dev server adds X-API-Key header and forwards to drug-gate). Exports 5 functions matching the 5 API endpoints. Includes in-memory response cache (5-min TTL) to avoid redundant requests during quiz generation. Throws DrugApiError on non-OK responses.",
       "exports": [
         "getDrugNames(params?) -> PaginatedResponse<DrugName>",
         "getDrugClasses(params?) -> PaginatedResponse<DrugClass>",
         "getDrugClass(name) -> DrugClassLookup",
         "getDrugsInClass(params) -> PaginatedResponse<DrugInClass>",
         "getDrugByNdc(ndc) -> NdcLookup",
-        "DrugApiError (class)"
+        "DrugApiError (class)",
+        "clearRequestCache() -> void"
       ],
       "testFile": "src/services/api-client.test.ts"
     },
@@ -131,10 +142,19 @@
     "authInjection": "X-API-Key header added from DRUG_GATE_API_KEY env var",
     "configuredIn": "vite.config.ts"
   },
+  "utils": [
+    {
+      "name": "text",
+      "path": "src/utils/text.ts",
+      "description": "Text utility functions for formatting and display.",
+      "testFile": "src/utils/text.test.ts"
+    }
+  ],
   "styling": {
     "framework": "Tailwind CSS v4",
     "entrypoint": "src/index.css",
-    "approach": "utility-first, inline classes"
+    "approach": "utility-first, inline classes",
+    "darkMode": "class-based (.dark on documentElement), managed by useTheme hook"
   },
   "testing": {
     "unit": "Vitest + React Testing Library (collocated .test.ts/.test.tsx files)",
