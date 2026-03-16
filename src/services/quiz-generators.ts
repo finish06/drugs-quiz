@@ -32,35 +32,51 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 /**
- * Fetch a random page of EPC classes from the full catalog.
- * First call gets total_pages, then fetches a random page.
+ * Fetch a large pool of EPC classes from multiple random pages.
+ * Fetches 2 random pages to get ~200 classes for variety.
  */
-async function fetchRandomEpcClasses(): Promise<DrugClass[]> {
+async function fetchEpcClassPool(): Promise<DrugClass[]> {
   const initial = await getDrugClasses({ type: "epc", limit: 100, page: 1 });
   const totalPages = initial.pagination.total_pages;
 
   if (totalPages <= 1) {
-    return shuffle(initial.data);
+    return initial.data;
   }
 
-  const page = randomInt(1, totalPages);
-  if (page === 1) {
-    return shuffle(initial.data);
+  // Fetch 2 different random pages for a larger pool
+  const page1 = randomInt(1, totalPages);
+  const page2Data: DrugClass[] = [];
+
+  const data1 = page1 === 1
+    ? initial.data
+    : (await getDrugClasses({ type: "epc", limit: 100, page: page1 })).data;
+
+  // Try a second different page for more variety
+  let page2 = randomInt(1, totalPages);
+  if (page2 === page1 && totalPages > 1) {
+    page2 = (page1 % totalPages) + 1;
+  }
+  if (page2 !== page1) {
+    try {
+      const resp = await getDrugClasses({ type: "epc", limit: 100, page: page2 });
+      page2Data.push(...resp.data);
+    } catch {
+      // Fine — one page is enough
+    }
   }
 
-  const response = await getDrugClasses({ type: "epc", limit: 100, page });
-  return shuffle(response.data);
+  return [...data1, ...page2Data];
 }
 
 /**
  * Generate a "Name the Class" question.
- *
- * Approach: Fetch a random page of EPC classes, pick one that has
- * drugs, use it as the correct answer, and pull distractors from
- * the same page.
+ * Accepts a usedDrugs set to avoid repeating drugs across questions.
  */
-export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQuestion> {
-  const shuffledClasses = await fetchRandomEpcClasses();
+export async function generateNameTheClassQuestion(
+  classPool: DrugClass[],
+  usedDrugs: Set<string>,
+): Promise<MultipleChoiceQuestion> {
+  const shuffledClasses = shuffle(classPool);
 
   let drugName: string | null = null;
   let correctClass: string | null = null;
@@ -68,11 +84,14 @@ export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQues
   for (const cls of shuffledClasses) {
     try {
       const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
-      const examDrugs = drugsResponse.data.filter((d) => isExamRelevantDrug(d.generic_name));
+      const examDrugs = drugsResponse.data.filter(
+        (d) => isExamRelevantDrug(d.generic_name) && !usedDrugs.has(d.generic_name.toLowerCase()),
+      );
       const drug = examDrugs[0];
       if (drug) {
         drugName = toTitleCase(drug.generic_name);
         correctClass = cls.name;
+        usedDrugs.add(drug.generic_name.toLowerCase());
         break;
       }
     } catch {
@@ -84,7 +103,6 @@ export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQues
     throw new Error("Failed to find a drug with an EPC class");
   }
 
-  // Pick 3 distractor classes (different from the correct one)
   const distractors = shuffledClasses
     .map((c) => c.name)
     .filter((name) => name !== correctClass)
@@ -106,11 +124,13 @@ export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQues
 
 /**
  * Generate a "Match Drug to Class" question.
- *
- * Fetches a random page of EPC classes, picks 4 that have drugs.
+ * Accepts a usedDrugs set to avoid repeating drugs across questions.
  */
-export async function generateMatchDrugToClassQuestion(): Promise<MatchingQuestion> {
-  const shuffledClasses = await fetchRandomEpcClasses();
+export async function generateMatchDrugToClassQuestion(
+  classPool: DrugClass[],
+  usedDrugs: Set<string>,
+): Promise<MatchingQuestion> {
+  const shuffledClasses = shuffle(classPool);
 
   const pairs: { drug: string; className: string }[] = [];
 
@@ -119,10 +139,13 @@ export async function generateMatchDrugToClassQuestion(): Promise<MatchingQuesti
 
     try {
       const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
-      const examDrugs = drugsResponse.data.filter((d) => isExamRelevantDrug(d.generic_name));
+      const examDrugs = drugsResponse.data.filter(
+        (d) => isExamRelevantDrug(d.generic_name) && !usedDrugs.has(d.generic_name.toLowerCase()),
+      );
       const drug = examDrugs[0];
       if (drug) {
         pairs.push({ drug: toTitleCase(drug.generic_name), className: cls.name });
+        usedDrugs.add(drug.generic_name.toLowerCase());
       }
     } catch {
       continue;
@@ -157,15 +180,15 @@ function hasRealBrandName(d: { generic_name: string; brand_name: string }): bool
 
 /**
  * Generate a "Brand/Generic Match" question.
- *
- * Collects drugs with distinct brand names from across multiple EPC
- * classes on a random page.
+ * Accepts a usedDrugs set to avoid repeating drugs across questions.
  */
-export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuestion> {
-  const shuffledClasses = await fetchRandomEpcClasses();
+export async function generateBrandGenericMatchQuestion(
+  classPool: DrugClass[],
+  usedDrugs: Set<string>,
+): Promise<MatchingQuestion> {
+  const shuffledClasses = shuffle(classPool);
 
   const pairs: { generic: string; brand: string }[] = [];
-  const usedGenerics = new Set<string>();
 
   for (const cls of shuffledClasses) {
     if (pairs.length >= 4) break;
@@ -177,9 +200,9 @@ export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuest
       for (const drug of examDrugs) {
         if (pairs.length >= 4) break;
         const genericKey = drug.generic_name.toLowerCase();
-        if (hasRealBrandName(drug) && !usedGenerics.has(genericKey)) {
+        if (hasRealBrandName(drug) && !usedDrugs.has(genericKey)) {
           pairs.push({ generic: toTitleCase(drug.generic_name), brand: toTitleCase(drug.brand_name) });
-          usedGenerics.add(genericKey);
+          usedDrugs.add(genericKey);
         }
       }
     } catch {
@@ -206,12 +229,17 @@ export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuest
 
 /**
  * Generate multiple questions of a given type.
+ * Fetches a class pool once, then passes a shared usedDrugs set
+ * to each generator to prevent repeating drugs across questions.
  */
 export async function generateQuestions(
   type: "name-the-class" | "match-drug-to-class" | "brand-generic-match",
   count: number,
   onProgress?: (completed: number, total: number) => void,
 ): Promise<(MultipleChoiceQuestion | MatchingQuestion)[]> {
+  const classPool = await fetchEpcClassPool();
+  const usedDrugs = new Set<string>();
+
   const generators = {
     "name-the-class": generateNameTheClassQuestion,
     "match-drug-to-class": generateMatchDrugToClassQuestion,
@@ -222,7 +250,7 @@ export async function generateQuestions(
   const questions: (MultipleChoiceQuestion | MatchingQuestion)[] = [];
 
   for (let i = 0; i < count; i++) {
-    const question = await generator();
+    const question = await generator(classPool, usedDrugs);
     questions.push(question);
     onProgress?.(i + 1, count);
   }
