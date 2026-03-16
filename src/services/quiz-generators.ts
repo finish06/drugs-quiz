@@ -1,4 +1,4 @@
-import { getDrugNames, getDrugClasses, getDrugClass, getDrugsInClass } from "./api-client";
+import { getDrugClasses, getDrugsInClass } from "./api-client";
 import type { MultipleChoiceQuestion, MatchingQuestion } from "@/types/quiz";
 
 /** Popular EPC classes for exam prep — used as seeds for brand/generic matching */
@@ -31,54 +31,39 @@ function shuffle<T>(array: T[]): T[] {
 /**
  * Generate a "Name the Class" question.
  *
- * Recipe:
- * 1. Pick a random generic drug
- * 2. Look up its EPC class (correct answer)
- * 3. Fetch 3 distractor EPC classes
- * 4. Present as multiple choice
+ * Approach: Start from EPC classes (guaranteed to have drugs),
+ * pick a random class, get a drug from it, then use other classes
+ * as distractors. This avoids the problem of random drugs not
+ * having EPC class data.
  */
 export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQuestion> {
-  // Get total pages for random selection
-  const initial = await getDrugNames({ type: "generic", limit: 1 });
-  const totalPages = initial.pagination.total_pages;
+  // Fetch a page of EPC classes
+  const classesResponse = await getDrugClasses({ type: "epc", limit: 100 });
+  const shuffledClasses = shuffle(classesResponse.data);
 
   let drugName: string | null = null;
   let correctClass: string | null = null;
 
-  // Retry loop: pick a drug that has an EPC class
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const page = randomInt(1, totalPages);
-    const drugsPage = await getDrugNames({ type: "generic", limit: 1, page });
-    const drug = drugsPage.data[0];
-    if (!drug) continue;
-
-    try {
-      const lookup = await getDrugClass(drug.name);
-      const epcClass = lookup.classes.find(
-        (c) => c.type.toUpperCase() === "EPC",
-      );
-      if (epcClass) {
-        drugName = drug.name;
-        correctClass = epcClass.name;
-        break;
-      }
-    } catch {
-      // Drug not found or no class — try another
-      continue;
+  // Find a class that has at least one drug
+  for (const cls of shuffledClasses) {
+    const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
+    const drug = drugsResponse.data[0];
+    if (drug) {
+      drugName = drug.generic_name;
+      correctClass = cls.name;
+      break;
     }
   }
 
   if (!drugName || !correctClass) {
-    throw new Error("Failed to find a drug with an EPC class after 5 attempts");
+    throw new Error("Failed to find a drug with an EPC class");
   }
 
-  // Fetch distractor classes
-  const classesResponse = await getDrugClasses({ type: "epc", limit: 100 });
-  const allClasses = classesResponse.data
+  // Pick 3 distractor classes (different from the correct one)
+  const distractors = shuffledClasses
     .map((c) => c.name)
-    .filter((name) => name !== correctClass);
-
-  const distractors = shuffle(allClasses).slice(0, 3);
+    .filter((name) => name !== correctClass)
+    .slice(0, 3);
 
   if (distractors.length < 3) {
     throw new Error("Not enough distractor classes available");

@@ -17,24 +17,7 @@ beforeEach(() => {
 
 describe("generateNameTheClassQuestion", () => {
   it("returns a multiple-choice question with 4 options", async () => {
-    // Initial call to get total pages
-    mockedApi.getDrugNames.mockResolvedValueOnce({
-      data: [{ name: "simvastatin", type: "generic" }],
-      pagination: { page: 1, limit: 1, total: 100, total_pages: 100 },
-    });
-    // Random page fetch
-    mockedApi.getDrugNames.mockResolvedValueOnce({
-      data: [{ name: "simvastatin", type: "generic" }],
-      pagination: { page: 42, limit: 1, total: 100, total_pages: 100 },
-    });
-    // Class lookup
-    mockedApi.getDrugClass.mockResolvedValueOnce({
-      query_name: "simvastatin",
-      generic_name: "simvastatin",
-      brand_names: ["Zocor"],
-      classes: [{ name: "HMG-CoA Reductase Inhibitor", type: "EPC" }],
-    });
-    // Distractor classes
+    // Fetch EPC classes
     mockedApi.getDrugClasses.mockResolvedValueOnce({
       data: [
         { name: "HMG-CoA Reductase Inhibitor", type: "epc" },
@@ -45,67 +28,58 @@ describe("generateNameTheClassQuestion", () => {
       ],
       pagination: { page: 1, limit: 100, total: 5, total_pages: 1 },
     });
+    // Get a drug from the first class tried
+    mockedApi.getDrugsInClass.mockResolvedValueOnce({
+      data: [{ generic_name: "simvastatin", brand_name: "Zocor" }],
+      pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+    });
 
     const question = await generateNameTheClassQuestion();
 
     expect(question.kind).toBe("multiple-choice");
-    expect(question.drugName).toBe("simvastatin");
-    expect(question.correctAnswer).toBe("HMG-CoA Reductase Inhibitor");
     expect(question.options).toHaveLength(4);
-    expect(question.options).toContain("HMG-CoA Reductase Inhibitor");
+    expect(question.options).toContain(question.correctAnswer);
   });
 
-  it("retries when drug has no EPC class", async () => {
-    // Initial call
-    mockedApi.getDrugNames.mockResolvedValueOnce({
-      data: [{ name: "unknown", type: "generic" }],
-      pagination: { page: 1, limit: 1, total: 100, total_pages: 100 },
-    });
-    // First attempt — drug has no EPC class
-    mockedApi.getDrugNames.mockResolvedValueOnce({
-      data: [{ name: "unknown", type: "generic" }],
-      pagination: { page: 1, limit: 1, total: 100, total_pages: 100 },
-    });
-    mockedApi.getDrugClass.mockResolvedValueOnce({
-      query_name: "unknown",
-      generic_name: "unknown",
-      brand_names: [],
-      classes: [{ name: "Some MoA", type: "MoA" }], // No EPC
-    });
-    // Second attempt — drug has EPC class
-    mockedApi.getDrugNames.mockResolvedValueOnce({
-      data: [{ name: "lisinopril", type: "generic" }],
-      pagination: { page: 2, limit: 1, total: 100, total_pages: 100 },
-    });
-    mockedApi.getDrugClass.mockResolvedValueOnce({
-      query_name: "lisinopril",
-      generic_name: "lisinopril",
-      brand_names: ["Prinivil"],
-      classes: [{ name: "ACE Inhibitor", type: "EPC" }],
-    });
-    // Distractors
+  it("skips classes with no drugs and finds one that works", async () => {
     mockedApi.getDrugClasses.mockResolvedValueOnce({
       data: [
+        { name: "Empty Class", type: "epc" },
         { name: "ACE Inhibitor", type: "epc" },
-        { name: "Beta Blocker", type: "epc" },
         { name: "PPI", type: "epc" },
         { name: "SSRI", type: "epc" },
+        { name: "Beta Blocker", type: "epc" },
       ],
-      pagination: { page: 1, limit: 100, total: 4, total_pages: 1 },
+      pagination: { page: 1, limit: 100, total: 5, total_pages: 1 },
+    });
+    mockedApi.getDrugsInClass.mockImplementation(async (params) => {
+      if (params.class === "Empty Class") {
+        return { data: [], pagination: { page: 1, limit: 5, total: 0, total_pages: 0 } };
+      }
+      return {
+        data: [{ generic_name: `drug-for-${params.class}`, brand_name: "" }],
+        pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+      };
     });
 
     const question = await generateNameTheClassQuestion();
 
-    expect(question.drugName).toBe("lisinopril");
-    expect(question.correctAnswer).toBe("ACE Inhibitor");
+    expect(question.drugName).not.toContain("Empty");
+    expect(question.correctAnswer).not.toBe("Empty Class");
   });
 
-  it("throws after 5 failed attempts", async () => {
-    mockedApi.getDrugNames.mockResolvedValue({
-      data: [{ name: "bad-drug", type: "generic" }],
-      pagination: { page: 1, limit: 1, total: 1, total_pages: 1 },
+  it("throws when no classes have drugs", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "Empty-1", type: "epc" },
+        { name: "Empty-2", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 2, total_pages: 1 },
     });
-    mockedApi.getDrugClass.mockRejectedValue(new Error("Not found"));
+    mockedApi.getDrugsInClass.mockResolvedValue({
+      data: [],
+      pagination: { page: 1, limit: 5, total: 0, total_pages: 0 },
+    });
 
     await expect(generateNameTheClassQuestion()).rejects.toThrow(
       "Failed to find a drug with an EPC class",
@@ -258,23 +232,8 @@ describe("generateBrandGenericMatchQuestion", () => {
 
 describe("generateQuestions", () => {
   it("generates multiple name-the-class questions", async () => {
-    // Set up mocks for 2 questions
+    // Set up mocks for 2 questions — each call fetches classes then a drug
     for (let i = 0; i < 2; i++) {
-      mockedApi.getDrugNames
-        .mockResolvedValueOnce({
-          data: [{ name: `drug-${i}`, type: "generic" }],
-          pagination: { page: 1, limit: 1, total: 10, total_pages: 10 },
-        })
-        .mockResolvedValueOnce({
-          data: [{ name: `drug-${i}`, type: "generic" }],
-          pagination: { page: 1, limit: 1, total: 10, total_pages: 10 },
-        });
-      mockedApi.getDrugClass.mockResolvedValueOnce({
-        query_name: `drug-${i}`,
-        generic_name: `drug-${i}`,
-        brand_names: [],
-        classes: [{ name: `Class-${i}`, type: "EPC" }],
-      });
       mockedApi.getDrugClasses.mockResolvedValueOnce({
         data: [
           { name: `Class-${i}`, type: "epc" },
@@ -283,6 +242,10 @@ describe("generateQuestions", () => {
           { name: "Distractor-C", type: "epc" },
         ],
         pagination: { page: 1, limit: 100, total: 4, total_pages: 1 },
+      });
+      mockedApi.getDrugsInClass.mockResolvedValueOnce({
+        data: [{ generic_name: `drug-${i}`, brand_name: "" }],
+        pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
       });
     }
 
