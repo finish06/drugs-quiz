@@ -1,6 +1,6 @@
 {
   "$schema": "https://github.com/MountainUnicorn/add/docs-manifest.schema.json",
-  "generated": "2026-03-15",
+  "generated": "2026-03-16",
   "project": "drugs-quiz",
   "type": "frontend-spa",
   "framework": "React 19 + Vite + TypeScript",
@@ -101,7 +101,7 @@
     {
       "name": "quiz-generators",
       "path": "src/services/quiz-generators.ts",
-      "description": "Question generation logic implementing the three quiz recipes from the API contract. Each generator makes multiple API calls, handles retries (name-the-class retries up to 5 times for drugs without EPC classes), and returns typed question objects.",
+      "description": "Question generation logic implementing the three quiz recipes from the API contract. Uses fetchRandomEpcClasses() to pick a random page of EPC classes (pagination-aware), then finds drugs within those classes. Brand-generic matching collects across multiple classes using a hasRealBrandName filter. Returns typed question objects.",
       "exports": [
         "generateNameTheClassQuestion() -> MultipleChoiceQuestion",
         "generateMatchDrugToClassQuestion() -> MatchingQuestion",

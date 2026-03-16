@@ -65,42 +65,41 @@ Implements the "Name the Class" recipe from `frontend-api-contract.md`.
 ```mermaid
 sequenceDiagram
     participant Gen as generateNameTheClassQuestion
+    participant Fetch as fetchRandomEpcClasses
     participant API as api-client
     participant DrugGate as drug-gate API
 
-    Note over Gen: Step 1 - Get total page count for random selection
-    Gen->>API: getDrugNames({ type: "generic", limit: 1 })
-    API->>DrugGate: GET /v1/drugs/names?type=generic&limit=1
+    Note over Gen: Step 1 - Fetch a random page of EPC classes
+    Gen->>Fetch: fetchRandomEpcClasses()
+    Fetch->>API: getDrugClasses({ type: "epc", limit: 100, page: 1 })
+    API->>DrugGate: GET /v1/drugs/classes?type=epc&limit=100&page=1
     DrugGate-->>API: { data: [...], pagination: { total_pages: N } }
-    API-->>Gen: PaginatedResponse<DrugName>
+    API-->>Fetch: PaginatedResponse<DrugClass>
 
-    Note over Gen: Step 2 - Pick a random drug with an EPC class (retry up to 5x)
-    loop Attempt 1..5 (until drug with EPC class found)
-        Gen->>Gen: randomInt(1, totalPages)
-        Gen->>API: getDrugNames({ type: "generic", limit: 1, page: random })
-        API->>DrugGate: GET /v1/drugs/names?type=generic&limit=1&page={random}
-        DrugGate-->>API: { data: [{ name, type }] }
-        API-->>Gen: drug name
+    alt total_pages > 1
+        Fetch->>Fetch: randomInt(1, totalPages)
+        Fetch->>API: getDrugClasses({ type: "epc", limit: 100, page: random })
+        API->>DrugGate: GET /v1/drugs/classes?type=epc&limit=100&page={random}
+        DrugGate-->>API: { data: [...] }
+        API-->>Fetch: PaginatedResponse<DrugClass>
+    end
+    Fetch->>Fetch: shuffle(data)
+    Fetch-->>Gen: DrugClass[] (shuffled)
 
-        Gen->>API: getDrugClass(drug.name)
-        API->>DrugGate: GET /v1/drugs/class?name={drug_name}
-        alt Drug has EPC class
-            DrugGate-->>API: { classes: [{ name, type: "EPC" }, ...] }
-            API-->>Gen: DrugClassLookup
-            Note over Gen: Found! correctClass = EPC class name
-        else Drug not found or no EPC class
-            DrugGate-->>API: 404 or classes without EPC
-            Note over Gen: Continue to next attempt
+    Note over Gen: Step 2 - Find a class that has drugs
+    loop For each shuffled class (until one with drugs found)
+        Gen->>API: getDrugsInClass({ class: cls.name, limit: 5 })
+        API->>DrugGate: GET /v1/drugs/classes/drugs?class={name}&limit=5
+        alt Class has drugs
+            DrugGate-->>API: { data: [{ generic_name, ... }] }
+            API-->>Gen: drug found — correctClass = cls.name, drugName = generic_name
+        else Empty or error
+            Note over Gen: Skip, try next class
         end
     end
 
-    Note over Gen: Step 3 - Fetch distractor classes
-    Gen->>API: getDrugClasses({ type: "epc", limit: 100 })
-    API->>DrugGate: GET /v1/drugs/classes?type=epc&limit=100
-    DrugGate-->>API: { data: [{ name, type }, ...] }
-    API-->>Gen: PaginatedResponse<DrugClass>
-
-    Gen->>Gen: Filter out correctClass, shuffle, take 3 distractors
+    Note over Gen: Step 3 - Pick 3 distractors from same page
+    Gen->>Gen: Filter remaining classes, take 3 distractors
     Gen->>Gen: Shuffle [correctClass + 3 distractors]
     Gen-->>Gen: Return MultipleChoiceQuestion
 ```
@@ -112,16 +111,21 @@ Implements the "Match Drug to Class" recipe from `frontend-api-contract.md`.
 ```mermaid
 sequenceDiagram
     participant Gen as generateMatchDrugToClassQuestion
+    participant Fetch as fetchRandomEpcClasses
     participant API as api-client
     participant DrugGate as drug-gate API
 
-    Note over Gen: Step 1 - Fetch a pool of EPC classes
-    Gen->>API: getDrugClasses({ type: "epc", limit: 100 })
-    API->>DrugGate: GET /v1/drugs/classes?type=epc&limit=100
-    DrugGate-->>API: { data: [class1, class2, ...] }
-    API-->>Gen: PaginatedResponse<DrugClass>
-
-    Gen->>Gen: Shuffle all classes randomly
+    Note over Gen: Step 1 - Fetch a random page of EPC classes
+    Gen->>Fetch: fetchRandomEpcClasses()
+    Fetch->>API: getDrugClasses({ type: "epc", limit: 100, page: 1 })
+    API->>DrugGate: GET /v1/drugs/classes?type=epc&limit=100&page=1
+    DrugGate-->>API: { data: [...], pagination: { total_pages: N } }
+    alt total_pages > 1
+        Fetch->>API: getDrugClasses({ type: "epc", limit: 100, page: random })
+        API->>DrugGate: GET /v1/drugs/classes?type=epc&limit=100&page={random}
+        DrugGate-->>API: { data: [...] }
+    end
+    Fetch-->>Gen: DrugClass[] (shuffled)
 
     Note over Gen: Step 2 - For each class, try to get a drug (need 4 pairs)
     loop For each shuffled class (until 4 pairs found)
@@ -131,7 +135,7 @@ sequenceDiagram
         API-->>Gen: PaginatedResponse<DrugInClass>
         alt Class has drugs
             Gen->>Gen: Add pair { drug: generic_name, className: cls.name }
-        else Empty class
+        else Empty or error
             Note over Gen: Skip, try next class
         end
     end
@@ -150,29 +154,42 @@ Implements the "Brand/Generic Match" recipe from `frontend-api-contract.md`.
 ```mermaid
 sequenceDiagram
     participant Gen as generateBrandGenericMatchQuestion
+    participant Fetch as fetchRandomEpcClasses
     participant API as api-client
     participant DrugGate as drug-gate API
 
-    Note over Gen: Uses hardcoded POPULAR_CLASSES list (10 exam-relevant EPC classes)
-    Gen->>Gen: Shuffle POPULAR_CLASSES randomly
+    Note over Gen: Step 1 - Fetch a random page of EPC classes
+    Gen->>Fetch: fetchRandomEpcClasses()
+    Fetch->>API: getDrugClasses({ type: "epc", limit: 100, page: 1 })
+    API->>DrugGate: GET /v1/drugs/classes?type=epc&limit=100&page=1
+    DrugGate-->>API: { data: [...], pagination: { total_pages: N } }
+    alt total_pages > 1
+        Fetch->>API: getDrugClasses({ type: "epc", limit: 100, page: random })
+        API->>DrugGate: GET /v1/drugs/classes?type=epc&limit=100&page={random}
+        DrugGate-->>API: { data: [...] }
+    end
+    Fetch-->>Gen: DrugClass[] (shuffled)
 
-    loop For each popular class (until one yields 4+ drugs with brands)
-        Gen->>API: getDrugsInClass({ class: className, limit: 20 })
-        API->>DrugGate: GET /v1/drugs/classes/drugs?class={className}&limit=20
+    Note over Gen: Step 2 - Collect drugs with real brand names across classes
+    loop For each shuffled class (until 4 pairs collected)
+        Gen->>API: getDrugsInClass({ class: cls.name, limit: 10 })
+        API->>DrugGate: GET /v1/drugs/classes/drugs?class={name}&limit=10
         DrugGate-->>API: { data: [{ generic_name, brand_name }, ...] }
         API-->>Gen: PaginatedResponse<DrugInClass>
 
-        Gen->>Gen: Filter to drugs where brand_name is non-empty
-        alt 4+ drugs with brand names
-            Gen->>Gen: Shuffle filtered drugs, take 4
-            Gen->>Gen: Build correctPairs (generic -> brand)
-            Gen->>Gen: Shuffle leftItems (generic names)
-            Gen->>Gen: Shuffle rightItems (brand names)
-            Gen-->>Gen: Return MatchingQuestion
-        else Fewer than 4
-            Note over Gen: Try next popular class
+        loop For each drug in response
+            Gen->>Gen: hasRealBrandName(drug) — brand non-empty, differs from generic, < 50 chars
+            alt Passes filter and generic not already used
+                Gen->>Gen: Add pair { generic, brand }, track usedGenerics
+            end
         end
     end
+
+    Note over Gen: Step 3 - Build matching question
+    Gen->>Gen: Build correctPairs (generic -> brand)
+    Gen->>Gen: Shuffle leftItems (generic names)
+    Gen->>Gen: Shuffle rightItems (brand names)
+    Gen-->>Gen: Return MatchingQuestion
 ```
 
 ## 5. Error Handling Flow
