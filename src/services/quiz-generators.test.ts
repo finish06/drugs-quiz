@@ -339,6 +339,35 @@ describe("generateQuestions", () => {
     expect(onProgress).toHaveBeenNthCalledWith(3, 3, 3);
   });
 
+  it("fetches from multiple pages when total_pages > 1", async () => {
+    // First call returns page 1 with total_pages=3
+    mockedApi.getDrugClasses
+      .mockResolvedValueOnce({
+        data: makeClassPool(["Page1-A", "Page1-B", "Page1-C", "Page1-D"]),
+        pagination: { page: 1, limit: 100, total: 300, total_pages: 3 },
+      })
+      // Second call for random page
+      .mockResolvedValueOnce({
+        data: makeClassPool(["Page2-A", "Page2-B", "Page2-C", "Page2-D"]),
+        pagination: { page: 2, limit: 100, total: 300, total_pages: 3 },
+      })
+      // Third call for second random page
+      .mockResolvedValueOnce({
+        data: makeClassPool(["Page3-A", "Page3-B", "Page3-C", "Page3-D"]),
+        pagination: { page: 3, limit: 100, total: 300, total_pages: 3 },
+      });
+
+    mockedApi.getDrugsInClass.mockImplementation(async (params) => ({
+      data: [{ generic_name: `drug-${params.class}`, brand_name: "" }],
+      pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+    }));
+
+    const questions = await generateQuestions("name-the-class", 1);
+    expect(questions).toHaveLength(1);
+    // Should have called getDrugClasses at least twice (initial + random page(s))
+    expect(mockedApi.getDrugClasses.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("does not repeat drugs across questions", async () => {
     mockedApi.getDrugClasses.mockResolvedValueOnce({
       data: makeClassPool(["Class A", "Class B", "Class C", "Class D", "Class E", "Class F"]),
