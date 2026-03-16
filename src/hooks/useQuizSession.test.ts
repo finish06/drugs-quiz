@@ -212,4 +212,61 @@ describe("useQuizSession", () => {
 
     expect(result.current.session?.questions[0]!.kind).toBe("matching");
   });
+
+  it("handles non-Error thrown during generation", async () => {
+    mockedGenerators.generateQuestions.mockRejectedValueOnce("string error");
+
+    const { result } = renderHook(() => useQuizSession());
+
+    await act(async () => {
+      await result.current.startQuiz({ type: "name-the-class", questionCount: 5 });
+    });
+
+    expect(result.current.error).toBe("Failed to generate questions");
+    expect(result.current.session).toBeNull();
+  });
+
+  it("ignores submitAnswer when no session exists", () => {
+    const { result } = renderHook(() => useQuizSession());
+
+    act(() => {
+      result.current.submitAnswer(true);
+    });
+
+    expect(result.current.session).toBeNull();
+  });
+
+  it("ignores nextQuestion when no session exists", () => {
+    const { result } = renderHook(() => useQuizSession());
+
+    act(() => {
+      result.current.nextQuestion();
+    });
+
+    expect(result.current.session).toBeNull();
+  });
+
+  it("ignores submitAnswer when quiz is complete", async () => {
+    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMCQuestion]);
+
+    const { result } = renderHook(() => useQuizSession());
+
+    await act(async () => {
+      await result.current.startQuiz({ type: "name-the-class", questionCount: 1 });
+    });
+
+    act(() => {
+      result.current.submitAnswer(true);
+      result.current.nextQuestion();
+    });
+
+    expect(result.current.session?.status).toBe("complete");
+    const answersBefore = result.current.session?.answers.length;
+
+    act(() => {
+      result.current.submitAnswer(false);
+    });
+
+    expect(result.current.session?.answers.length).toBe(answersBefore);
+  });
 });

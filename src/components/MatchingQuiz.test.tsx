@@ -228,4 +228,121 @@ describe("MatchingQuiz", () => {
 
     expect(screen.getByText("Correct answers:")).toBeInTheDocument();
   });
+
+  it("allows undoing a pair by clicking a paired left item", async () => {
+    const user = userEvent.setup();
+    render(
+      <MatchingQuiz
+        question={mockQuestion}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        questionNumber={1}
+        totalQuestions={5}
+        leftLabel="Drugs"
+        rightLabel="Classes"
+      />,
+    );
+
+    // Create a pair
+    await user.click(screen.getByText("simvastatin"));
+    await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+
+    // Verify paired
+    const simButton = screen.getByText("simvastatin").closest("button");
+    expect(simButton?.className).toContain("border-blue-400");
+
+    // Undo by clicking the left item again
+    await user.click(screen.getByText("simvastatin"));
+
+    // Should no longer be paired
+    const simButtonAfter = screen.getByText("simvastatin").closest("button");
+    expect(simButtonAfter?.className).not.toContain("border-blue-400");
+  });
+
+  it("reassigns a right item when it is already paired", async () => {
+    const user = userEvent.setup();
+    render(
+      <MatchingQuiz
+        question={mockQuestion}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        questionNumber={1}
+        totalQuestions={5}
+        leftLabel="Drugs"
+        rightLabel="Classes"
+      />,
+    );
+
+    // Pair simvastatin with ACE Inhibitor
+    await user.click(screen.getByText("simvastatin"));
+    await user.click(screen.getByText("ACE Inhibitor"));
+
+    // Now pair lisinopril with ACE Inhibitor (should reassign)
+    await user.click(screen.getByText("lisinopril"));
+    await user.click(screen.getByText("ACE Inhibitor"));
+
+    // lisinopril should now be paired with ACE Inhibitor
+    // simvastatin should be unpaired
+    const lisinoprilButton = screen.getByText("lisinopril").closest("button");
+    expect(lisinoprilButton?.className).toContain("border-blue-400");
+  });
+
+  it("shows Next Question button after submission (not last question)", async () => {
+    const user = userEvent.setup();
+    const onNext = vi.fn();
+    render(
+      <MatchingQuiz
+        question={mockQuestion}
+        onAnswer={vi.fn()}
+        onNext={onNext}
+        questionNumber={1}
+        totalQuestions={5}
+        leftLabel="Drugs"
+        rightLabel="Classes"
+      />,
+    );
+
+    // Match all
+    await user.click(screen.getByText("simvastatin"));
+    await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+    await user.click(screen.getByText("lisinopril"));
+    await user.click(screen.getByText("ACE Inhibitor"));
+    await user.click(screen.getByText("omeprazole"));
+    await user.click(screen.getByText("Proton Pump Inhibitor"));
+    await user.click(screen.getByText("metoprolol"));
+    await user.click(screen.getByText("Beta Adrenergic Blocker"));
+
+    await user.click(screen.getByText("Check Answers"));
+    expect(screen.getByText("Next Question")).toBeInTheDocument();
+
+    await user.click(screen.getByText("Next Question"));
+    expect(onNext).toHaveBeenCalledOnce();
+  });
+
+  it("shows See Results on last question after submission", async () => {
+    const user = userEvent.setup();
+    render(
+      <MatchingQuiz
+        question={mockQuestion}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        questionNumber={5}
+        totalQuestions={5}
+        leftLabel="Drugs"
+        rightLabel="Classes"
+      />,
+    );
+
+    await user.click(screen.getByText("simvastatin"));
+    await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+    await user.click(screen.getByText("lisinopril"));
+    await user.click(screen.getByText("ACE Inhibitor"));
+    await user.click(screen.getByText("omeprazole"));
+    await user.click(screen.getByText("Proton Pump Inhibitor"));
+    await user.click(screen.getByText("metoprolol"));
+    await user.click(screen.getByText("Beta Adrenergic Blocker"));
+
+    await user.click(screen.getByText("Check Answers"));
+    expect(screen.getByText("See Results")).toBeInTheDocument();
+  });
 });

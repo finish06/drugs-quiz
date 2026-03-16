@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import App from "./App";
 import * as generators from "@/services/quiz-generators";
-import type { MultipleChoiceQuestion } from "@/types/quiz";
+import type { MultipleChoiceQuestion, MatchingQuestion } from "@/types/quiz";
 
 vi.mock("@/services/quiz-generators");
 const mockedGenerators = vi.mocked(generators);
@@ -13,6 +13,18 @@ const mockQuestion: MultipleChoiceQuestion = {
   drugName: "simvastatin",
   correctAnswer: "HMG-CoA Reductase Inhibitor",
   options: ["ACE Inhibitor", "HMG-CoA Reductase Inhibitor", "PPI", "SSRI"],
+};
+
+const mockMatchQuestion: MatchingQuestion = {
+  kind: "matching",
+  leftItems: ["simvastatin", "lisinopril", "omeprazole", "metoprolol"],
+  rightItems: ["Beta Blocker", "Statin", "ACE Inhibitor", "PPI"],
+  correctPairs: {
+    simvastatin: "Statin",
+    lisinopril: "ACE Inhibitor",
+    omeprazole: "PPI",
+    metoprolol: "Beta Blocker",
+  },
 };
 
 describe("App", () => {
@@ -105,5 +117,67 @@ describe("App", () => {
 
     await screen.findByText("simvastatin");
     expect(screen.getByText("Exit")).toBeInTheDocument();
+  });
+
+  it("renders matching quiz for match-drug-to-class type", async () => {
+    const user = userEvent.setup();
+    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMatchQuestion]);
+
+    render(<App />);
+    // Select Match Drug to Class
+    await user.click(screen.getByText("Match Drug to Class"));
+    await user.click(screen.getByText("Start Quiz"));
+
+    await screen.findByText("simvastatin");
+    expect(screen.getByText("Drugs")).toBeInTheDocument();
+    expect(screen.getByText("Classes")).toBeInTheDocument();
+  });
+
+  it("renders matching quiz with Generic/Brand labels for brand-generic type", async () => {
+    const user = userEvent.setup();
+    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMatchQuestion]);
+
+    render(<App />);
+    // Select Brand/Generic Match
+    await user.click(screen.getByText("Brand/Generic Match"));
+    await user.click(screen.getByText("Start Quiz"));
+
+    await screen.findByText("simvastatin");
+    expect(screen.getByText("Generic")).toBeInTheDocument();
+    expect(screen.getByText("Brand")).toBeInTheDocument();
+  });
+
+  it("retries quiz with same config from results screen", async () => {
+    const user = userEvent.setup();
+    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockQuestion]);
+
+    render(<App />);
+    await user.click(screen.getByText("Start Quiz"));
+
+    // Complete the quiz
+    await screen.findByText("simvastatin");
+    await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+    await user.click(screen.getByText("See Results"));
+
+    // Retry — mock returns new question
+    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockQuestion]);
+    await screen.findByText("Retry");
+    await user.click(screen.getByText("Retry"));
+
+    // Should eventually show the question again
+    expect(await screen.findByText("simvastatin")).toBeInTheDocument();
+  });
+
+  it("returns to config from error state via Back button", async () => {
+    const user = userEvent.setup();
+    mockedGenerators.generateQuestions.mockRejectedValueOnce(new Error("fail"));
+
+    render(<App />);
+    await user.click(screen.getByText("Start Quiz"));
+
+    await screen.findByText("Something went wrong");
+    await user.click(screen.getByText("Back"));
+
+    expect(screen.getByText("Start Quiz")).toBeInTheDocument();
   });
 });
