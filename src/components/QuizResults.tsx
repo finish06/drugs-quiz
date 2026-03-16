@@ -24,18 +24,18 @@ export function QuizResults({ results, onNewQuiz, onRetry }: QuizResultsProps) {
   }
 
   return (
-    <div className="space-y-8 text-center">
+    <div className="rounded-xl bg-white p-8 shadow-sm space-y-8 text-center">
       <div>
-        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+        <p className="text-sm font-medium text-gray-400 uppercase tracking-wide">
           Quiz Complete
         </p>
-        <p className={`mt-2 text-6xl font-bold ${getGradeColor()}`}>
+        <p className={`mt-3 text-6xl font-bold ${getGradeColor()}`}>
           {percentage}%
         </p>
-        <p className="mt-2 text-lg text-gray-600">{getGradeMessage()}</p>
+        <p className="mt-2 text-lg text-gray-500">{getGradeMessage()}</p>
       </div>
 
-      <div className="rounded-lg bg-gray-50 p-6">
+      <div className="rounded-lg bg-gray-50 p-6 border border-gray-100">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-gray-900">{totalQuestions}</p>
@@ -54,13 +54,13 @@ export function QuizResults({ results, onNewQuiz, onRetry }: QuizResultsProps) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 p-4">
+      <div className="rounded-lg border border-gray-100 p-4">
         <p className="text-sm font-medium text-gray-700 mb-3">Question Breakdown</p>
         <div className="flex flex-wrap gap-2 justify-center">
           {results.answers.map((answer, index) => (
             <div
               key={index}
-              className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium ${
+              className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
                 answer.correct
                   ? "bg-green-100 text-green-700"
                   : "bg-red-100 text-red-700"
@@ -76,13 +76,13 @@ export function QuizResults({ results, onNewQuiz, onRetry }: QuizResultsProps) {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={onRetry}
-          className="rounded-lg border-2 border-blue-500 py-3 font-semibold text-blue-600 transition-colors hover:bg-blue-50"
+          className="rounded-xl border-2 border-brand py-3 font-semibold text-brand transition-all duration-200 hover:bg-blue-50"
         >
           Retry
         </button>
         <button
           onClick={onNewQuiz}
-          className="rounded-lg bg-blue-500 py-3 font-semibold text-white transition-colors hover:bg-blue-600"
+          className="rounded-xl bg-brand py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md"
         >
           New Quiz
         </button>

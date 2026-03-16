@@ -28,14 +28,14 @@ export function MultipleChoice({
   }
 
   function getOptionStyle(option: string): string {
-    const base = "w-full text-left rounded-lg border-2 p-4 transition-colors";
+    const base = "w-full text-left rounded-lg border-2 p-4 transition-all duration-200";
 
     if (!answered) {
-      return `${base} border-gray-200 hover:border-blue-300 hover:bg-blue-50`;
+      return `${base} border-gray-200 hover:border-brand-muted hover:bg-blue-50 hover:shadow-sm`;
     }
 
     if (option === question.correctAnswer) {
-      return `${base} border-green-500 bg-green-50 text-green-900`;
+      return `${base} border-green-500 bg-green-50 text-green-900 shadow-sm`;
     }
 
     if (option === selectedOption && option !== question.correctAnswer) {
@@ -46,24 +46,24 @@ export function MultipleChoice({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="rounded-xl bg-white p-6 shadow-sm space-y-6">
       <div className="flex items-center justify-between text-sm text-gray-500">
         <span>
           Question {questionNumber} of {totalQuestions}
         </span>
-        <div className="h-2 flex-1 mx-4 rounded-full bg-gray-200">
+        <div className="h-2 flex-1 mx-4 rounded-full bg-gray-100">
           <div
-            className="h-2 rounded-full bg-blue-500 transition-all"
+            className="h-2 rounded-full bg-brand transition-all duration-300"
             style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
           />
         </div>
       </div>
 
-      <div className="text-center">
-        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+      <div className="text-center py-4">
+        <p className="text-sm font-medium text-gray-400 uppercase tracking-wide">
           What class does this drug belong to?
         </p>
-        <p className="mt-2 text-3xl font-bold text-gray-900">{question.drugName}</p>
+        <p className="mt-3 text-3xl font-bold text-gray-900">{question.drugName}</p>
       </div>
 
       <div className="grid gap-3">
@@ -82,7 +82,7 @@ export function MultipleChoice({
       {answered && (
         <button
           onClick={onNext}
-          className="w-full rounded-lg bg-blue-500 py-3 font-semibold text-white transition-colors hover:bg-blue-600"
+          className="w-full rounded-xl bg-brand py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md"
         >
           {questionNumber === totalQuestions ? "See Results" : "Next Question"}
         </button>

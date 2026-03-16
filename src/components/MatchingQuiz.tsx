@@ -85,51 +85,51 @@ export function MatchingQuiz({
   }
 
   function getItemStyle(item: string, side: "left" | "right"): string {
-    const base = "w-full text-left rounded-lg border-2 p-3 transition-colors text-sm";
+    const base = "w-full text-left rounded-lg border-2 p-3 transition-all duration-200 text-sm";
     const pairIdx = getPairIndex(item, side);
 
     if (submitted) {
       if (side === "left" && pairedLeftItems.has(item)) {
         const isCorrect = question.correctPairs[item] === pairs[item];
-        return `${base} ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`;
+        return `${base} ${isCorrect ? "border-green-500 bg-green-50 shadow-sm" : "border-red-500 bg-red-50"}`;
       }
       if (side === "right" && pairedRightItems.has(item)) {
         const leftKey = Object.entries(pairs).find(([, v]) => v === item)?.[0];
         const isCorrect = leftKey ? question.correctPairs[leftKey] === item : false;
-        return `${base} ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`;
+        return `${base} ${isCorrect ? "border-green-500 bg-green-50 shadow-sm" : "border-red-500 bg-red-50"}`;
       }
       return `${base} border-gray-200 opacity-50`;
     }
 
     if (pairIdx >= 0) {
       const color = PAIR_COLORS[pairIdx % PAIR_COLORS.length]!;
-      return `${base} ${color.border} ${color.bg} ${color.text}`;
+      return `${base} ${color.border} ${color.bg} ${color.text} shadow-sm`;
     }
 
     if (side === "left" && selectedLeft === item) {
-      return `${base} border-blue-500 bg-blue-50 ring-2 ring-blue-300`;
+      return `${base} border-brand bg-blue-50 ring-2 ring-brand-muted`;
     }
 
-    return `${base} border-gray-200 hover:border-gray-300`;
+    return `${base} border-gray-200 hover:border-gray-300 hover:shadow-sm`;
   }
 
   const allPaired = Object.keys(pairs).length === question.leftItems.length;
 
   return (
-    <div className="space-y-6">
+    <div className="rounded-xl bg-white p-6 shadow-sm space-y-6">
       <div className="flex items-center justify-between text-sm text-gray-500">
         <span>
           Question {questionNumber} of {totalQuestions}
         </span>
-        <div className="h-2 flex-1 mx-4 rounded-full bg-gray-200">
+        <div className="h-2 flex-1 mx-4 rounded-full bg-gray-100">
           <div
-            className="h-2 rounded-full bg-blue-500 transition-all"
+            className="h-2 rounded-full bg-brand transition-all duration-300"
             style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
           />
         </div>
       </div>
 
-      <p className="text-center text-sm font-medium text-gray-500 uppercase tracking-wide">
+      <p className="text-center text-sm font-medium text-gray-400 uppercase tracking-wide">
         Match each item on the left with its pair on the right
       </p>
 
@@ -172,12 +172,12 @@ export function MatchingQuiz({
       </div>
 
       {submitted && (
-        <div className="rounded-lg bg-gray-50 p-4">
+        <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
           <p className="text-sm font-medium text-gray-700 mb-2">Correct answers:</p>
           <ul className="space-y-1 text-sm text-gray-600">
             {Object.entries(question.correctPairs).map(([left, right]) => (
               <li key={left}>
-                {left} → {right}
+                <span className="font-medium">{left}</span> → {right}
               </li>
             ))}
           </ul>
@@ -187,7 +187,7 @@ export function MatchingQuiz({
       {!submitted && allPaired && (
         <button
           onClick={handleSubmit}
-          className="w-full rounded-lg bg-blue-500 py-3 font-semibold text-white transition-colors hover:bg-blue-600"
+          className="w-full rounded-xl bg-brand py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md"
         >
           Check Answers
         </button>
@@ -196,7 +196,7 @@ export function MatchingQuiz({
       {submitted && (
         <button
           onClick={onNext}
-          className="w-full rounded-lg bg-blue-500 py-3 font-semibold text-white transition-colors hover:bg-blue-600"
+          className="w-full rounded-xl bg-brand py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md"
         >
           {questionNumber === totalQuestions ? "See Results" : "Next Question"}
         </button>
