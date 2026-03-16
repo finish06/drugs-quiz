@@ -93,6 +93,25 @@ describe("generateNameTheClassQuestion", () => {
     expect(question.correctAnswer).not.toBe("Failing Class");
   });
 
+  it("throws when not enough distractor classes", async () => {
+    // Only 2 classes total — after using 1 as correct, only 1 distractor (need 3)
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "Only Class", type: "epc" },
+        { name: "One Distractor", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 2, total_pages: 1 },
+    });
+    mockedApi.getDrugsInClass.mockResolvedValueOnce({
+      data: [{ generic_name: "some-drug", brand_name: "" }],
+      pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+    });
+
+    await expect(generateNameTheClassQuestion()).rejects.toThrow(
+      "Not enough distractor classes available",
+    );
+  });
+
   it("throws when no classes have drugs", async () => {
     mockedApi.getDrugClasses.mockResolvedValueOnce({
       data: [
@@ -213,6 +232,39 @@ describe("generateMatchDrugToClassQuestion", () => {
     const question = await generateMatchDrugToClassQuestion();
     expect(question.leftItems).toHaveLength(4);
     expect(question.rightItems).not.toContain("Failing");
+  });
+
+  it("throws when not enough classes have drugs", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "Empty-1", type: "epc" },
+        { name: "Empty-2", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 2, total_pages: 1 },
+    });
+    mockedApi.getDrugsInClass.mockResolvedValue({
+      data: [],
+      pagination: { page: 1, limit: 5, total: 0, total_pages: 0 },
+    });
+
+    await expect(generateMatchDrugToClassQuestion()).rejects.toThrow(
+      "Could not find 4 classes with drugs",
+    );
+  });
+
+  it("throws when all classes throw errors", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "Fail-1", type: "epc" },
+        { name: "Fail-2", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 2, total_pages: 1 },
+    });
+    mockedApi.getDrugsInClass.mockRejectedValue(new Error("upstream_error"));
+
+    await expect(generateMatchDrugToClassQuestion()).rejects.toThrow(
+      "Could not find 4 classes with drugs",
+    );
   });
 });
 
