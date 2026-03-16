@@ -4,6 +4,7 @@ import {
   generateMatchDrugToClassQuestion,
   generateBrandGenericMatchQuestion,
   generateQuestions,
+  isExamRelevantDrug,
 } from "./quiz-generators";
 import * as apiClient from "./api-client";
 
@@ -13,6 +14,42 @@ const mockedApi = vi.mocked(apiClient);
 
 beforeEach(() => {
   vi.resetAllMocks();
+});
+
+describe("isExamRelevantDrug", () => {
+  it("accepts common drug names like simvastatin", () => {
+    expect(isExamRelevantDrug("simvastatin")).toBe(true);
+  });
+
+  it("accepts names exactly 60 characters", () => {
+    expect(isExamRelevantDrug("a".repeat(60))).toBe(true);
+  });
+
+  it("rejects names longer than 60 characters", () => {
+    expect(isExamRelevantDrug("a".repeat(61))).toBe(false);
+  });
+
+  it("rejects names containing commas (multi-ingredient compounds)", () => {
+    expect(isExamRelevantDrug("acetaminophen, codeine phosphate")).toBe(false);
+  });
+
+  it("rejects homeopathic names containing 'nosode'", () => {
+    expect(isExamRelevantDrug("influenzinum nosode")).toBe(false);
+  });
+
+  it("rejects homeopathic names containing 'suis'", () => {
+    expect(isExamRelevantDrug("hepar suis")).toBe(false);
+  });
+
+  it("rejects homeopathic names containing 'officinale'", () => {
+    expect(isExamRelevantDrug("taraxacum officinale")).toBe(false);
+  });
+
+  it("rejects homeopathic indicators case-insensitively", () => {
+    expect(isExamRelevantDrug("Influenzinum NOSODE")).toBe(false);
+    expect(isExamRelevantDrug("Hepar SUIS")).toBe(false);
+    expect(isExamRelevantDrug("Taraxacum OFFICINALE")).toBe(false);
+  });
 });
 
 describe("generateNameTheClassQuestion", () => {
@@ -110,6 +147,38 @@ describe("generateNameTheClassQuestion", () => {
     await expect(generateNameTheClassQuestion()).rejects.toThrow(
       "Not enough distractor classes available",
     );
+  });
+
+  it("filters out obscure non-exam-relevant drugs", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: [
+        { name: "HMG-CoA Reductase Inhibitor", type: "epc" },
+        { name: "ACE Inhibitor", type: "epc" },
+        { name: "PPI", type: "epc" },
+        { name: "Beta Blocker", type: "epc" },
+      ],
+      pagination: { page: 1, limit: 100, total: 4, total_pages: 1 },
+    });
+    // First class returns only obscure drugs, second returns a real drug
+    mockedApi.getDrugsInClass.mockImplementation(async (params) => {
+      if (params.class === "HMG-CoA Reductase Inhibitor") {
+        return {
+          data: [
+            { generic_name: "influenzinum nosode", brand_name: "" },
+            { generic_name: "acetaminophen, codeine phosphate", brand_name: "" },
+          ],
+          pagination: { page: 1, limit: 5, total: 2, total_pages: 1 },
+        };
+      }
+      return {
+        data: [{ generic_name: "lisinopril", brand_name: "Zestril" }],
+        pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+      };
+    });
+
+    const question = await generateNameTheClassQuestion();
+    // Should skip the obscure drugs and pick lisinopril
+    expect(question.drugName).toBe("Lisinopril");
   });
 
   it("throws when no classes have drugs", async () => {

@@ -3,6 +3,21 @@ import type { DrugClass } from "@/types/api";
 import type { MultipleChoiceQuestion, MatchingQuestion } from "@/types/quiz";
 import { toTitleCase } from "@/utils/text";
 
+const HOMEOPATHIC_INDICATORS = /nosode|suis|officinale/i;
+
+/**
+ * Filter out obscure, non-exam-relevant drug names:
+ * - Too long (> 60 chars)
+ * - Multi-ingredient compounds (contain commas)
+ * - Homeopathic preparations
+ */
+export function isExamRelevantDrug(name: string): boolean {
+  if (name.length > 60) return false;
+  if (name.includes(",")) return false;
+  if (HOMEOPATHIC_INDICATORS.test(name)) return false;
+  return true;
+}
+
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -53,7 +68,8 @@ export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQues
   for (const cls of shuffledClasses) {
     try {
       const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
-      const drug = drugsResponse.data[0];
+      const examDrugs = drugsResponse.data.filter((d) => isExamRelevantDrug(d.generic_name));
+      const drug = examDrugs[0];
       if (drug) {
         drugName = toTitleCase(drug.generic_name);
         correctClass = cls.name;
@@ -103,7 +119,8 @@ export async function generateMatchDrugToClassQuestion(): Promise<MatchingQuesti
 
     try {
       const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
-      const drug = drugsResponse.data[0];
+      const examDrugs = drugsResponse.data.filter((d) => isExamRelevantDrug(d.generic_name));
+      const drug = examDrugs[0];
       if (drug) {
         pairs.push({ drug: toTitleCase(drug.generic_name), className: cls.name });
       }
@@ -155,8 +172,9 @@ export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuest
 
     try {
       const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 10 });
+      const examDrugs = drugsResponse.data.filter((d) => isExamRelevantDrug(d.generic_name));
 
-      for (const drug of drugsResponse.data) {
+      for (const drug of examDrugs) {
         if (pairs.length >= 4) break;
         const genericKey = drug.generic_name.toLowerCase();
         if (hasRealBrandName(drug) && !usedGenerics.has(genericKey)) {
