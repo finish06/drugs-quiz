@@ -1,6 +1,6 @@
 # Feature Spec: Match Drug to Class Quiz
 
-**Status:** Draft
+**Status:** Approved
 **Milestone:** M1 — MVP Quiz
 **PRD Reference:** docs/prd.md §7 Feature 1
 

@@ -11,8 +11,8 @@ import type {
   ApiError,
 } from "@/types/api";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
-const API_KEY = import.meta.env.VITE_API_KEY as string;
+/** API base path — same-origin proxy handles auth and forwards to drug-gate */
+const API_BASE = "/api";
 
 class DrugApiError extends Error {
   constructor(
@@ -33,11 +33,7 @@ function buildQueryString(params: Record<string, string | number | undefined>): 
 }
 
 async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "X-API-Key": API_KEY,
-    },
-  });
+  const response = await fetch(`${API_BASE}${path}`);
 
   if (!response.ok) {
     const error = (await response.json()) as ApiError;

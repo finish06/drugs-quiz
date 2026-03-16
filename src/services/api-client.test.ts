@@ -42,7 +42,7 @@ describe("getDrugNames", () => {
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url] = mockFetch.mock.calls[0]!;
-    expect(url).toContain("/v1/drugs/names");
+    expect(url).toContain("/api/v1/drugs/names");
     expect(result.data).toHaveLength(2);
     expect(result.data[0]!.name).toBe("Simvastatin");
   });
@@ -106,7 +106,7 @@ describe("getDrugClass", () => {
     expect(result.brand_names).toContain("Zocor");
     expect(result.classes[0]!.name).toBe("HMG-CoA Reductase Inhibitor");
     const [url] = mockFetch.mock.calls[0]!;
-    expect(url).toContain("/v1/drugs/class?name=simvastatin");
+    expect(url).toContain("/api/v1/drugs/class?name=simvastatin");
   });
 
   it("encodes special characters in drug name", async () => {

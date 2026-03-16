@@ -1,6 +1,6 @@
 # Feature Spec: Brand/Generic Match Quiz
 
-**Status:** Draft
+**Status:** Approved
 **Milestone:** M1 — MVP Quiz
 **PRD Reference:** docs/prd.md §7 Feature 3
 

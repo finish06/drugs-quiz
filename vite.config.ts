@@ -12,5 +12,15 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    proxy: {
+      "/api": {
+        target: process.env.DRUG_GATE_URL || "http://localhost:8081",
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/api/, ""),
+        headers: {
+          "X-API-Key": process.env.DRUG_GATE_API_KEY || "",
+        },
+      },
+    },
   },
 });
