@@ -144,9 +144,10 @@ export function MatchingQuiz({
                 key={item}
                 onClick={() => handleLeftClick(item)}
                 disabled={submitted}
-                className={getItemStyle(item, "left")}
+                title={item}
+                className={`${getItemStyle(item, "left")} min-h-[3.5rem]`}
               >
-                {item}
+                <span className="line-clamp-2 overflow-hidden">{item}</span>
               </button>
             ))}
           </div>
@@ -162,9 +163,10 @@ export function MatchingQuiz({
                 key={item}
                 onClick={() => handleRightClick(item)}
                 disabled={submitted || !selectedLeft}
-                className={getItemStyle(item, "right")}
+                title={item}
+                className={`${getItemStyle(item, "right")} min-h-[3.5rem]`}
               >
-                {item}
+                <span className="line-clamp-2 overflow-hidden">{item}</span>
               </button>
             ))}
           </div>
