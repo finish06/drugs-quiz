@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  quality:
+    name: Lint, Type Check, Test, Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint .
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Test with coverage
+        run: npx vitest run --coverage
+
+      - name: Build
+        run: npx vite build
+
+  docker-release:
+    name: Push Release Image
+    needs: quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Release version: $VERSION"
+          echo "Tags: dockerhub.calebdunn.tech/drugs-quiz:$VERSION, dockerhub.calebdunn.tech/drugs-quiz:latest"
+
+      - name: Log in to registry
+        run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login dockerhub.calebdunn.tech -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
+      - name: Build and push release images
+        run: |
+          docker build \
+            -t "dockerhub.calebdunn.tech/drugs-quiz:$VERSION" \
+            -t "dockerhub.calebdunn.tech/drugs-quiz:latest" \
+            .
+          docker push "dockerhub.calebdunn.tech/drugs-quiz:$VERSION"
+          docker push "dockerhub.calebdunn.tech/drugs-quiz:latest"
+          echo "Pushed: dockerhub.calebdunn.tech/drugs-quiz:$VERSION"
+          echo "Pushed: dockerhub.calebdunn.tech/drugs-quiz:latest"

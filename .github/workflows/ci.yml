@@ -33,3 +33,67 @@ jobs:
 
       - name: Build
         run: npx vite build
+
+  docker-beta:
+    name: Push Beta Image
+    needs: quality
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set beta tag
+        run: |
+          BETA_TAG="beta-${GITHUB_SHA::7}"
+          echo "BETA_TAG=$BETA_TAG" >> "$GITHUB_ENV"
+          echo "Image tag: dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG"
+
+      - name: Log in to registry
+        run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login dockerhub.calebdunn.tech -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
+      - name: Build and push beta image
+        run: |
+          docker build -t "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG" .
+          docker push "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG"
+          echo "Pushed: dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG"
+
+      - name: Cleanup old beta tags (keep last 10)
+        run: |
+          REGISTRY="https://dockerhub.calebdunn.tech"
+          REPO="drugs-quiz"
+          AUTH=$(echo -n "${{ secrets.REGISTRY_USERNAME }}:${{ secrets.REGISTRY_PASSWORD }}" | base64)
+
+          # List all tags
+          TAGS=$(curl -s -H "Authorization: Basic $AUTH" "$REGISTRY/v2/$REPO/tags/list" | jq -r '.tags[]? // empty' | grep '^beta-' | sort)
+
+          COUNT=$(echo "$TAGS" | grep -c . || true)
+          echo "Found $COUNT beta tags"
+
+          if [ "$COUNT" -le 10 ]; then
+            echo "No cleanup needed ($COUNT <= 10)"
+            exit 0
+          fi
+
+          # Delete oldest tags beyond 10
+          DELETE_COUNT=$((COUNT - 10))
+          echo "Deleting $DELETE_COUNT oldest beta tags"
+
+          echo "$TAGS" | head -n "$DELETE_COUNT" | while read -r TAG; do
+            echo "Deleting: $TAG"
+            # Get manifest digest
+            DIGEST=$(curl -s -H "Authorization: Basic $AUTH" \
+              -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+              "$REGISTRY/v2/$REPO/manifests/$TAG" \
+              -o /dev/null -D - | grep -i "docker-content-digest" | awk '{print $2}' | tr -d '\r')
+
+            if [ -n "$DIGEST" ]; then
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                -H "Authorization: Basic $AUTH" \
+                -X DELETE "$REGISTRY/v2/$REPO/manifests/$DIGEST")
+              echo "  Deleted $TAG (digest: $DIGEST) — HTTP $HTTP_CODE"
+            else
+              echo "  Warning: could not get digest for $TAG, skipping"
+            fi
+          done
+        continue-on-error: true
