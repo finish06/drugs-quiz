@@ -35,8 +35,8 @@ export function QuizConfig({ onStart }: QuizConfigProps) {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-xl bg-white p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">Quiz Type</h2>
+      <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm transition-colors duration-150">
+        <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-4">Quiz Type</h2>
         <div className="grid gap-3">
           {QUIZ_TYPES.map((qt) => (
             <button
@@ -44,20 +44,20 @@ export function QuizConfig({ onStart }: QuizConfigProps) {
               onClick={() => setSelectedType(qt.value)}
               className={`text-left rounded-lg border-2 p-4 transition-all duration-200 ${
                 selectedType === qt.value
-                  ? "border-brand bg-blue-50 shadow-sm"
-                  : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                  ? "border-brand bg-blue-50 dark:bg-blue-900/30 shadow-sm"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm"
               }`}
               aria-pressed={selectedType === qt.value}
             >
-              <div className="font-medium text-gray-900">{qt.label}</div>
-              <div className="mt-1 text-sm text-gray-500">{qt.description}</div>
+              <div className="font-medium text-gray-900 dark:text-gray-100">{qt.label}</div>
+              <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">{qt.description}</div>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="rounded-xl bg-white p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
+      <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm transition-colors duration-150">
+        <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-4">
           Number of Questions
         </h2>
         <div className="flex gap-3">
@@ -67,8 +67,8 @@ export function QuizConfig({ onStart }: QuizConfigProps) {
               onClick={() => setQuestionCount(count)}
               className={`flex-1 rounded-lg border-2 py-3 text-center font-medium transition-all duration-200 ${
                 questionCount === count
-                  ? "border-brand bg-blue-50 text-brand-dark"
-                  : "border-gray-200 text-gray-700 hover:border-gray-300 hover:shadow-sm"
+                  ? "border-brand bg-blue-50 dark:bg-blue-900/30 text-brand-dark dark:text-brand-light"
+                  : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm"
               }`}
               aria-pressed={questionCount === count}
             >
@@ -80,7 +80,7 @@ export function QuizConfig({ onStart }: QuizConfigProps) {
 
       <button
         onClick={handleStart}
-        className="w-full rounded-xl bg-brand py-3.5 text-lg font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md active:scale-[0.98]"
+        className="w-full rounded-xl bg-brand py-3.5 text-lg font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark dark:hover:bg-brand-light hover:shadow-md active:scale-[0.98]"
       >
         Start Quiz
       </button>

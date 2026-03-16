@@ -12,10 +12,10 @@ interface MatchingQuizProps {
 }
 
 const PAIR_COLORS = [
-  { bg: "bg-blue-100", border: "border-blue-400", text: "text-blue-800" },
-  { bg: "bg-purple-100", border: "border-purple-400", text: "text-purple-800" },
-  { bg: "bg-amber-100", border: "border-amber-400", text: "text-amber-800" },
-  { bg: "bg-teal-100", border: "border-teal-400", text: "text-teal-800" },
+  { bg: "bg-blue-100 dark:bg-blue-900/40", border: "border-blue-400", text: "text-blue-800 dark:text-blue-300" },
+  { bg: "bg-purple-100 dark:bg-purple-900/40", border: "border-purple-400", text: "text-purple-800 dark:text-purple-300" },
+  { bg: "bg-amber-100 dark:bg-amber-900/40", border: "border-amber-400", text: "text-amber-800 dark:text-amber-300" },
+  { bg: "bg-teal-100 dark:bg-teal-900/40", border: "border-teal-400", text: "text-teal-800 dark:text-teal-300" },
 ];
 
 export function MatchingQuiz({
@@ -91,14 +91,14 @@ export function MatchingQuiz({
     if (submitted) {
       if (side === "left" && pairedLeftItems.has(item)) {
         const isCorrect = question.correctPairs[item] === pairs[item];
-        return `${base} ${isCorrect ? "border-green-500 bg-green-50 shadow-sm" : "border-red-500 bg-red-50"}`;
+        return `${base} ${isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/30 shadow-sm" : "border-red-500 bg-red-50 dark:bg-red-900/30"}`;
       }
       if (side === "right" && pairedRightItems.has(item)) {
         const leftKey = Object.entries(pairs).find(([, v]) => v === item)?.[0];
         const isCorrect = leftKey ? question.correctPairs[leftKey] === item : false;
-        return `${base} ${isCorrect ? "border-green-500 bg-green-50 shadow-sm" : "border-red-500 bg-red-50"}`;
+        return `${base} ${isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/30 shadow-sm" : "border-red-500 bg-red-50 dark:bg-red-900/30"}`;
       }
-      return `${base} border-gray-200 opacity-50`;
+      return `${base} border-gray-200 dark:border-gray-700 opacity-50`;
     }
 
     if (pairIdx >= 0) {
@@ -107,21 +107,21 @@ export function MatchingQuiz({
     }
 
     if (side === "left" && selectedLeft === item) {
-      return `${base} border-brand bg-blue-50 ring-2 ring-brand-muted`;
+      return `${base} border-brand dark:border-brand bg-blue-50 dark:bg-blue-900/30 ring-2 ring-brand-muted dark:ring-brand-muted`;
     }
 
-    return `${base} border-gray-200 hover:border-gray-300 hover:shadow-sm`;
+    return `${base} border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm`;
   }
 
   const allPaired = Object.keys(pairs).length === question.leftItems.length;
 
   return (
-    <div className="rounded-xl bg-white p-6 shadow-sm space-y-6">
-      <div className="flex items-center justify-between text-sm text-gray-500">
+    <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm space-y-6 transition-colors duration-150">
+      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
         <span>
           Question {questionNumber} of {totalQuestions}
         </span>
-        <div className="h-2 flex-1 mx-4 rounded-full bg-gray-100">
+        <div className="h-2 flex-1 mx-4 rounded-full bg-gray-100 dark:bg-gray-700">
           <div
             className="h-2 rounded-full bg-brand transition-all duration-300"
             style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
@@ -129,13 +129,13 @@ export function MatchingQuiz({
         </div>
       </div>
 
-      <p className="text-center text-sm font-medium text-gray-400 uppercase tracking-wide">
+      <p className="text-center text-sm font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">
         Match each item on the left with its pair on the right
       </p>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="mb-2 text-xs font-semibold text-gray-400 uppercase">
+          <p className="mb-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
             {leftLabel}
           </p>
           <div className="space-y-2">
@@ -154,7 +154,7 @@ export function MatchingQuiz({
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold text-gray-400 uppercase">
+          <p className="mb-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
             {rightLabel}
           </p>
           <div className="space-y-2">
@@ -174,9 +174,9 @@ export function MatchingQuiz({
       </div>
 
       {submitted && (
-        <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
-          <p className="text-sm font-medium text-gray-700 mb-2">Correct answers:</p>
-          <ul className="space-y-1 text-sm text-gray-600">
+        <div className="rounded-lg bg-gray-50 dark:bg-gray-900 p-4 border border-gray-100 dark:border-gray-700">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Correct answers:</p>
+          <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
             {Object.entries(question.correctPairs).map(([left, right]) => (
               <li key={left}>
                 <span className="font-medium">{left}</span> → {right}
