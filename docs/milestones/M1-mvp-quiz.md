@@ -36,7 +36,7 @@ ci-docker-registry   ███████████████████�
 - [x] 90% test coverage
 - [x] E2E tests pass for quiz flows
 - [x] CI pushes Docker images to registry
-- [ ] Deployed to staging
+- [x] Deployed to staging (192.168.1.145:8080, beta-d608660)
 
 ## Cycle History
 
