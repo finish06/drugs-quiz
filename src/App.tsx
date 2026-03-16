@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { QuizConfig } from "@/components/QuizConfig";
 import { MultipleChoice } from "@/components/MultipleChoice";
 import { MatchingQuiz } from "@/components/MatchingQuiz";
@@ -10,18 +9,15 @@ function App() {
   const { session, results, error, startQuiz, submitAnswer, nextQuestion, resetQuiz } =
     useQuizSession();
 
-  const handleRetry = useCallback(() => {
+  function handleRetry() {
     if (session?.config) {
       startQuiz(session.config);
     }
-  }, [session?.config, startQuiz]);
+  }
 
-  const handleStart = useCallback(
-    (config: QuizConfigType) => {
-      startQuiz(config);
-    },
-    [startQuiz],
-  );
+  function handleStart(config: QuizConfigType) {
+    startQuiz(config);
+  }
 
   function renderContent() {
     // Error state (checked first — session may be null on error)
