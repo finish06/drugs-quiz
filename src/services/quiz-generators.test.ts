@@ -472,6 +472,33 @@ describe("generateBrandGenericMatchQuestion", () => {
 });
 
 describe("generateQuestions", () => {
+  it("calls onProgress callback with (completed, total) for each question", async () => {
+    for (let i = 0; i < 3; i++) {
+      mockedApi.getDrugClasses.mockResolvedValueOnce({
+        data: [
+          { name: `Class-${i}`, type: "epc" },
+          { name: "Distractor-A", type: "epc" },
+          { name: "Distractor-B", type: "epc" },
+          { name: "Distractor-C", type: "epc" },
+        ],
+        pagination: { page: 1, limit: 100, total: 4, total_pages: 1 },
+      });
+      mockedApi.getDrugsInClass.mockResolvedValueOnce({
+        data: [{ generic_name: `drug-${i}`, brand_name: "" }],
+        pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+      });
+    }
+
+    const onProgress = vi.fn();
+    const questions = await generateQuestions("name-the-class", 3, onProgress);
+
+    expect(questions).toHaveLength(3);
+    expect(onProgress).toHaveBeenCalledTimes(3);
+    expect(onProgress).toHaveBeenNthCalledWith(1, 1, 3);
+    expect(onProgress).toHaveBeenNthCalledWith(2, 2, 3);
+    expect(onProgress).toHaveBeenNthCalledWith(3, 3, 3);
+  });
+
   it("generates multiple name-the-class questions", async () => {
     // Set up mocks for 2 questions — each call fetches classes then a drug
     for (let i = 0; i < 2; i++) {

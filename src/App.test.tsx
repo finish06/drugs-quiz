@@ -41,14 +41,18 @@ describe("App", () => {
 
   it("shows loading state after starting quiz", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockReturnValueOnce(
-      new Promise(() => {}), // Never resolves — stays loading
+    mockedGenerators.generateQuestions.mockImplementationOnce(
+      (_type, _count, onProgress) => {
+        // Simulate progress for the first question then hang
+        onProgress?.(1, 5);
+        return new Promise(() => {}); // Never resolves — stays loading
+      },
     );
 
     render(<App />);
     await user.click(screen.getByText("Start Quiz"));
 
-    expect(screen.getByText("Generating questions...")).toBeInTheDocument();
+    expect(screen.getByText("Loading question 1 of 5...")).toBeInTheDocument();
   });
 
   it("shows quiz question after loading", async () => {

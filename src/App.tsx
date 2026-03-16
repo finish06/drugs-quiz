@@ -6,7 +6,7 @@ import { useQuizSession } from "@/hooks/useQuizSession";
 import type { QuizConfig as QuizConfigType } from "@/types/quiz";
 
 function App() {
-  const { session, results, error, startQuiz, submitAnswer, nextQuestion, resetQuiz } =
+  const { session, results, error, loadingProgress, startQuiz, submitAnswer, nextQuestion, resetQuiz } =
     useQuizSession();
 
   function handleRetry() {
@@ -51,7 +51,11 @@ function App() {
       return (
         <div className="rounded-xl bg-white p-12 shadow-sm text-center">
           <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-brand border-r-transparent" />
-          <p className="mt-4 text-gray-500">Generating questions...</p>
+          <p className="mt-4 text-gray-500">
+            {loadingProgress
+              ? `Loading question ${loadingProgress.current} of ${loadingProgress.total}...`
+              : "Generating questions..."}
+          </p>
         </div>
       );
     }

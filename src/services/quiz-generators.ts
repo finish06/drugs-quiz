@@ -210,6 +210,7 @@ export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuest
 export async function generateQuestions(
   type: "name-the-class" | "match-drug-to-class" | "brand-generic-match",
   count: number,
+  onProgress?: (completed: number, total: number) => void,
 ): Promise<(MultipleChoiceQuestion | MatchingQuestion)[]> {
   const generators = {
     "name-the-class": generateNameTheClassQuestion,
@@ -218,6 +219,13 @@ export async function generateQuestions(
   };
 
   const generator = generators[type];
-  const promises = Array.from({ length: count }, () => generator());
-  return Promise.all(promises);
+  const questions: (MultipleChoiceQuestion | MatchingQuestion)[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const question = await generator();
+    questions.push(question);
+    onProgress?.(i + 1, count);
+  }
+
+  return questions;
 }

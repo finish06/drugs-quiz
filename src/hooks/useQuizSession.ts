@@ -6,6 +6,7 @@ interface UseQuizSessionReturn {
   session: QuizSession | null;
   results: QuizResults | null;
   error: string | null;
+  loadingProgress: { current: number; total: number } | null;
   startQuiz: (config: QuizConfig) => Promise<void>;
   submitAnswer: (correct: boolean) => void;
   nextQuestion: () => void;
@@ -15,9 +16,11 @@ interface UseQuizSessionReturn {
 export function useQuizSession(): UseQuizSessionReturn {
   const [session, setSession] = useState<QuizSession | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState<{ current: number; total: number } | null>(null);
 
   const startQuiz = useCallback(async (config: QuizConfig) => {
     setError(null);
+    setLoadingProgress(null);
     setSession({
       config,
       questions: [],
@@ -27,7 +30,10 @@ export function useQuizSession(): UseQuizSessionReturn {
     });
 
     try {
-      const questions: Question[] = await generateQuestions(config.type, config.questionCount);
+      const questions: Question[] = await generateQuestions(config.type, config.questionCount, (current, total) => {
+        setLoadingProgress({ current, total });
+      });
+      setLoadingProgress(null);
       setSession({
         config,
         questions,
@@ -91,6 +97,7 @@ export function useQuizSession(): UseQuizSessionReturn {
     session,
     results,
     error,
+    loadingProgress,
     startQuiz,
     submitAnswer,
     nextQuestion,
