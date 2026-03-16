@@ -50,9 +50,9 @@ Pharmacy students, technicians, and professionals studying for licensing exams n
 | Layer | Technology | Version | Notes |
 |-------|-----------|---------|-------|
 | Language | TypeScript | 5.x | Frontend only |
-| Frontend | React | 18 | SPA with Vite bundler |
+| Frontend | React | 19 | SPA with Vite bundler |
 | Native (future) | Capacitor | — | iOS wrap when ready |
-| Styling | Tailwind CSS | 3.x | Utility-first CSS |
+| Styling | Tailwind CSS | 4.x | Utility-first CSS |
 | Testing | Vitest + RTL | — | Unit and component tests |
 | E2E Testing | Playwright | — | End-to-end browser tests |
 | API | drug-gate | v0.4.0 | External REST API (see frontend-api-contract.md) |
@@ -72,8 +72,8 @@ Pharmacy students, technicians, and professionals studying for licensing exams n
 | Environment | Purpose | URL | Deploy Trigger | Infrastructure |
 |-------------|---------|-----|----------------|----------------|
 | Local | Development & unit tests | http://localhost:5173 | Manual | Docker Compose on dev machine |
-| Staging | Integration testing | TBD | Push to staging branch | Dedicated VM on homelab |
-| Production | Live users | TBD | Merge to main | AWS EC2 instance |
+| Staging | Integration testing | https://drug-quiz.staging.calebdunn.tech | Push to staging branch | Dedicated VM on homelab |
+| Production | Live users | https://drug-quiz.calebdunn.tech | Merge to main | AWS EC2 instance |
 
 **Environment Tier:** 3 (full pipeline: dev → staging → production)
 

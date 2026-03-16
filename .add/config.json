@@ -41,7 +41,7 @@
   },
   "infrastructure": {
     "git_host": "github",
-    "git_remote": null,
+    "git_remote": "git@github.com:finish06/drugs-quiz.git",
     "cloud_provider": "aws",
     "cloud_services": ["EC2"],
     "cicd": {
@@ -66,13 +66,13 @@
     },
     "staging": {
       "deploy_trigger": "push to staging branch",
-      "url": "TBD",
+      "url": "https://drug-quiz.staging.calebdunn.tech",
       "verify": ["e2e_tests", "performance_tests"]
     },
     "production": {
       "deploy_trigger": "merge to main",
       "verify": ["smoke_tests"],
-      "url": "TBD",
+      "url": "https://drug-quiz.calebdunn.tech",
       "requires_approval": true
     }
   },

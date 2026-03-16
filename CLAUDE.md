@@ -19,9 +19,9 @@ Document hierarchy: PRD → Spec → Plan → User Test Cases → Automated Test
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | Language | TypeScript | 5.x |
-| Frontend | React | 18 |
-| Bundler | Vite | latest |
-| Styling | Tailwind CSS | 3.x |
+| Frontend | React | 19 |
+| Bundler | Vite | 6.x |
+| Styling | Tailwind CSS | 4.x |
 | Testing | Vitest + React Testing Library | latest |
 | E2E | Playwright | latest |
 | Native (future) | Capacitor | — |
@@ -34,7 +34,7 @@ Document hierarchy: PRD → Spec → Plan → User Test Cases → Automated Test
 npm run dev                      # Start local dev server
 npx vitest run                   # Run unit tests
 npx playwright test              # Run E2E tests
-npx eslint . --ext .ts,.tsx      # Lint check
+npx eslint .                     # Lint check (flat config, no --ext needed)
 npx tsc --noEmit                 # Type check
 ```
 
@@ -53,23 +53,21 @@ npx tsc --noEmit                 # Type check
 ### Key Directories
 ```
 src/                             # React application source
-  components/                    # Reusable UI components
-  pages/                         # Page-level components
-  hooks/                         # Custom React hooks
-  services/                      # API client and data fetching
-  types/                         # TypeScript type definitions
-  utils/                         # Utility functions
-specs/                           # Feature specifications
-docs/                            # PRD, plans, milestones
+  components/                    # UI components (QuizConfig, MultipleChoice, MatchingQuiz, QuizResults)
+  hooks/                         # Custom React hooks (useQuizSession)
+  services/                      # API client (api-client.ts) and question generators (quiz-generators.ts)
+  types/                         # TypeScript type definitions (api.ts, quiz.ts)
+specs/                           # Feature specifications (5 spec files)
+docs/                            # PRD, plans, milestones, sequence diagrams
   plans/                         # Implementation plans
   milestones/                    # Milestone tracking
-tests/                           # Test artifacts
-  unit/                          # Unit tests (collocated or here)
-  integration/                   # Integration tests
-  e2e/                           # Playwright E2E tests
+tests/                           # Test infrastructure (setup.ts)
+  e2e/                           # Playwright E2E tests (not yet written)
   screenshots/                   # Visual verification
-.add/                            # ADD methodology config
+.add/                            # ADD methodology config, docs-manifest, learnings
 ```
+
+Note: Unit/component tests are collocated next to source files (e.g., `QuizConfig.test.tsx` alongside `QuizConfig.tsx`).
 
 ### API Integration
 

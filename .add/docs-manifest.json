@@ -1,0 +1,155 @@
+{
+  "$schema": "https://github.com/MountainUnicorn/add/docs-manifest.schema.json",
+  "generated": "2026-03-15",
+  "project": "drugs-quiz",
+  "type": "frontend-spa",
+  "framework": "React 19 + Vite + TypeScript",
+  "entryPoint": "src/main.tsx",
+  "components": [
+    {
+      "name": "App",
+      "path": "src/App.tsx",
+      "description": "Root application component. Orchestrates the quiz flow state machine: config -> loading -> in-progress -> results/error. Renders the appropriate child component based on session state.",
+      "props": null,
+      "stateManagement": "useQuizSession hook",
+      "children": ["QuizConfig", "MultipleChoice", "MatchingQuiz", "QuizResults"]
+    },
+    {
+      "name": "QuizConfig",
+      "path": "src/components/QuizConfig.tsx",
+      "description": "Quiz configuration screen. Lets user select quiz type (3 options) and question count (5/10/15/20). Calls onStart with the chosen config.",
+      "props": {
+        "onStart": "(config: QuizConfig) => void"
+      },
+      "localState": ["selectedType: QuizType", "questionCount: number"],
+      "testFile": "src/components/QuizConfig.test.tsx"
+    },
+    {
+      "name": "MultipleChoice",
+      "path": "src/components/MultipleChoice.tsx",
+      "description": "Renders a single Name-the-Class multiple-choice question. Shows drug name, 4 answer options, progress bar. Highlights correct/incorrect on answer, then shows Next/See Results button.",
+      "props": {
+        "question": "MultipleChoiceQuestion",
+        "onAnswer": "(correct: boolean) => void",
+        "onNext": "() => void",
+        "questionNumber": "number",
+        "totalQuestions": "number"
+      },
+      "localState": ["selectedOption: string | null", "answered: boolean"],
+      "testFile": "src/components/MultipleChoice.test.tsx"
+    },
+    {
+      "name": "MatchingQuiz",
+      "path": "src/components/MatchingQuiz.tsx",
+      "description": "Renders a matching question (drug-to-class or brand-to-generic). Two-column layout where user clicks left item then right item to form pairs. Color-coded pair indicators. Shows correct answers after submit.",
+      "props": {
+        "question": "MatchingQuestion",
+        "onAnswer": "(correct: boolean) => void",
+        "onNext": "() => void",
+        "questionNumber": "number",
+        "totalQuestions": "number",
+        "leftLabel": "string",
+        "rightLabel": "string"
+      },
+      "localState": ["pairs: Record<string, string>", "selectedLeft: string | null", "submitted: boolean"],
+      "testFile": "src/components/MatchingQuiz.test.tsx"
+    },
+    {
+      "name": "QuizResults",
+      "path": "src/components/QuizResults.tsx",
+      "description": "Displays end-of-session results: percentage score with color-coded grade, correct/incorrect/total breakdown, per-question dot indicators, and Retry/New Quiz buttons.",
+      "props": {
+        "results": "QuizResults",
+        "onNewQuiz": "() => void",
+        "onRetry": "() => void"
+      },
+      "testFile": "src/components/QuizResults.test.tsx"
+    }
+  ],
+  "hooks": [
+    {
+      "name": "useQuizSession",
+      "path": "src/hooks/useQuizSession.ts",
+      "description": "Core session state machine. Manages quiz lifecycle: start (generates questions via API), submit answers, advance questions, compute results, reset. Handles loading and error states.",
+      "returns": {
+        "session": "QuizSession | null",
+        "results": "QuizResults | null",
+        "error": "string | null",
+        "startQuiz": "(config: QuizConfig) => Promise<void>",
+        "submitAnswer": "(correct: boolean) => void",
+        "nextQuestion": "() => void",
+        "resetQuiz": "() => void"
+      },
+      "testFile": "src/hooks/useQuizSession.test.ts"
+    }
+  ],
+  "services": [
+    {
+      "name": "api-client",
+      "path": "src/services/api-client.ts",
+      "description": "Typed wrapper around the drug-gate API. All requests go through /api proxy (Vite dev server adds X-API-Key header and forwards to drug-gate). Exports 5 functions matching the 5 API endpoints. Throws DrugApiError on non-OK responses.",
+      "exports": [
+        "getDrugNames(params?) -> PaginatedResponse<DrugName>",
+        "getDrugClasses(params?) -> PaginatedResponse<DrugClass>",
+        "getDrugClass(name) -> DrugClassLookup",
+        "getDrugsInClass(params) -> PaginatedResponse<DrugInClass>",
+        "getDrugByNdc(ndc) -> NdcLookup",
+        "DrugApiError (class)"
+      ],
+      "testFile": "src/services/api-client.test.ts"
+    },
+    {
+      "name": "quiz-generators",
+      "path": "src/services/quiz-generators.ts",
+      "description": "Question generation logic implementing the three quiz recipes from the API contract. Each generator makes multiple API calls, handles retries (name-the-class retries up to 5 times for drugs without EPC classes), and returns typed question objects.",
+      "exports": [
+        "generateNameTheClassQuestion() -> MultipleChoiceQuestion",
+        "generateMatchDrugToClassQuestion() -> MatchingQuestion",
+        "generateBrandGenericMatchQuestion() -> MatchingQuestion",
+        "generateQuestions(type, count) -> Question[]"
+      ],
+      "testFile": "src/services/quiz-generators.test.ts"
+    }
+  ],
+  "types": [
+    {
+      "name": "api",
+      "path": "src/types/api.ts",
+      "description": "TypeScript interfaces mirroring the drug-gate API response shapes: Pagination, PaginatedResponse<T>, DrugName, DrugClass, DrugClassLookup, DrugClassEntry, DrugInClass, NdcLookup, ApiError, and query param interfaces."
+    },
+    {
+      "name": "quiz",
+      "path": "src/types/quiz.ts",
+      "description": "Quiz domain types: QuizType union, QuizConfig, MultipleChoiceQuestion, MatchingQuestion, Question union, Answer, QuizSession (with status: loading|in-progress|complete), QuizResults."
+    }
+  ],
+  "pages": [],
+  "apiProxy": {
+    "path": "/api",
+    "target": "DRUG_GATE_URL (env var, default http://192.168.1.86:8085)",
+    "rewrite": "/api/* -> /*",
+    "authInjection": "X-API-Key header added from DRUG_GATE_API_KEY env var",
+    "configuredIn": "vite.config.ts"
+  },
+  "styling": {
+    "framework": "Tailwind CSS v4",
+    "entrypoint": "src/index.css",
+    "approach": "utility-first, inline classes"
+  },
+  "testing": {
+    "unit": "Vitest + React Testing Library (collocated .test.ts/.test.tsx files)",
+    "e2e": "Playwright (tests/e2e/, currently empty)",
+    "coverageThreshold": 90
+  },
+  "directoryStructure": {
+    "src/": "React application source",
+    "src/components/": "UI components (QuizConfig, MultipleChoice, MatchingQuiz, QuizResults)",
+    "src/hooks/": "Custom React hooks (useQuizSession)",
+    "src/services/": "API client and quiz question generators",
+    "src/types/": "TypeScript type definitions (api.ts, quiz.ts)",
+    "specs/": "Feature specifications (5 spec files)",
+    "docs/": "PRD, plans, milestones",
+    "tests/": "Test infrastructure (setup.ts, empty e2e/integration/unit subdirs)",
+    ".add/": "ADD methodology config, away-logs, learnings"
+  }
+}
