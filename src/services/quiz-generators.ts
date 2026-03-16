@@ -1,4 +1,5 @@
 import { getDrugClasses, getDrugsInClass } from "./api-client";
+import type { DrugClass } from "@/types/api";
 import type { MultipleChoiceQuestion, MatchingQuestion } from "@/types/quiz";
 
 function randomInt(min: number, max: number): number {
@@ -15,22 +16,39 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 /**
+ * Fetch a random page of EPC classes from the full catalog.
+ * First call gets total_pages, then fetches a random page.
+ */
+async function fetchRandomEpcClasses(): Promise<DrugClass[]> {
+  const initial = await getDrugClasses({ type: "epc", limit: 100, page: 1 });
+  const totalPages = initial.pagination.total_pages;
+
+  if (totalPages <= 1) {
+    return shuffle(initial.data);
+  }
+
+  const page = randomInt(1, totalPages);
+  if (page === 1) {
+    return shuffle(initial.data);
+  }
+
+  const response = await getDrugClasses({ type: "epc", limit: 100, page });
+  return shuffle(response.data);
+}
+
+/**
  * Generate a "Name the Class" question.
  *
- * Approach: Start from EPC classes (guaranteed to have drugs),
- * pick a random class, get a drug from it, then use other classes
- * as distractors. This avoids the problem of random drugs not
- * having EPC class data.
+ * Approach: Fetch a random page of EPC classes, pick one that has
+ * drugs, use it as the correct answer, and pull distractors from
+ * the same page.
  */
 export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQuestion> {
-  // Fetch a page of EPC classes
-  const classesResponse = await getDrugClasses({ type: "epc", limit: 100 });
-  const shuffledClasses = shuffle(classesResponse.data);
+  const shuffledClasses = await fetchRandomEpcClasses();
 
   let drugName: string | null = null;
   let correctClass: string | null = null;
 
-  // Find a class that has at least one drug
   for (const cls of shuffledClasses) {
     try {
       const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
@@ -41,7 +59,6 @@ export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQues
         break;
       }
     } catch {
-      // Skip classes that fail (e.g., 502 upstream error)
       continue;
     }
   }
@@ -73,14 +90,10 @@ export async function generateNameTheClassQuestion(): Promise<MultipleChoiceQues
 /**
  * Generate a "Match Drug to Class" question.
  *
- * Recipe:
- * 1. Pick 4 random EPC classes
- * 2. For each class, get one drug
- * 3. Present drugs vs classes as a matching exercise
+ * Fetches a random page of EPC classes, picks 4 that have drugs.
  */
 export async function generateMatchDrugToClassQuestion(): Promise<MatchingQuestion> {
-  const classesResponse = await getDrugClasses({ type: "epc", limit: 100 });
-  const shuffledClasses = shuffle(classesResponse.data);
+  const shuffledClasses = await fetchRandomEpcClasses();
 
   const pairs: { drug: string; className: string }[] = [];
 
@@ -94,7 +107,6 @@ export async function generateMatchDrugToClassQuestion(): Promise<MatchingQuesti
         pairs.push({ drug: drug.generic_name, className: cls.name });
       }
     } catch {
-      // Skip classes that fail (e.g., 502 upstream error)
       continue;
     }
   }
@@ -129,13 +141,10 @@ function hasRealBrandName(d: { generic_name: string; brand_name: string }): bool
  * Generate a "Brand/Generic Match" question.
  *
  * Collects drugs with distinct brand names from across multiple EPC
- * classes, since most classes only have 1 drug in the API. Needs 4
- * unique brand/generic pairs per question.
+ * classes on a random page.
  */
 export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuestion> {
-  // Fetch EPC classes and shuffle
-  const classesResponse = await getDrugClasses({ type: "epc", limit: 100 });
-  const shuffledClasses = shuffle(classesResponse.data);
+  const shuffledClasses = await fetchRandomEpcClasses();
 
   const pairs: { generic: string; brand: string }[] = [];
   const usedGenerics = new Set<string>();
@@ -155,7 +164,6 @@ export async function generateBrandGenericMatchQuestion(): Promise<MatchingQuest
         }
       }
     } catch {
-      // Skip classes that fail (e.g., 502 upstream error)
       continue;
     }
   }
