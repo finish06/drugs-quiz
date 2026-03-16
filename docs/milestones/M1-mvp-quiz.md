@@ -14,7 +14,7 @@ name-the-class       ███████████████████�
 match-drug-to-class  ████████████████████████████████████  DONE — implemented + tested
 brand-generic-match  ████████████████████████████████████  DONE — implemented + tested + E2E verified
 quiz-session         ████████████████████████████████████  DONE — implemented + tested
-ci-docker-registry   ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░  SPECCED — spec + plan ready
+ci-docker-registry   ████████████████████████████████████  DONE — beta push verified in registry
 ```
 
 ## Feature Details
@@ -26,7 +26,7 @@ ci-docker-registry   ████████░░░░░░░░░░░�
 | match-drug-to-class | specs/match-drug-to-class.md | DONE | Matching quiz with color-coded pairs |
 | brand-generic-match | specs/brand-generic-match.md | DONE | Matching quiz, cross-class collection |
 | quiz-session | specs/quiz-session.md | DONE | Session flow, scoring, results |
-| ci-docker-registry | specs/ci-docker-registry.md | SPECCED | CI push to private registry |
+| ci-docker-registry | specs/ci-docker-registry.md | DONE | Beta push verified, release workflow ready |
 
 ## Success Criteria
 
@@ -35,10 +35,11 @@ ci-docker-registry   ████████░░░░░░░░░░░�
 - [x] UI is responsive and usable on mobile
 - [x] 90% test coverage
 - [x] E2E tests pass for quiz flows
-- [ ] CI pushes Docker images to registry
+- [x] CI pushes Docker images to registry
 - [ ] Deployed to staging
 
 ## Cycle History
 
 | Cycle | Features | Status | Notes |
 |-------|----------|--------|-------|
+| cycle-1 | ci-docker-registry (SPECCED→DONE) | COMPLETE | Beta push to dockerhub.calebdunn.tech verified, release workflow ready |
