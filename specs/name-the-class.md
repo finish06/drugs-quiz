@@ -1,6 +1,6 @@
 # Feature Spec: Name the Class Quiz
 
-**Status:** Approved
+**Status:** Complete
 **Milestone:** M1 — MVP Quiz
 **PRD Reference:** docs/prd.md §7 Feature 2
 
@@ -60,6 +60,8 @@ Question generation follows the "Name the Class" recipe from `frontend-api-contr
 - API rate limit hit (429) — show error, pause generation, respect `Retry-After`
 - API unavailable (502) — show error message, offer retry
 - Very long class names — ensure text doesn't overflow on mobile
+- Drug names are normalized to Title Case for display consistency
+- Obscure/non-exam drugs are filtered out (names >60 chars, containing commas, or homeopathic indicators)
 
 ## Screenshot Checkpoints
 

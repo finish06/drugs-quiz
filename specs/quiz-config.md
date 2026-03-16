@@ -1,6 +1,6 @@
 # Feature Spec: Quiz Configuration
 
-**Status:** Approved
+**Status:** Complete
 **Milestone:** M1 — MVP Quiz
 **PRD Reference:** docs/prd.md §7 Feature 5
 

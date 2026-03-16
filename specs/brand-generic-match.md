@@ -1,6 +1,6 @@
 # Feature Spec: Brand/Generic Match Quiz
 
-**Status:** Approved
+**Status:** Complete
 **Milestone:** M1 — MVP Quiz
 **PRD Reference:** docs/prd.md §7 Feature 3
 
@@ -68,6 +68,9 @@ Question generation follows the "Brand/Generic Match" recipe from `frontend-api-
 - Drug has no brand name (empty string) — filter out before selection
 - Fewer than 4 drugs with brand names in a class — try a different class
 - Brand name appears for multiple generics (unlikely but possible) — ensure unique pairs
+- Drug and brand names normalized to Title Case for display consistency
+- Obscure/non-exam drugs are filtered out (names >60 chars, containing commas, or homeopathic indicators)
+- Long names truncated to 2 lines with hover tooltip showing full text
 - Very long brand names — text wrapping
 
 ## Screenshot Checkpoints

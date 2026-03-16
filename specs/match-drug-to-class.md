@@ -1,6 +1,6 @@
 # Feature Spec: Match Drug to Class Quiz
 
-**Status:** Approved
+**Status:** Complete
 **Milestone:** M1 — MVP Quiz
 **PRD Reference:** docs/prd.md §7 Feature 1
 
@@ -58,6 +58,9 @@ Question generation follows the "Match Drug to Class" recipe from `frontend-api-
 - Two drugs happen to share a class — ensure 4 distinct classes are selected
 - API errors mid-generation — show partial error, offer retry
 - Long drug or class names — text truncation or wrapping strategy
+- Drug names normalized to Title Case for display consistency
+- Obscure/non-exam drugs are filtered out (names >60 chars, containing commas, or homeopathic indicators)
+- Long drug/class names truncated to 2 lines with hover tooltip showing full text
 - Accessibility — keyboard navigation for matching (tab between columns, enter to select)
 
 ## Screenshot Checkpoints

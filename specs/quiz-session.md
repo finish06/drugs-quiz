@@ -1,6 +1,6 @@
 # Feature Spec: Quiz Session
 
-**Status:** Approved
+**Status:** Complete
 **Milestone:** M1 — MVP Quiz
 **PRD Reference:** docs/prd.md §7 Feature 4
 
@@ -25,6 +25,7 @@ As a pharmacy student, I want a smooth quiz flow from start to finish with scori
    - Per-question breakdown (which were correct/incorrect)
 7. **Restart:** From results, user can start a new quiz (returns to config) or retry the same config
 8. **Error handling:** If API errors occur during question generation, show an error with retry option
+9. **Loading progress:** Shows "Loading question X of Y..." as each question generates
 
 ## User Test Cases
 
@@ -79,7 +80,7 @@ Each generator returns `Promise<Question[]>`.
 
 ## Screenshot Checkpoints
 
-1. Loading state — spinner/skeleton while questions generate
+1. Loading state — spinner/skeleton while questions generate, with progress indicator ("Loading question X of Y...")
 2. In-progress — question displayed with progress bar
 3. Results — final score with breakdown
 4. Error state — API error with retry button
