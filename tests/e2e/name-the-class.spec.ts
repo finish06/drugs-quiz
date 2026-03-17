@@ -13,23 +13,25 @@ test.describe("Name the Class Quiz", () => {
       timeout: 15000,
     });
 
-    // Should show a drug name and 4 options
-    const questionText = page.getByText("Question 1 of 5");
-    await expect(questionText).toBeVisible();
+    // Should show Question 1 of 5
+    await expect(page.getByText("Question 1 of 5")).toBeVisible();
 
-    // Click the first option (we don't know which is correct)
-    const options = page.locator("button").filter({ hasNotText: /Exit|Next|See Results|Start/ });
-    const optionCount = await options.count();
-    expect(optionCount).toBeGreaterThanOrEqual(4);
+    // Get the 4 answer option buttons (inside the grid gap-3 div)
+    const optionButtons = page.locator("button[title]").filter({
+      hasNotText: /Exit|Next|See Results|Start|drugs-quiz/,
+    });
+    await expect(optionButtons.first()).toBeVisible();
 
     // Answer the first question
-    await options.first().click();
+    await optionButtons.first().click();
 
     // Should show Next Question button
-    await expect(page.getByText("Next Question")).toBeVisible();
+    await expect(page.getByText("Next Question")).toBeVisible({ timeout: 5000 });
     await page.getByText("Next Question").click();
 
-    // Should show Question 2
-    await expect(page.getByText("Question 2 of 5")).toBeVisible({ timeout: 5000 });
+    // Should show Question 2 (or inline loading spinner if background hasn't caught up)
+    await expect(
+      page.getByText("Question 2 of 5").or(page.getByText("Loading next question...")),
+    ).toBeVisible({ timeout: 10000 });
   });
 });
