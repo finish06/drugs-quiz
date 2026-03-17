@@ -38,6 +38,7 @@ export interface QuizSession {
   answers: Answer[];
   currentIndex: number;
   status: "loading" | "in-progress" | "complete";
+  generationComplete: boolean;
 }
 
 /** Session results */

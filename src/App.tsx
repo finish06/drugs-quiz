@@ -73,6 +73,20 @@ function App() {
       );
     }
 
+    // In-progress — waiting for background generation to catch up
+    if (
+      session.status === "in-progress" &&
+      session.currentIndex >= session.questions.length &&
+      !session.generationComplete
+    ) {
+      return (
+        <div className="rounded-xl bg-white dark:bg-gray-800 p-12 shadow-sm text-center">
+          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-brand border-r-transparent" />
+          <p className="mt-4 text-gray-500 dark:text-gray-400">Loading next question...</p>
+        </div>
+      );
+    }
+
     // In-progress — render the current question
     const currentQuestion = session.questions[session.currentIndex];
     if (!currentQuestion) return null;
@@ -85,7 +99,7 @@ function App() {
           onAnswer={submitAnswer}
           onNext={nextQuestion}
           questionNumber={session.currentIndex + 1}
-          totalQuestions={session.questions.length}
+          totalQuestions={session.config.questionCount}
         />
       );
     }
@@ -99,7 +113,7 @@ function App() {
           onAnswer={submitAnswer}
           onNext={nextQuestion}
           questionNumber={session.currentIndex + 1}
-          totalQuestions={session.questions.length}
+          totalQuestions={session.config.questionCount}
           leftLabel={isClassMatch ? "Drugs" : "Generic"}
           rightLabel={isClassMatch ? "Classes" : "Brand"}
         />

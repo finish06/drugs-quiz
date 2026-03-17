@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import App from "./App";
 import * as generators from "@/services/quiz-generators";
-import type { MultipleChoiceQuestion, MatchingQuestion } from "@/types/quiz";
+import type { MultipleChoiceQuestion, MatchingQuestion, Question } from "@/types/quiz";
 
 vi.mock("@/services/quiz-generators");
 const mockedGenerators = vi.mocked(generators);
@@ -27,6 +27,14 @@ const mockMatchQuestion: MatchingQuestion = {
   },
 };
 
+const mockClassPool = [{ name: "Class A", type: "epc" as const }];
+
+/** Set up standard mocks for lazy-loading quiz generation */
+function setupMocks(question: Question = mockQuestion) {
+  mockedGenerators.fetchEpcClassPool.mockResolvedValue(mockClassPool);
+  mockedGenerators.generateSingleQuestion.mockResolvedValue(question);
+}
+
 describe("App", () => {
   it("renders the app header", () => {
     render(<App />);
@@ -41,23 +49,20 @@ describe("App", () => {
 
   it("shows loading state after starting quiz", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockImplementationOnce(
-      (_type, _count, onProgress) => {
-        // Simulate progress for the first question then hang
-        onProgress?.(1, 5);
-        return new Promise(() => {}); // Never resolves — stays loading
-      },
+    // Make fetchEpcClassPool hang to keep loading state
+    mockedGenerators.fetchEpcClassPool.mockImplementationOnce(
+      () => new Promise(() => {}), // Never resolves — stays loading
     );
 
     render(<App />);
     await user.click(screen.getByText("Start Quiz"));
 
-    expect(screen.getByText("Loading question 1 of 5...")).toBeInTheDocument();
+    expect(screen.getByText("Generating questions...")).toBeInTheDocument();
   });
 
   it("shows quiz question after loading", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockQuestion]);
+    setupMocks();
 
     render(<App />);
     await user.click(screen.getByText("Start Quiz"));
@@ -68,7 +73,7 @@ describe("App", () => {
 
   it("shows error state when generation fails", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockRejectedValueOnce(
+    mockedGenerators.fetchEpcClassPool.mockRejectedValueOnce(
       new Error("API unavailable"),
     );
 
@@ -81,12 +86,20 @@ describe("App", () => {
 
   it("shows results after answering all questions", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockQuestion]);
+    setupMocks();
 
     render(<App />);
+    // Select 5 questions (the minimum)
+    await user.click(screen.getByText("5"));
     await user.click(screen.getByText("Start Quiz"));
 
-    // Answer the question
+    // Answer all 5 questions
+    for (let i = 0; i < 4; i++) {
+      await screen.findByText("simvastatin");
+      await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+      await user.click(screen.getByText("Next Question"));
+    }
+    // Last question: "See Results"
     await screen.findByText("simvastatin");
     await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
     await user.click(screen.getByText("See Results"));
@@ -97,11 +110,18 @@ describe("App", () => {
 
   it("returns to config screen on New Quiz", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockQuestion]);
+    setupMocks();
 
     render(<App />);
+    await user.click(screen.getByText("5"));
     await user.click(screen.getByText("Start Quiz"));
 
+    // Answer all 5 questions
+    for (let i = 0; i < 4; i++) {
+      await screen.findByText("simvastatin");
+      await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+      await user.click(screen.getByText("Next Question"));
+    }
     await screen.findByText("simvastatin");
     await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
     await user.click(screen.getByText("See Results"));
@@ -114,7 +134,7 @@ describe("App", () => {
 
   it("shows Exit button during quiz", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockQuestion]);
+    setupMocks();
 
     render(<App />);
     await user.click(screen.getByText("Start Quiz"));
@@ -125,7 +145,7 @@ describe("App", () => {
 
   it("renders matching quiz for match-drug-to-class type", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMatchQuestion]);
+    setupMocks(mockMatchQuestion);
 
     render(<App />);
     // Select Match Drug to Class
@@ -139,7 +159,7 @@ describe("App", () => {
 
   it("renders matching quiz with Generic/Brand labels for brand-generic type", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMatchQuestion]);
+    setupMocks(mockMatchQuestion);
 
     render(<App />);
     // Select Brand/Generic Match
@@ -153,18 +173,23 @@ describe("App", () => {
 
   it("retries quiz with same config from results screen", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockQuestion]);
+    setupMocks();
 
     render(<App />);
+    await user.click(screen.getByText("5"));
     await user.click(screen.getByText("Start Quiz"));
 
-    // Complete the quiz
+    // Complete all 5 questions
+    for (let i = 0; i < 4; i++) {
+      await screen.findByText("simvastatin");
+      await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+      await user.click(screen.getByText("Next Question"));
+    }
     await screen.findByText("simvastatin");
     await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
     await user.click(screen.getByText("See Results"));
 
-    // Retry — mock returns new question
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockQuestion]);
+    // Retry
     await screen.findByText("Retry");
     await user.click(screen.getByText("Retry"));
 
@@ -174,7 +199,7 @@ describe("App", () => {
 
   it("returns to config from error state via Back button", async () => {
     const user = userEvent.setup();
-    mockedGenerators.generateQuestions.mockRejectedValueOnce(new Error("fail"));
+    mockedGenerators.fetchEpcClassPool.mockRejectedValueOnce(new Error("fail"));
 
     render(<App />);
     await user.click(screen.getByText("Start Quiz"));
@@ -183,5 +208,39 @@ describe("App", () => {
     await user.click(screen.getByText("Back"));
 
     expect(screen.getByText("Start Quiz")).toBeInTheDocument();
+  });
+
+  it("shows inline loading when user is ahead of background generation", async () => {
+    let callCount = 0;
+    mockedGenerators.generateSingleQuestion.mockImplementation(() => {
+      callCount++;
+      if (callCount <= 2) {
+        return Promise.resolve(mockQuestion);
+      }
+      // Background questions never resolve
+      return new Promise(() => {});
+    });
+    mockedGenerators.fetchEpcClassPool.mockResolvedValue(mockClassPool);
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    // Default config is "name-the-class" with 5 questions
+    await user.click(screen.getByText("Start Quiz"));
+
+    // Wait for quiz to start
+    await screen.findByText("simvastatin");
+
+    // Answer Q1 correctly
+    await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+    await user.click(screen.getByText("Next Question"));
+
+    // Answer Q2 correctly
+    await screen.findByText("simvastatin");
+    await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+    await user.click(screen.getByText("Next Question"));
+
+    // Now user is at index 2 but only 2 questions loaded — should show inline loading
+    expect(await screen.findByText("Loading next question...")).toBeInTheDocument();
   });
 });

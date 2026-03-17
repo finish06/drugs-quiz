@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { QuizConfig, QuizSession, Question, Answer, QuizResults } from "@/types/quiz";
-import { generateQuestions } from "@/services/quiz-generators";
+import { generateSingleQuestion, fetchEpcClassPool } from "@/services/quiz-generators";
+import type { DrugClass } from "@/types/api";
 
 interface UseQuizSessionReturn {
   session: QuizSession | null;
@@ -18,34 +19,101 @@ export function useQuizSession(): UseQuizSessionReturn {
   const [error, setError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<{ current: number; total: number } | null>(null);
 
+  const cancelledRef = useRef(false);
+  const classPoolRef = useRef<DrugClass[]>([]);
+  const usedDrugsRef = useRef<Set<string>>(new Set());
+
+  // Cancel background generation on unmount
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, []);
+
+  const backgroundGenerate = useCallback(async (config: QuizConfig, startIndex: number) => {
+    for (let i = startIndex; i < config.questionCount; i++) {
+      if (cancelledRef.current) return;
+
+      try {
+        const question = await generateSingleQuestion(
+          config.type,
+          classPoolRef.current,
+          usedDrugsRef.current,
+        );
+
+        if (cancelledRef.current) return;
+
+        setSession((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            questions: [...prev.questions, question],
+          };
+        });
+      } catch {
+        // If a background question fails, skip it
+        continue;
+      }
+    }
+
+    if (!cancelledRef.current) {
+      setSession((prev) => {
+        if (!prev) return prev;
+        return { ...prev, generationComplete: true };
+      });
+    }
+  }, []);
+
   const startQuiz = useCallback(async (config: QuizConfig) => {
     setError(null);
     setLoadingProgress(null);
+    cancelledRef.current = false;
+
     setSession({
       config,
       questions: [],
       answers: [],
       currentIndex: 0,
       status: "loading",
+      generationComplete: false,
     });
 
     try {
-      const questions: Question[] = await generateQuestions(config.type, config.questionCount, (current, total) => {
-        setLoadingProgress({ current, total });
-      });
+      const classPool = await fetchEpcClassPool();
+      classPoolRef.current = classPool;
+      usedDrugsRef.current = new Set<string>();
+
+      const initialCount = Math.min(2, config.questionCount);
+      const initialQuestions: Question[] = [];
+
+      for (let i = 0; i < initialCount; i++) {
+        if (cancelledRef.current) return;
+        const question = await generateSingleQuestion(config.type, classPool, usedDrugsRef.current);
+        initialQuestions.push(question);
+        setLoadingProgress({ current: i + 1, total: config.questionCount });
+      }
+
+      if (cancelledRef.current) return;
+
       setLoadingProgress(null);
+      const isComplete = config.questionCount <= 2;
       setSession({
         config,
-        questions,
+        questions: initialQuestions,
         answers: [],
         currentIndex: 0,
         status: "in-progress",
+        generationComplete: isComplete,
       });
+
+      if (!isComplete) {
+        backgroundGenerate(config, 2);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate questions");
       setSession(null);
     }
-  }, []);
+  }, [backgroundGenerate]);
 
   const submitAnswer = useCallback((correct: boolean) => {
     setSession((prev) => {
@@ -68,7 +136,7 @@ export function useQuizSession(): UseQuizSessionReturn {
       if (!prev || prev.status !== "in-progress") return prev;
 
       const nextIndex = prev.currentIndex + 1;
-      if (nextIndex >= prev.questions.length) {
+      if (nextIndex >= prev.config.questionCount) {
         return { ...prev, status: "complete" };
       }
 
@@ -77,6 +145,7 @@ export function useQuizSession(): UseQuizSessionReturn {
   }, []);
 
   const resetQuiz = useCallback(() => {
+    cancelledRef.current = true;
     setSession(null);
     setError(null);
   }, []);
@@ -84,10 +153,10 @@ export function useQuizSession(): UseQuizSessionReturn {
   const results: QuizResults | null =
     session?.status === "complete"
       ? {
-          totalQuestions: session.questions.length,
+          totalQuestions: session.config.questionCount,
           correctAnswers: session.answers.filter((a) => a.correct).length,
           percentage: Math.round(
-            (session.answers.filter((a) => a.correct).length / session.questions.length) * 100,
+            (session.answers.filter((a) => a.correct).length / session.config.questionCount) * 100,
           ),
           answers: session.answers,
         }

@@ -4,6 +4,7 @@ import {
   generateMatchDrugToClassQuestion,
   generateBrandGenericMatchQuestion,
   generateQuestions,
+  generateSingleQuestion,
   isExamRelevantDrug,
 } from "./quiz-generators";
 import type { DrugClass } from "@/types/api";
@@ -366,6 +367,27 @@ describe("generateQuestions", () => {
     expect(questions).toHaveLength(1);
     // Should have called getDrugClasses at least twice (initial + random page(s))
     expect(mockedApi.getDrugClasses.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("generates a single name-the-class question and updates usedDrugs", async () => {
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: makeClassPool(["Class A", "Distractor-A", "Distractor-B", "Distractor-C"]),
+      pagination: { page: 1, limit: 100, total: 4, total_pages: 1 },
+    });
+
+    mockedApi.getDrugsInClass.mockResolvedValue({
+      data: [{ generic_name: "test-drug", brand_name: "TestBrand" }],
+      pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+    });
+
+    const classPool = makeClassPool(["Class A", "Distractor-A", "Distractor-B", "Distractor-C"]);
+    const usedDrugs = new Set<string>();
+
+    const question = await generateSingleQuestion("name-the-class", classPool, usedDrugs);
+
+    expect(question).toBeDefined();
+    expect(question.kind).toBe("multiple-choice");
+    expect(usedDrugs.size).toBeGreaterThan(0);
   });
 
   it("does not repeat drugs across questions", async () => {

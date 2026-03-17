@@ -1,8 +1,8 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useQuizSession } from "./useQuizSession";
 import * as generators from "@/services/quiz-generators";
-import type { MultipleChoiceQuestion, MatchingQuestion } from "@/types/quiz";
+import type { MultipleChoiceQuestion, MatchingQuestion, Question } from "@/types/quiz";
 
 vi.mock("@/services/quiz-generators");
 
@@ -25,6 +25,14 @@ const mockMatchQuestion: MatchingQuestion = {
   },
 };
 
+const mockClassPool = [{ name: "Class A", type: "epc" as const }];
+
+/** Set up standard mocks for fetchEpcClassPool and generateSingleQuestion */
+function setupStandardMocks(question: Question = mockMCQuestion) {
+  mockedGenerators.fetchEpcClassPool.mockResolvedValue(mockClassPool);
+  mockedGenerators.generateSingleQuestion.mockResolvedValue(question);
+}
+
 beforeEach(() => {
   vi.resetAllMocks();
 });
@@ -39,11 +47,11 @@ describe("useQuizSession", () => {
   });
 
   it("sets loading state when starting a quiz", async () => {
-    let resolveQuestions: (value: MultipleChoiceQuestion[]) => void;
-    const pendingPromise = new Promise<MultipleChoiceQuestion[]>((resolve) => {
-      resolveQuestions = resolve;
+    let resolvePool: (value: typeof mockClassPool) => void;
+    const pendingPool = new Promise<typeof mockClassPool>((resolve) => {
+      resolvePool = resolve;
     });
-    mockedGenerators.generateQuestions.mockReturnValueOnce(pendingPromise);
+    mockedGenerators.fetchEpcClassPool.mockReturnValueOnce(pendingPool);
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -53,18 +61,18 @@ describe("useQuizSession", () => {
 
     expect(result.current.session?.status).toBe("loading");
 
+    mockedGenerators.generateSingleQuestion.mockResolvedValue(mockMCQuestion);
     await act(async () => {
-      resolveQuestions!([mockMCQuestion]);
+      resolvePool!(mockClassPool);
     });
 
-    expect(result.current.session?.status).toBe("in-progress");
+    await waitFor(() => {
+      expect(result.current.session?.status).toBe("in-progress");
+    });
   });
 
   it("transitions to in-progress after questions load", async () => {
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([
-      mockMCQuestion,
-      mockMCQuestion,
-    ]);
+    setupStandardMocks();
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -78,7 +86,7 @@ describe("useQuizSession", () => {
   });
 
   it("sets error when question generation fails", async () => {
-    mockedGenerators.generateQuestions.mockRejectedValueOnce(
+    mockedGenerators.fetchEpcClassPool.mockRejectedValueOnce(
       new Error("API unavailable"),
     );
 
@@ -93,10 +101,7 @@ describe("useQuizSession", () => {
   });
 
   it("records answers via submitAnswer", async () => {
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([
-      mockMCQuestion,
-      mockMCQuestion,
-    ]);
+    setupStandardMocks();
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -114,10 +119,7 @@ describe("useQuizSession", () => {
   });
 
   it("advances to next question", async () => {
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([
-      mockMCQuestion,
-      mockMCQuestion,
-    ]);
+    setupStandardMocks();
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -134,7 +136,7 @@ describe("useQuizSession", () => {
   });
 
   it("transitions to complete after last question", async () => {
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMCQuestion]);
+    setupStandardMocks();
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -151,16 +153,17 @@ describe("useQuizSession", () => {
   });
 
   it("computes results when quiz is complete", async () => {
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([
-      mockMCQuestion,
-      mockMCQuestion,
-      mockMCQuestion,
-    ]);
+    setupStandardMocks();
 
     const { result } = renderHook(() => useQuizSession());
 
     await act(async () => {
       await result.current.startQuiz({ type: "name-the-class", questionCount: 3 });
+    });
+
+    // Wait for background generation to complete (3 > 2 so background runs)
+    await waitFor(() => {
+      expect(result.current.session?.questions.length).toBe(3);
     });
 
     // Answer: correct, incorrect, correct
@@ -184,7 +187,7 @@ describe("useQuizSession", () => {
   });
 
   it("resets quiz to initial state", async () => {
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMCQuestion]);
+    setupStandardMocks();
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -202,7 +205,7 @@ describe("useQuizSession", () => {
   });
 
   it("works with matching questions", async () => {
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMatchQuestion]);
+    setupStandardMocks(mockMatchQuestion);
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -214,7 +217,7 @@ describe("useQuizSession", () => {
   });
 
   it("handles non-Error thrown during generation", async () => {
-    mockedGenerators.generateQuestions.mockRejectedValueOnce("string error");
+    mockedGenerators.fetchEpcClassPool.mockRejectedValueOnce("string error");
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -247,7 +250,7 @@ describe("useQuizSession", () => {
   });
 
   it("ignores submitAnswer when quiz is complete", async () => {
-    mockedGenerators.generateQuestions.mockResolvedValueOnce([mockMCQuestion]);
+    setupStandardMocks();
 
     const { result } = renderHook(() => useQuizSession());
 
@@ -268,5 +271,91 @@ describe("useQuizSession", () => {
     });
 
     expect(result.current.session?.answers.length).toBe(answersBefore);
+  });
+
+  describe("lazy loading", () => {
+    it("starts quiz after 2 questions load, not all", async () => {
+      let callCount = 0;
+      const resolvers: Array<(q: Question) => void> = [];
+
+      mockedGenerators.generateSingleQuestion.mockImplementation(() => {
+        callCount++;
+        const currentCall = callCount;
+        if (currentCall <= 2) {
+          return Promise.resolve({ ...mockMCQuestion, drugName: `drug-${currentCall}` });
+        }
+        // Background questions: return a promise we control
+        return new Promise<Question>((resolve) => {
+          resolvers.push(resolve);
+        });
+      });
+      mockedGenerators.fetchEpcClassPool.mockResolvedValueOnce(mockClassPool);
+
+      const { result } = renderHook(() => useQuizSession());
+
+      await act(async () => {
+        await result.current.startQuiz({ type: "name-the-class", questionCount: 5 });
+      });
+
+      expect(result.current.session?.status).toBe("in-progress");
+      expect(result.current.session?.questions.length).toBe(2);
+    });
+
+    it("background generation adds remaining questions", async () => {
+      let callCount = 0;
+      mockedGenerators.generateSingleQuestion.mockImplementation(async () => {
+        callCount++;
+        return { ...mockMCQuestion, drugName: `drug-${callCount}` };
+      });
+      mockedGenerators.fetchEpcClassPool.mockResolvedValueOnce(mockClassPool);
+
+      const { result } = renderHook(() => useQuizSession());
+
+      await act(async () => {
+        await result.current.startQuiz({ type: "name-the-class", questionCount: 5 });
+      });
+
+      await waitFor(() => {
+        expect(result.current.session?.questions.length).toBe(5);
+      });
+    });
+
+    it("shows generationComplete when all questions are done", async () => {
+      let callCount = 0;
+      mockedGenerators.generateSingleQuestion.mockImplementation(async () => {
+        callCount++;
+        return { ...mockMCQuestion, drugName: `drug-${callCount}` };
+      });
+      mockedGenerators.fetchEpcClassPool.mockResolvedValueOnce(mockClassPool);
+
+      const { result } = renderHook(() => useQuizSession());
+
+      await act(async () => {
+        await result.current.startQuiz({ type: "name-the-class", questionCount: 5 });
+      });
+
+      await waitFor(() => {
+        expect(result.current.session?.generationComplete).toBe(true);
+      });
+    });
+
+    it("handles quiz with ≤2 questions without background loading", async () => {
+      let callCount = 0;
+      mockedGenerators.generateSingleQuestion.mockImplementation(async () => {
+        callCount++;
+        return { ...mockMCQuestion, drugName: `drug-${callCount}` };
+      });
+      mockedGenerators.fetchEpcClassPool.mockResolvedValueOnce(mockClassPool);
+
+      const { result } = renderHook(() => useQuizSession());
+
+      await act(async () => {
+        await result.current.startQuiz({ type: "name-the-class", questionCount: 2 });
+      });
+
+      expect(result.current.session?.status).toBe("in-progress");
+      expect(result.current.session?.questions.length).toBe(2);
+      expect(result.current.session?.generationComplete).toBe(true);
+    });
   });
 });
