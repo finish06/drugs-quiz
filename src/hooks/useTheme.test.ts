@@ -139,5 +139,29 @@ describe("useTheme", () => {
     });
 
     expect(result.current.theme).toBe("dark");
+
+    // Also test switching back to light
+    act(() => {
+      matchMediaMock.dispatchChange(false);
+    });
+
+    expect(result.current.theme).toBe("light");
+  });
+
+  it("ignores OS preference change when localStorage override is set", () => {
+    const { result } = renderHook(() => useTheme());
+
+    // User manually toggles to dark — sets localStorage
+    act(() => {
+      result.current.toggleTheme();
+    });
+    expect(result.current.theme).toBe("dark");
+
+    // OS changes to light — should be ignored because localStorage is set
+    act(() => {
+      matchMediaMock.dispatchChange(false);
+    });
+
+    expect(result.current.theme).toBe("dark");
   });
 });

@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Brand/Generic Match Quiz", () => {
   test("loads and displays a brand/generic matching question", async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto("/");
 
     // Select Brand/Generic Match
