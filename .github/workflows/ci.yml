@@ -54,9 +54,11 @@ jobs:
 
       - name: Build and push beta image
         run: |
-          docker build -t "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG" .
+          docker build -t "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG" \
+                       -t "dockerhub.calebdunn.tech/drugs-quiz:beta" .
           docker push "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG"
-          echo "Pushed: dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG"
+          docker push "dockerhub.calebdunn.tech/drugs-quiz:beta"
+          echo "Pushed: dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG + :beta"
 
       - name: Cleanup old beta tags (keep last 10)
         run: |
