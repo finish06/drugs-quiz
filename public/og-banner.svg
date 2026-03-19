@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="pill-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <clipPath id="pill-shape">
+      <rect x="-12" y="-26" width="24" height="52" rx="12"/>
+    </clipPath>
+    <clipPath id="pill-top-half">
+      <rect x="-12" y="-26" width="24" height="26"/>
+    </clipPath>
+    <clipPath id="pill-bottom-half">
+      <rect x="-12" y="0" width="24" height="26"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.03">
+    <line x1="0" y1="0" x2="1200" y2="630" stroke="#60a5fa" stroke-width="1"/>
+    <line x1="200" y1="0" x2="1200" y2="500" stroke="#60a5fa" stroke-width="1"/>
+    <line x1="0" y1="130" x2="1000" y2="630" stroke="#60a5fa" stroke-width="1"/>
+  </g>
+
+  <!-- Capsule icon (scaled up) -->
+  <g transform="translate(200,315) scale(4)">
+    <rect x="-20" y="-20" width="40" height="40" rx="9" fill="rgba(15,23,42,0)"/>
+    <g transform="rotate(-45)">
+      <g clip-path="url(#pill-top-half)">
+        <rect x="-12" y="-26" width="24" height="52" rx="12" fill="#93c5fd"/>
+      </g>
+      <g clip-path="url(#pill-bottom-half)">
+        <rect x="-12" y="-26" width="24" height="52" rx="12" fill="url(#pill-g)"/>
+      </g>
+      <line x1="-12" y1="0" x2="12" y2="0" stroke="#0f172a" stroke-width="2.5"/>
+      <g clip-path="url(#pill-shape)">
+        <text x="0" y="-13" text-anchor="middle" dominant-baseline="central" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="22" fill="#1e3a5f" transform="rotate(45,0,-13)">D</text>
+      </g>
+      <g clip-path="url(#pill-shape)">
+        <text x="0" y="13" text-anchor="middle" dominant-baseline="central" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="22" fill="#e2e8f0" transform="rotate(45,0,13)">Q</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Title text -->
+  <text x="420" y="260" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="72" fill="#f8fafc">drugs-quiz</text>
+
+  <!-- Tagline -->
+  <text x="420" y="330" font-family="system-ui,-apple-system,sans-serif" font-weight="400" font-size="32" fill="#94a3b8">Pharmacy Exam Prep</text>
+
+  <!-- Keywords -->
+  <text x="420" y="400" font-family="system-ui,-apple-system,sans-serif" font-weight="400" font-size="22" fill="#64748b">NAPLEX &amp; PTCE practice — drug names, classes, brand/generic matching</text>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="610" width="1200" height="20" fill="#3b82f6"/>
+</svg>

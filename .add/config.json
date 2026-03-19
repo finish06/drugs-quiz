@@ -145,8 +145,8 @@
     "lastVersionTag": null
   },
   "planning": {
-    "current_milestone": "M1-MVP-Quiz",
-    "current_cycle": null,
+    "current_milestone": "M2-SEO-Discoverability",
+    "current_cycle": "cycle-2",
     "wip_limit": 2,
     "parallel_agents": 2,
     "cycle_history": []

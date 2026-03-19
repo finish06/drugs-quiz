@@ -87,10 +87,12 @@ SSH key for staging access will be generated in the project directory for direct
 
 | Milestone | Goal | Target Maturity | Status | Success Criteria |
 |-----------|------|-----------------|--------|------------------|
-| M1: MVP Quiz | Core quiz experience with 3 quiz types and scoring | Alpha | NOW | All 3 quiz types work, scoring displays, responsive UI |
-| M2: User Accounts | Authentication and user profiles | Alpha | NEXT | Users can sign up, log in, and sessions are tied to accounts |
-| M3: Progress Tracking | Historical performance and study analytics | Beta | LATER | Users see accuracy trends over time |
-| M4: Leaderboards | Social features and competitive elements | Beta | LATER | Users can compare scores with peers |
+| M1: MVP Quiz | Core quiz experience with 3 quiz types and scoring | Alpha | DONE | All 3 quiz types work, scoring displays, responsive UI |
+| M2: SEO & Discoverability | Organic search discovery and social sharing | Alpha | NOW | OG tags, structured data, sitemap, robots.txt, keyword-optimized meta |
+| M3: User Accounts | Authentication and user profiles (Google OAuth) | Alpha | NEXT | Users can sign up, log in, and sessions are tied to accounts |
+| M4: Progress Tracking | Historical performance and study analytics | Beta | LATER | Users see accuracy trends over time |
+| M5: Leaderboards | Social features and competitive elements | Beta | LATER | Users can compare scores with peers |
+| M6: PWA & Native | PWA manifest, service worker, offline support, Capacitor iOS wrap | Beta | LATER | App installable from browser, works offline with cached data |
 
 ### Milestone Detail
 
