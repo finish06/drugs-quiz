@@ -1,9 +1,9 @@
 # drugs-quiz — Product Requirements Document
 
-**Version:** 0.1.0
+**Version:** 0.2.0
 **Created:** 2026-03-15
 **Author:** Caleb Dunn
-**Status:** Draft
+**Status:** Active
 
 ## 1. Problem Statement
 
@@ -36,12 +36,13 @@ Pharmacy students, technicians, and professionals studying for licensing exams n
 - Responsive web UI (works on mobile browsers via PWA)
 - API key management via environment variable
 
-### Out of Scope
+### Out of Scope (Current Phase)
 
-- **Milestone 2:** User accounts and authentication
-- **Milestone 3:** Progress tracking and historical performance
-- **Milestone 4:** Leaderboards and social features
 - Native iOS app (Capacitor wrap — future milestone)
+- Drug pronunciation guide — revisit post-M6
+- Monetization / Pro tier — backlog, revisit when MAU justifies it
+- Referral program — premature before proving conversion, revisit M7+
+- Community seeding (Reddit/Discord) — ops play, not engineering
 
 ## 5. Architecture
 
@@ -89,30 +90,146 @@ SSH key for staging access will be generated in the project directory for direct
 |-----------|------|-----------------|--------|------------------|
 | M1: MVP Quiz | Core quiz experience with 3 quiz types and scoring | Alpha | DONE | All 3 quiz types work, scoring displays, responsive UI |
 | M2: SEO & Discoverability | Organic search discovery and social sharing | Alpha | DONE | OG tags, structured data, sitemap, robots.txt, keyword-optimized meta |
-| M3: Learning Loop & Retention | Answer review, spaced repetition, session history, Quick 5 | Alpha | NOW | 30%+ 7-day return rate, users learn from mistakes, localStorage-first |
-| M4: Infrastructure & Quality | BFF proxy, automated staging deploy, full E2E, batched pre-fetching | Alpha | NEXT | Automated deploys, sub-1s quiz load, full E2E coverage |
-| M5: Accounts & Viral Distribution | Google OAuth, shareable score cards, instructor share links, v1.0.0 | Beta | NEXT | 20%+ account signup, 1K organic MAU within 60 days |
-| M6: Compete & Go Native | Exam countdown, school leaderboards, PWA + offline | Beta | LATER | School leaderboard adoption, PWA installs, exam mode completion >60% |
-| Backlog: Monetization | Pro tier, advanced analytics, referral program | — | LATER | Revisit when MAU justifies it — free-first strategy |
+| M3: Close the Learning Loop | Transform quiz into a study tool — answer review, spaced repetition, session history, Quick 5 | Alpha | NOW | Daily active usage, 30%+ 7-day return rate, users learn from mistakes |
+| M4: Infrastructure + Quality Hardening | BFF proxy, automated staging deploy, full E2E, batched pre-fetching | Alpha | NEXT | Automated staging deploys, full E2E coverage, sub-1s quiz load on warm cache |
+| M5: Go Social — Accounts + Viral Distribution | Google OAuth, shareable score cards, instructor share links, v1.0.0 | Beta | NEXT | 20%+ account signup rate, 1K organic MAU within 60 days |
+| M6: Compete + Go Native | Exam countdown, school leaderboards, PWA + offline | Beta | LATER | School leaderboard adoption, PWA installs, exam mode completion >60% |
+| Backlog: Monetization | Pro tier, advanced analytics, referral program | — | LATER | Free-first strategy — revisit when MAU justifies it |
 
 ### Milestone Detail
 
-#### M1: MVP Quiz [NOW]
+#### M1: MVP Quiz [DONE]
 **Goal:** Deliver the core interactive quiz experience with all three quiz types, basic scoring, and a responsive UI that works well on mobile.
+
 **Appetite:** 2-3 weeks
+
 **Target maturity:** Alpha
+
 **Features:**
 - match-drug-to-class — 4-option matching quiz
 - name-the-class — multiple choice quiz
 - brand-generic-match — matching generic to brand names
 - quiz-session — scoring, question navigation, results summary
 - quiz-config — select quiz type, number of questions
+  
 **Success criteria:**
-- [ ] All 3 quiz types generate questions from the API
-- [ ] Scoring displays correctly at end of session
-- [ ] UI is responsive and usable on mobile
-- [ ] 90% test coverage
-- [ ] E2E tests pass for all quiz flows
+- [x] All 3 quiz types generate questions from the API
+- [x] Scoring displays correctly at end of session
+- [x] UI is responsive and usable on mobile
+- [x] 90% test coverage
+- [x] E2E tests pass for all quiz flows
+
+#### M2: SEO & Discoverability [DONE]
+**Goal:** Optimize for organic search discovery and social sharing.
+
+**Appetite:** 1 week
+
+**Target maturity:** Alpha
+
+**Features:**
+- OG tags and social sharing meta
+- Structured data (JSON-LD)
+- Sitemap and robots.txt
+- Keyword-optimized meta descriptions
+
+#### M3: Close the Learning Loop [NOW]
+**Goal:** Transform the quiz from a test into a study tool. Give users a reason to come back tomorrow.
+
+**Appetite:** 2-3 weeks
+
+**Target maturity:** Alpha
+
+**Features:**
+- **Answer Review Mode** — Show correct answers + drug class context after each quiz. Table stakes for learning.
+- **Spaced Repetition (localStorage)** — Track weak drugs, surface them more often. Highest-leverage retention feature. No backend needed.
+- **Session History + Personal Best (localStorage)** — Last 10 sessions on home screen. Creates trajectory awareness. Primes account migration later.
+- **"Quick 5" Entry Point** — One-tap 5-question mix. Lowers activation energy for short sessions.
+
+**Success criteria:**
+- [ ] Answer review shows correct answers with drug class context after each quiz
+- [ ] Spaced repetition surfaces weak drugs more frequently
+- [ ] Session history displays last 10 sessions on home screen
+- [ ] Personal best tracking motivates improvement
+- [ ] Quick 5 launches a 5-question mixed quiz in one tap
+- [ ] All data persists in localStorage (no backend required)
+- [ ] 30%+ 7-day return rate
+
+#### M4: Infrastructure + Quality Hardening [NEXT]
+**Goal:** Build the technical foundation for user accounts and social features. Make the existing product bulletproof.
+
+**Appetite:** 2 weeks
+
+**Target maturity:** Alpha
+
+**Features:**
+- **BFF Proxy Service** — Lightweight Node/Hono container. Moves API key server-side. Required surface for OAuth in M5.
+- **Automated Staging Deploy** — CI pushes to staging and runs smoke tests on every merge. Eliminates manual deploy tax.
+- **Full E2E Test Coverage** — Complete quiz flow tests for all 3 types + error states. Screenshot capture in CI.
+- **Performance: Batched Pre-fetching** — Batch API calls with `Promise.allSettled`. Cut quiz generation from O(n sequential) to O(1 batch).
+
+**Success criteria:**
+- [ ] BFF proxy handles all API calls, API key never exposed to client
+- [ ] Staging deploys automatically on merge with smoke tests
+- [ ] Full E2E coverage for all quiz flows and error states
+- [ ] Quiz generation uses batched pre-fetching, sub-1s load on warm cache
+
+#### M5: Go Social — Accounts + Viral Distribution [NEXT]
+**Goal:** Add Google OAuth accounts, shareable results, and the viral distribution loop. Convert localStorage users to cloud-synced accounts.
+
+**Appetite:** 3-4 weeks
+
+**Target maturity:** Beta
+
+**Features:**
+- **Google OAuth + User Accounts** — OAuth via BFF, JWT sessions. "Sync your localStorage history to the cloud" upgrade path.
+- **Shareable Score Cards** — Auto-generated result card with share to Reddit/Twitter/iMessage. Every session becomes a distribution event.
+- **Instructor Share Links** — Pre-configured quiz URLs for specific drug classes. B2B2C wedge — one professor = 120 students.
+- **Semantic Release (v1.0.0)** — Ship the first public release with changelog. Signals maturity to instructors and institutions.
+
+**Success criteria:**
+- [ ] Google OAuth login via BFF
+- [ ] localStorage data migrates to cloud on account creation
+- [ ] Shareable score cards generate and display correctly
+- [ ] Instructor share links create pre-configured quizzes
+- [ ] v1.0.0 tagged and released with changelog
+- [ ] 20%+ account signup rate
+- [ ] 1,000 organic MAU within 60 days
+
+#### M6: Compete + Go Native [LATER]
+**Goal:** Add the competitive layer and native experience that makes drugs-quiz the default pharmacy study tool.
+
+**Appetite:** 3-4 weeks
+
+**Target maturity:** Beta
+
+**Features:**
+- **Exam Countdown Mode** — NAPLEX/PTCE simulation with daily quota and timer. The word-of-mouth feature for faculty recommendations.
+- **School-Affiliated Leaderboards** — Peer-group competition drives cohort engagement. Students recruit classmates to climb rankings.
+- **PWA + Offline Support** — Installable from browser. Offline quiz with cached data. Push notifications for streak reminders.
+
+**Success criteria:**
+- [ ] Exam countdown mode with daily quota and timer
+- [ ] School-affiliated leaderboards functional
+- [ ] PWA installable with offline quiz support
+- [ ] Exam mode completion rate >60%
+
+### Timeline Overview
+
+```
+M3: Learning Loop (2-3 wks) → M4: Infrastructure (2 wks) → M5: Go Social (3-4 wks) → M6: Compete + Native (3-4 wks)
+     localStorage-first              BFF + E2E + perf             Accounts + viral              Leaderboards + PWA
+     retention focus                 foundation focus             acquisition focus              competition focus
+```
+
+**Total estimated timeline: 10-13 weeks** (Alpha → Beta maturity)
+
+### Strategic Sequencing
+
+**Retention before acquisition.** Fix the learning loop before driving traffic — a user who learns *why* they got something wrong will come back; a user who just sees "70%" won't.
+
+**Infrastructure before features.** The BFF proxy is the foundation M5 needs. E2E coverage catches auth state machine bugs before users do.
+
+**Free value before monetization.** Product stays free to maximize word-of-mouth adoption in the pharmacy student community. Monetization revisited when MAU justifies it.
 
 ### Maturity Promotion Path
 
@@ -145,14 +262,25 @@ Home screen where users select quiz type, number of questions, and start a sessi
 - **Accessibility:** WCAG 2.1 AA compliance — keyboard navigable, screen reader friendly, sufficient color contrast.
 - **Offline:** PWA service worker for basic offline support (cached quiz data).
 
+### Deliberate Cuts
+
+| Cut | Why |
+|-----|-----|
+| Drug pronunciation guide | Nice but not retention-critical. Revisit post-M6. |
+| Bundle size budget in CI | Good practice but won't block near-term milestones. Add during M4 as a bonus. |
+| TypeScript `noUncheckedIndexedAccess` | Already have 95% coverage. Diminishing returns vs. feature velocity. |
+| Community seeding (Reddit/Discord) | Ops play, not engineering. Do organically alongside M5 launch. |
+| Referral program | Premature before proving Pro conversion. Revisit in M7. |
+
 ## 9. Open Questions
 
-- How should the API key be handled for the frontend? Options: build-time env var (Vite), lightweight proxy, or serverless function.
-- What domain/URL for staging and production?
-- Should quiz sessions persist across page refreshes (localStorage)?
+- ~~How should the API key be handled for the frontend?~~ **Resolved:** Build-time env var for now; BFF proxy in M4.
+- ~~What domain/URL for staging and production?~~ **Resolved:** staging: drug-quiz.staging.calebdunn.tech, prod: drug-quiz.calebdunn.tech
+- ~~Should quiz sessions persist across page refreshes?~~ **Resolved:** Yes, localStorage-first strategy (M3). Cloud sync on account creation (M5).
 
 ## 10. Revision History
 
 | Date | Version | Author | Changes |
 |------|---------|--------|---------|
 | 2026-03-15 | 0.1.0 | Caleb Dunn | Initial draft from /add:init interview |
+| 2026-03-20 | 0.2.0 | Caleb Dunn | Updated roadmap from final-roadmap.md — M1/M2 marked DONE, expanded M3-M6 detail, added strategic sequencing, resolved open questions, added deliberate cuts |

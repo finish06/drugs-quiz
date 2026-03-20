@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { QuizConfig } from "@/components/QuizConfig";
 import { MultipleChoice } from "@/components/MultipleChoice";
 import { MatchingQuiz } from "@/components/MatchingQuiz";
 import { QuizResults } from "@/components/QuizResults";
+import { FlashcardDrill } from "@/components/FlashcardDrill";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
+import { useDrugPerformance } from "@/hooks/useDrugPerformance";
 import { useTheme } from "@/hooks/useTheme";
 import type { QuizConfig as QuizConfigType } from "@/types/quiz";
 
@@ -14,6 +16,8 @@ function App() {
   const { theme, toggleTheme } = useTheme();
   const { sessions: sessionHistory, personalBest, isCollapsed: isHistoryCollapsed, saveSession, toggleCollapsed: toggleHistoryCollapsed } =
     useSessionHistory();
+  const { recordResult, getWeakDrugs } = useDrugPerformance();
+  const [showFlashcards, setShowFlashcards] = useState(false);
 
   const savedSessionRef = useRef<string | null>(null);
   useEffect(() => {
@@ -33,6 +37,37 @@ function App() {
     }
   }, [results, session?.config, saveSession]);
 
+  // Record drug performance for spaced repetition
+  const recordedSessionRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (results && session?.config) {
+      const sessionKey = `sr-${session.config.type}-${results.totalQuestions}`;
+      if (recordedSessionRef.current !== sessionKey) {
+        recordedSessionRef.current = sessionKey;
+        for (const answer of results.answers) {
+          if (answer.question.kind === "multiple-choice") {
+            recordResult(
+              answer.question.drugName.toLowerCase(),
+              answer.question.drugName,
+              answer.question.correctAnswer,
+              answer.correct,
+            );
+          } else if (answer.question.kind === "matching") {
+            const pairs = answer.userAnswer as Record<string, string>;
+            for (const [left, right] of Object.entries(answer.question.correctPairs)) {
+              recordResult(
+                left.toLowerCase(),
+                left,
+                right,
+                pairs[left] === right,
+              );
+            }
+          }
+        }
+      }
+    }
+  }, [results, session?.config, recordResult]);
+
   function handleRetry() {
     if (session?.config) {
       startQuiz(session.config);
@@ -46,6 +81,8 @@ function App() {
   function handleQuick5() {
     startQuiz({ type: "quick-5", questionCount: 5 });
   }
+
+  const weakDrugs = useMemo(() => getWeakDrugs(), [getWeakDrugs]);
 
   function renderContent() {
     // Error state (checked first — session may be null on error)
@@ -97,6 +134,19 @@ function App() {
       );
     }
 
+    // Flashcard drill mode
+    if (session.status === "complete" && showFlashcards) {
+      if (weakDrugs.length > 0) {
+        return (
+          <FlashcardDrill
+            weakDrugs={weakDrugs}
+            onExit={() => setShowFlashcards(false)}
+          />
+        );
+      }
+      setShowFlashcards(false);
+    }
+
     // Results state
     if (session.status === "complete" && results) {
       return (
@@ -104,6 +154,8 @@ function App() {
           results={results}
           onNewQuiz={resetQuiz}
           onRetry={handleRetry}
+          weakDrugCount={weakDrugs.length}
+          onStudyWeakDrugs={weakDrugs.length > 0 ? () => setShowFlashcards(true) : undefined}
         />
       );
     }

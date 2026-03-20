@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { SessionRecord, SessionQuizType } from "@/types/quiz";
 
 const HISTORY_KEY = "dq-session-history";
@@ -72,7 +72,7 @@ export function useSessionHistory(): UseSessionHistoryReturn {
     });
   }, []);
 
-  const personalBest = computePersonalBest(sessions);
+  const personalBest = useMemo(() => computePersonalBest(sessions), [sessions]);
 
   return { sessions, personalBest, isCollapsed, saveSession, toggleCollapsed };
 }

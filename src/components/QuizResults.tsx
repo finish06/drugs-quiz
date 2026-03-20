@@ -1,12 +1,15 @@
 import type { QuizResults as QuizResultsType } from "@/types/quiz";
+import { AnswerReviewSection } from "./AnswerReviewSection";
 
 interface QuizResultsProps {
   results: QuizResultsType;
   onNewQuiz: () => void;
   onRetry: () => void;
+  weakDrugCount?: number;
+  onStudyWeakDrugs?: () => void;
 }
 
-export function QuizResults({ results, onNewQuiz, onRetry }: QuizResultsProps) {
+export function QuizResults({ results, onNewQuiz, onRetry, weakDrugCount, onStudyWeakDrugs }: QuizResultsProps) {
   const { totalQuestions, correctAnswers, percentage } = results;
 
   function getGradeColor(): string {
@@ -72,6 +75,17 @@ export function QuizResults({ results, onNewQuiz, onRetry }: QuizResultsProps) {
           ))}
         </div>
       </div>
+
+      <AnswerReviewSection answers={results.answers} />
+
+      {onStudyWeakDrugs && weakDrugCount && weakDrugCount > 0 && (
+        <button
+          onClick={onStudyWeakDrugs}
+          className="w-full rounded-xl border-2 border-brand py-3 font-semibold text-brand transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+        >
+          Study Weak Drugs ({weakDrugCount} to review)
+        </button>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <button

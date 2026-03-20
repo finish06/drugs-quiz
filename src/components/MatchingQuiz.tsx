@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { MatchingQuestion } from "@/types/quiz";
 
 interface MatchingQuizProps {
   question: MatchingQuestion;
-  onAnswer: (correct: boolean) => void;
+  onAnswer: (correct: boolean, userAnswer: Record<string, string>) => void;
   onNext: () => void;
   questionNumber: number;
   totalQuestions: number;
@@ -31,8 +31,8 @@ export function MatchingQuiz({
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const pairedLeftItems = new Set(Object.keys(pairs));
-  const pairedRightItems = new Set(Object.values(pairs));
+  const pairedLeftItems = useMemo(() => new Set(Object.keys(pairs)), [pairs]);
+  const pairedRightItems = useMemo(() => new Set(Object.values(pairs)), [pairs]);
 
   function handleLeftClick(item: string) {
     if (submitted) return;
@@ -72,7 +72,7 @@ export function MatchingQuiz({
     const correctCount = Object.entries(pairs).filter(
       ([left, right]) => question.correctPairs[left] === right,
     ).length;
-    onAnswer(correctCount === question.leftItems.length);
+    onAnswer(correctCount === question.leftItems.length, { ...pairs });
   }
 
   function getPairIndex(item: string, side: "left" | "right"): number {

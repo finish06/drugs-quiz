@@ -38,17 +38,25 @@ export interface MatchingQuestion {
 
 export type Question = MultipleChoiceQuestion | MatchingQuestion;
 
-/** User's answer to a question */
+/** User's answer to a question (basic) */
 export interface Answer {
   questionIndex: number;
   correct: boolean;
+}
+
+/** User's answer with full review data */
+export interface AnswerDetail extends Answer {
+  /** The question that was asked (for review) */
+  question: Question;
+  /** User's selected answer (option string for MC, pairs record for matching) */
+  userAnswer: string | Record<string, string>;
 }
 
 /** Session state */
 export interface QuizSession {
   config: QuizConfig;
   questions: Question[];
-  answers: Answer[];
+  answers: AnswerDetail[];
   currentIndex: number;
   status: "loading" | "in-progress" | "complete";
   generationComplete: boolean;
@@ -59,5 +67,5 @@ export interface QuizResults {
   totalQuestions: number;
   correctAnswers: number;
   percentage: number;
-  answers: Answer[];
+  answers: AnswerDetail[];
 }
