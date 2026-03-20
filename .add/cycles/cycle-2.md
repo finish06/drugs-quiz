@@ -2,9 +2,9 @@
 
 **Milestone:** M2 — SEO & Discoverability
 **Maturity:** Alpha
-**Status:** PLANNED
+**Status:** COMPLETE
 **Started:** 2026-03-19
-**Completed:** TBD
+**Completed:** 2026-03-19
 **Duration Budget:** ~2-3 hours (single session)
 
 ## Work Items
