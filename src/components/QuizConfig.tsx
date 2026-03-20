@@ -1,8 +1,15 @@
 import { useState } from "react";
-import type { QuizConfig, QuizType } from "@/types/quiz";
+import type { QuizConfig, QuizType, SessionRecord, SessionQuizType } from "@/types/quiz";
+import { SessionHistory } from "./SessionHistory";
+import { Quick5Button } from "./Quick5Button";
 
 interface QuizConfigProps {
   onStart: (config: QuizConfig) => void;
+  onQuick5?: () => void;
+  sessions?: SessionRecord[];
+  personalBest?: Partial<Record<SessionQuizType, number>>;
+  isHistoryCollapsed?: boolean;
+  onToggleHistoryCollapsed?: () => void;
 }
 
 const QUIZ_TYPES: { value: QuizType; label: string; description: string }[] = [
@@ -25,7 +32,7 @@ const QUIZ_TYPES: { value: QuizType; label: string; description: string }[] = [
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
 
-export function QuizConfig({ onStart }: QuizConfigProps) {
+export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}, isHistoryCollapsed = false, onToggleHistoryCollapsed }: QuizConfigProps) {
   const [selectedType, setSelectedType] = useState<QuizType>("name-the-class");
   const [questionCount, setQuestionCount] = useState<number>(10);
 
@@ -35,6 +42,8 @@ export function QuizConfig({ onStart }: QuizConfigProps) {
 
   return (
     <div className="space-y-8">
+      {onQuick5 && <Quick5Button onStart={onQuick5} />}
+
       <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm transition-colors duration-150">
         <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-4">Quiz Type</h2>
         <div className="grid gap-3">
@@ -84,6 +93,13 @@ export function QuizConfig({ onStart }: QuizConfigProps) {
       >
         Start Quiz
       </button>
+
+      <SessionHistory
+        sessions={sessions}
+        personalBest={personalBest}
+        isCollapsed={isHistoryCollapsed}
+        onToggleCollapsed={onToggleHistoryCollapsed ?? (() => {})}
+      />
     </div>
   );
 }

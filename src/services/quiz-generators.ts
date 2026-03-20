@@ -166,6 +166,7 @@ export async function generateMatchDrugToClassQuestion(
     leftItems: shuffle(pairs.map((p) => p.drug)),
     rightItems: shuffle(pairs.map((p) => p.className)),
     correctPairs,
+    sourceType: "match-drug-to-class",
   };
 }
 
@@ -224,6 +225,7 @@ export async function generateBrandGenericMatchQuestion(
     leftItems: shuffle(pairs.map((p) => p.generic)),
     rightItems: shuffle(pairs.map((p) => p.brand)),
     correctPairs,
+    sourceType: "brand-generic-match",
   };
 }
 
@@ -231,8 +233,10 @@ export async function generateBrandGenericMatchQuestion(
  * Generate a single question of the given type.
  * Uses the provided classPool and usedDrugs set for deduplication.
  */
+const QUIZ_TYPES: QuizType[] = ["name-the-class", "match-drug-to-class", "brand-generic-match"];
+
 export async function generateSingleQuestion(
-  type: QuizType,
+  type: QuizType | "quick-5",
   classPool: DrugClass[],
   usedDrugs: Set<string>,
 ): Promise<Question> {
@@ -242,7 +246,11 @@ export async function generateSingleQuestion(
     "brand-generic-match": generateBrandGenericMatchQuestion,
   };
 
-  const generator = generators[type];
+  const resolvedType = type === "quick-5"
+    ? QUIZ_TYPES[randomInt(0, QUIZ_TYPES.length - 1)]!
+    : type;
+
+  const generator = generators[resolvedType];
   return generator(classPool, usedDrugs);
 }
 
