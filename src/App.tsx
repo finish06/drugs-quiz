@@ -1,8 +1,10 @@
+import { useEffect, useRef } from "react";
 import { QuizConfig } from "@/components/QuizConfig";
 import { MultipleChoice } from "@/components/MultipleChoice";
 import { MatchingQuiz } from "@/components/MatchingQuiz";
 import { QuizResults } from "@/components/QuizResults";
 import { useQuizSession } from "@/hooks/useQuizSession";
+import { useSessionHistory } from "@/hooks/useSessionHistory";
 import { useTheme } from "@/hooks/useTheme";
 import type { QuizConfig as QuizConfigType } from "@/types/quiz";
 
@@ -10,6 +12,26 @@ function App() {
   const { session, results, error, loadingProgress, startQuiz, submitAnswer, nextQuestion, resetQuiz } =
     useQuizSession();
   const { theme, toggleTheme } = useTheme();
+  const { sessions: sessionHistory, personalBest, isCollapsed: isHistoryCollapsed, saveSession, toggleCollapsed: toggleHistoryCollapsed } =
+    useSessionHistory();
+
+  const savedSessionRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (results && session?.config) {
+      const sessionId = `${session.config.type}-${Date.now()}`;
+      if (savedSessionRef.current !== sessionId) {
+        savedSessionRef.current = sessionId;
+        saveSession({
+          id: sessionId,
+          completedAt: new Date().toISOString(),
+          quizType: session.config.type,
+          questionCount: results.totalQuestions,
+          correctCount: results.correctAnswers,
+          percentage: results.percentage,
+        });
+      }
+    }
+  }, [results, session?.config, saveSession]);
 
   function handleRetry() {
     if (session?.config) {
@@ -19,6 +41,10 @@ function App() {
 
   function handleStart(config: QuizConfigType) {
     startQuiz(config);
+  }
+
+  function handleQuick5() {
+    startQuiz({ type: "quick-5", questionCount: 5 });
   }
 
   function renderContent() {
@@ -45,7 +71,16 @@ function App() {
 
     // No session — show config screen
     if (!session) {
-      return <QuizConfig onStart={handleStart} />;
+      return (
+        <QuizConfig
+          onStart={handleStart}
+          onQuick5={handleQuick5}
+          sessions={sessionHistory}
+          personalBest={personalBest}
+          isHistoryCollapsed={isHistoryCollapsed}
+          onToggleHistoryCollapsed={toggleHistoryCollapsed}
+        />
+      );
     }
 
     // Loading state
@@ -105,7 +140,8 @@ function App() {
     }
 
     if (currentQuestion.kind === "matching") {
-      const isClassMatch = session.config.type === "match-drug-to-class";
+      const isClassMatch = currentQuestion.sourceType === "match-drug-to-class" ||
+        (currentQuestion.sourceType === undefined && session.config.type === "match-drug-to-class");
       return (
         <MatchingQuiz
           key={session.currentIndex}

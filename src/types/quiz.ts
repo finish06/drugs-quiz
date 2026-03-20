@@ -1,9 +1,20 @@
-/** Available quiz types */
+/** Available quiz types (including quick-5 for mixed sessions) */
 export type QuizType = "name-the-class" | "match-drug-to-class" | "brand-generic-match";
+export type SessionQuizType = QuizType | "quick-5";
+
+/** A saved quiz session result */
+export interface SessionRecord {
+  id: string;
+  completedAt: string;
+  quizType: SessionQuizType;
+  questionCount: number;
+  correctCount: number;
+  percentage: number;
+}
 
 /** Quiz configuration chosen by the user */
 export interface QuizConfig {
-  type: QuizType;
+  type: QuizType | "quick-5";
   questionCount: number;
 }
 
@@ -21,6 +32,8 @@ export interface MatchingQuestion {
   leftItems: string[];
   rightItems: string[];
   correctPairs: Record<string, string>;
+  /** Which quiz type generated this question (needed for Quick 5 mixed rendering) */
+  sourceType?: QuizType;
 }
 
 export type Question = MultipleChoiceQuestion | MatchingQuestion;
