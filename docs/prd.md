@@ -88,11 +88,12 @@ SSH key for staging access will be generated in the project directory for direct
 | Milestone | Goal | Target Maturity | Status | Success Criteria |
 |-----------|------|-----------------|--------|------------------|
 | M1: MVP Quiz | Core quiz experience with 3 quiz types and scoring | Alpha | DONE | All 3 quiz types work, scoring displays, responsive UI |
-| M2: SEO & Discoverability | Organic search discovery and social sharing | Alpha | NOW | OG tags, structured data, sitemap, robots.txt, keyword-optimized meta |
-| M3: User Accounts | Authentication and user profiles (Google OAuth) | Alpha | NEXT | Users can sign up, log in, and sessions are tied to accounts |
-| M4: Progress Tracking | Historical performance and study analytics | Beta | LATER | Users see accuracy trends over time |
-| M5: Leaderboards | Social features and competitive elements | Beta | LATER | Users can compare scores with peers |
-| M6: PWA & Native | PWA manifest, service worker, offline support, Capacitor iOS wrap | Beta | LATER | App installable from browser, works offline with cached data |
+| M2: SEO & Discoverability | Organic search discovery and social sharing | Alpha | DONE | OG tags, structured data, sitemap, robots.txt, keyword-optimized meta |
+| M3: Learning Loop & Retention | Answer review, spaced repetition, session history, Quick 5 | Alpha | NOW | 30%+ 7-day return rate, users learn from mistakes, localStorage-first |
+| M4: Infrastructure & Quality | BFF proxy, automated staging deploy, full E2E, batched pre-fetching | Alpha | NEXT | Automated deploys, sub-1s quiz load, full E2E coverage |
+| M5: Accounts & Viral Distribution | Google OAuth, shareable score cards, instructor share links, v1.0.0 | Beta | NEXT | 20%+ account signup, 1K organic MAU within 60 days |
+| M6: Compete & Go Native | Exam countdown, school leaderboards, PWA + offline | Beta | LATER | School leaderboard adoption, PWA installs, exam mode completion >60% |
+| Backlog: Monetization | Pro tier, advanced analytics, referral program | — | LATER | Revisit when MAU justifies it — free-first strategy |
 
 ### Milestone Detail
 
