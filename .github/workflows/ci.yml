@@ -32,7 +32,7 @@ jobs:
         run: npx vitest run
 
       - name: Coverage
-        run: npx vitest run --coverage --pool=forks --poolOptions.forks.singleFork
+        run: npx vitest run --coverage --pool=forks --no-isolate
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
