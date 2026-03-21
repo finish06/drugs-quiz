@@ -8,9 +8,9 @@
     "author": "Caleb Dunn"
   },
   "maturity": {
-    "level": "alpha",
-    "promoted_from": null,
-    "promoted_date": null,
+    "level": "beta",
+    "promoted_from": "alpha",
+    "promoted_date": "2026-03-20",
     "next_promotion_criteria": "Feature specs for all user-facing features, test coverage above 50%, PR workflow with code review, at least 2 deployment environments active, TDD evidence"
   },
   "architecture": {

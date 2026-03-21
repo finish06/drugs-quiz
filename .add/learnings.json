@@ -54,6 +54,32 @@
       "date": "2026-03-20",
       "classified_by": "agent",
       "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-005",
+      "title": "Handoff doc must be updated after every commit and cycle completion",
+      "body": "Handoff.md was not updated after cycle 4 work. Human flagged this in retro as a process gap. Auto-handoff triggers in the learning rule must be followed — write handoff after commits, major work items, and before session end. Non-negotiable.",
+      "scope": "project",
+      "stack": [],
+      "category": "process",
+      "severity": "high",
+      "source": "drugs-quiz",
+      "date": "2026-03-20",
+      "classified_by": "human",
+      "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-006",
+      "title": "v8 coverage OOMs on GitHub Actions free tier — CI coverage must be advisory",
+      "body": "v8 coverage provider with jsdom environments consistently OOMs on GitHub Actions free tier runners (7GB RAM). Tried 4GB and 8GB heap, single fork, --no-isolate — all OOM. Solution: split test (blocking) and coverage (advisory, continue-on-error). Coverage validated locally at 94%+. Track for M4 infrastructure hardening.",
+      "scope": "project",
+      "stack": ["typescript", "vitest"],
+      "category": "technical",
+      "severity": "high",
+      "source": "drugs-quiz",
+      "date": "2026-03-20",
+      "classified_by": "agent",
+      "checkpoint_type": "retro"
     }
   ]
 }

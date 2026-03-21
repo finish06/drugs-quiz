@@ -16,13 +16,17 @@
 
 - **[medium] AnswerDetail type extension pattern: extend Answer interface for backward compat** (L-004, 2026-03-20)
   Extended Answer to AnswerDetail (adds question + userAnswer fields) without breaking existing code. QuizSession.answers changed from Answer[] to AnswerDetail[]. Key insight: existing tests needed mock data updated to include new fields, but the runtime code was backward compatible because AnswerDetail extends Answer.
+- **[high] v8 coverage OOMs on GitHub Actions free tier — CI coverage must be advisory** (L-006, 2026-03-20)
+  v8 coverage provider with jsdom environments consistently OOMs on GitHub Actions free tier runners (7GB RAM). Tried 4GB and 8GB heap, single fork, --no-isolate — all OOM. Solution: split test (blocking) and coverage (advisory, continue-on-error). Coverage validated locally at 94%+. Track for M4 infrastructure hardening.
 
 ## Process
 
 - **[medium] Cycle 3 complete: session-history + quick-5 shipped in single session** (L-001, 2026-03-20)
-  Both features advanced SPECCED→DONE in one session. 26 new tests added (151→177), 93.4% coverage maintained. Serial execution (session-history first, quick-5 second) worked well since quick-5 depended on SessionRecord type. SessionHistory.tsx component has lower coverage (70.6%) due to rendering branches — worth adding tests in a future cycle.
+  Both features advanced SPECCED→DONE in one session. 26 new tests added (151→177), 93.4% coverage maintained. Serial execution (session-history first, quick-5 second) worked well since quick-5 depended on SessionRecord type.
 - **[medium] Cycle 4 complete: answer-review + spaced-repetition shipped, M3 done** (L-003, 2026-03-20)
-  Both features advanced SPECCED→DONE in one session. 37 new tests (177→214), 94.1% coverage. Serial execution critical — answer-review introduced AnswerDetail type that spaced-repetition depended on. Spec writing + TDD in same session worked well for alpha maturity. Performance optimization pass (useMemo for weakDrugs, personalBest, MatchingQuiz Sets) kept coverage above threshold.
+  Both features advanced SPECCED→DONE in one session. 37 new tests (177→214), 94.1% coverage. Serial execution critical — answer-review introduced AnswerDetail type that spaced-repetition depended on. Spec writing + TDD in same session worked well for alpha maturity.
+- **[high] Handoff doc must be updated after every commit and cycle completion** (L-005, 2026-03-20)
+  Handoff.md was not updated after cycle 4 work. Human flagged this in retro as a process gap. Auto-handoff triggers must be followed — write handoff after commits, major work items, and before session end. Non-negotiable.
 
 ---
-*4 entries. Last updated: 2026-03-20. Source: .add/learnings.json*
+*6 entries. Last updated: 2026-03-20. Source: .add/learnings.json*
