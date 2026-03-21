@@ -1,27 +1,32 @@
 # Session Handoff
-**Written:** 2026-03-20T22:15:00Z
+**Written:** 2026-03-21T16:30:00Z
 
 ## In Progress
-- Cycle 5 (M4): BFF proxy + batched prefetch — implementation complete, PR pending
+- Cycle 7 (M4): Automated staging deploy — implementation complete, PR pending
 
 ## Completed This Session
-- BFF proxy service (`bff/`) — Hono, Node adapter, docker-compose verified locally
-- Batched pre-fetching — Promise.allSettled in all 3 generators, perf test passing
-- Frontend cache removed from api-client.ts (drug-gate 60-min cache sufficient)
-- nginx config updated to proxy /api → BFF container
-- 2 specs written (specs/bff-proxy.md, specs/batched-prefetch.md)
+- FastAPI deploy-hook in `deploy-hook/` — HMAC signature verification, smoke tests
+- CI updated: BFF beta image push + staging webhook trigger
+- `docker-compose.staging.yml` updated to use registry images (no local builds)
+- Spec written: specs/automated-staging.md (12 ACs)
 - 212 tests passing, types clean, lint clean
 
 ## Decisions Made
-- Hono with @hono/node-server adapter (not Bun export default pattern)
-- BFF is pure passthrough — no caching, no business logic
-- Batch sizes: 8 classes for MC, 12 for matching (over-fetch to account for failures)
-- Frontend cache removed entirely (was 5-min TTL, drug-gate has 60-min server cache)
+- FastAPI for webhook (Python, as requested)
+- GitHub HMAC-SHA256 signature verification
+- Docker container with host socket access, separate compose from drugs-quiz
+- Port 9000 for webhook listener
+- Staging auto-deploys on beta push, production stays manual
+- `WEBHOOK_SECRET` and `STAGING_WEBHOOK_URL` as GitHub repo secrets
 
 ## Blockers
-- None
+- GitHub secrets need to be configured: `WEBHOOK_SECRET`, `STAGING_WEBHOOK_URL`
+- Deploy-hook container needs to be built and started on staging VM
+- Port 9000 may need firewall rule on staging VM
 
 ## Next Steps
-1. Commit and push to feature branch, create PR for human review
-2. Human reviews PR when back tomorrow
-3. After merge: cycle 6 (automated-staging + full-e2e) to complete M4
+1. Human reviews PR
+2. Configure GitHub secrets
+3. Deploy webhook container on staging VM
+4. Test end-to-end: merge → CI → webhook → staging updated
+5. Cycle 8: full-e2e to complete M4
