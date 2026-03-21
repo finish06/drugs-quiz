@@ -1,0 +1,22 @@
+# Deploy hook app configuration
+# Each app maps to a compose directory, compose file, and health checks.
+# GitHub Actions sends {"app": "<name>"} in the webhook payload.
+
+apps:
+  drugs-quiz:
+    compose_dir: /opt/drugs-quiz
+    compose_file: docker-compose.yml
+    health_checks:
+      - name: health
+        url: http://drugs-quiz:8080/api/health
+      - name: api_proxy
+        url: http://drugs-quiz:8080/api/v1/drugs/classes?type=epc&limit=1
+        expect_key: data
+
+  # Example: add more apps here
+  # cash-drugs:
+  #   compose_dir: /opt/cash-drugs
+  #   compose_file: docker-compose.yml
+  #   health_checks:
+  #     - name: health
+  #       url: http://cash-drugs-leader:8080/health

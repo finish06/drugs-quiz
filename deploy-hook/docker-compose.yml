@@ -1,15 +1,15 @@
 services:
   deploy-hook:
     build: .
-    container_name: drugs-quiz-deploy-hook
+    container_name: deploy-hook
     ports:
       - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./apps.yaml:/etc/deploy-hook/apps.yaml:ro
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-      - COMPOSE_DIR=/opt/drugs-quiz
-      - SMOKE_TEST_URL=http://drugs-quiz:8080
+      - CONFIG_PATH=/etc/deploy-hook/apps.yaml
     networks:
       - internal
     restart: unless-stopped

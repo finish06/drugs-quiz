@@ -1,34 +1,51 @@
 """
-Deploy webhook for drugs-quiz staging.
+Central deploy webhook — app-aware staging deployment service.
 
-Validates GitHub HMAC signatures, pulls updated images,
-restarts the compose stack, and runs smoke tests.
+Validates GitHub HMAC signatures, looks up the target app from config,
+pulls updated images, restarts the compose stack, and runs smoke tests.
+
+Apps are configured in apps.yaml. Each GitHub repo sends its app name
+in the webhook payload.
 """
 
 import hashlib
 import hmac
+import json
 import logging
 import os
 import subprocess
 import threading
+import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 import httpx
+import yaml
 from fastapi import FastAPI, Header, HTTPException, Request
 
-app = FastAPI(title="drugs-quiz deploy-hook")
+app = FastAPI(title="deploy-hook")
 logger = logging.getLogger("deploy-hook")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET")
-COMPOSE_DIR = os.environ.get("COMPOSE_DIR", "/opt/drugs-quiz")
-SMOKE_TEST_URL = os.environ.get("SMOKE_TEST_URL", "http://drugs-quiz:8080")
+CONFIG_PATH = os.environ.get("CONFIG_PATH", "/etc/deploy-hook/apps.yaml")
 
-# Simple deploy lock to prevent concurrent deploys
-_deploy_lock = threading.Lock()
+# Per-app deploy locks to prevent concurrent deploys to the same app
+_deploy_locks: dict[str, threading.Lock] = {}
 
 if not WEBHOOK_SECRET:
     logger.error("WEBHOOK_SECRET not set — webhook will reject all requests")
+
+
+def load_apps_config() -> dict:
+    """Load app configuration from YAML file."""
+    path = Path(CONFIG_PATH)
+    if not path.exists():
+        logger.error(f"Config file not found: {CONFIG_PATH}")
+        return {}
+    with open(path) as f:
+        config = yaml.safe_load(f)
+    return config.get("apps", {})
 
 
 def verify_signature(payload: bytes, signature: str | None) -> bool:
@@ -59,40 +76,67 @@ def run_command(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
     return result.returncode, result.stdout, result.stderr
 
 
-def run_smoke_tests() -> dict:
+def run_smoke_tests(health_checks: list[dict]) -> dict:
     """Run smoke tests against the deployed app."""
     tests = {}
 
     try:
         with httpx.Client(timeout=10) as client:
-            # Health check
-            resp = client.get(f"{SMOKE_TEST_URL}/api/health")
-            tests["health"] = {
-                "status": resp.status_code,
-                "passed": resp.status_code == 200,
-            }
+            for check in health_checks:
+                name = check["name"]
+                url = check["url"]
+                expect_key = check.get("expect_key")
 
-            # API proxy check
-            resp = client.get(
-                f"{SMOKE_TEST_URL}/api/v1/drugs/classes",
-                params={"type": "epc", "limit": "1"},
-            )
-            tests["api_proxy"] = {
-                "status": resp.status_code,
-                "passed": resp.status_code == 200 and "data" in resp.json(),
-            }
+                resp = client.get(url)
+                passed = resp.status_code == 200
+                if passed and expect_key:
+                    try:
+                        passed = expect_key in resp.json()
+                    except Exception:
+                        passed = False
+
+                tests[name] = {
+                    "url": url,
+                    "status": resp.status_code,
+                    "passed": passed,
+                }
     except Exception as e:
-        tests["error"] = {"passed": False, "detail": str(e)}
+        tests["connection_error"] = {"passed": False, "detail": str(e)}
 
     tests["all_passed"] = all(
-        t.get("passed", False) for t in tests.values()
+        t.get("passed", False) for k, t in tests.items() if k != "all_passed"
     )
     return tests
 
 
+def get_deploy_lock(app_name: str) -> threading.Lock:
+    """Get or create a per-app deploy lock."""
+    if app_name not in _deploy_locks:
+        _deploy_locks[app_name] = threading.Lock()
+    return _deploy_locks[app_name]
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "deploy-hook"}
+    apps = load_apps_config()
+    return {
+        "status": "ok",
+        "service": "deploy-hook",
+        "apps": list(apps.keys()),
+    }
+
+
+@app.get("/apps")
+async def list_apps():
+    """List configured apps and their deploy directories."""
+    apps = load_apps_config()
+    return {
+        name: {
+            "compose_dir": cfg["compose_dir"],
+            "health_checks": len(cfg.get("health_checks", [])),
+        }
+        for name, cfg in apps.items()
+    }
 
 
 @app.post("/deploy")
@@ -100,7 +144,11 @@ async def deploy(
     request: Request,
     x_hub_signature_256: str | None = Header(None),
 ):
-    """Handle deploy webhook from GitHub Actions."""
+    """Handle deploy webhook from GitHub Actions.
+
+    Expects JSON body with at minimum: {"app": "app-name"}
+    Optional fields: ref, sha, tag (for logging)
+    """
     body = await request.body()
 
     # Validate signature
@@ -108,49 +156,80 @@ async def deploy(
         logger.warning("Invalid or missing webhook signature")
         raise HTTPException(status_code=401, detail="Invalid signature")
 
-    # Prevent concurrent deploys
-    if not _deploy_lock.acquire(blocking=False):
-        logger.warning("Deploy already in progress")
-        raise HTTPException(status_code=409, detail="Deploy already in progress")
+    # Parse payload
+    try:
+        payload = json.loads(body) if body else {}
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    app_name = payload.get("app")
+    if not app_name:
+        raise HTTPException(status_code=400, detail="Missing 'app' field in payload")
+
+    # Look up app config
+    apps = load_apps_config()
+    app_config = apps.get(app_name)
+    if not app_config:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown app '{app_name}'. Known apps: {list(apps.keys())}",
+        )
+
+    compose_dir = app_config["compose_dir"]
+    compose_file = app_config.get("compose_file", "docker-compose.yml")
+    health_checks = app_config.get("health_checks", [])
+
+    # Prevent concurrent deploys to the same app
+    lock = get_deploy_lock(app_name)
+    if not lock.acquire(blocking=False):
+        logger.warning(f"Deploy already in progress for {app_name}")
+        raise HTTPException(status_code=409, detail=f"Deploy already in progress for {app_name}")
 
     try:
         started = datetime.now(timezone.utc).isoformat()
-        logger.info(f"Deploy started at {started}")
+        tag = payload.get("tag", "unknown")
+        sha = payload.get("sha", "unknown")
+        logger.info(f"Deploy started: app={app_name} tag={tag} sha={sha}")
         steps = []
 
         # Step 1: Pull latest images
         rc, out, err = run_command(
-            ["docker", "compose", "pull"], cwd=COMPOSE_DIR
+            ["docker", "compose", "-f", compose_file, "pull"], cwd=compose_dir
         )
-        steps.append({"step": "pull", "success": rc == 0, "detail": err if rc != 0 else "ok"})
+        steps.append({"step": "pull", "success": rc == 0, "detail": err.strip() if rc != 0 else "ok"})
         if rc != 0:
-            return {"status": "failed", "started": started, "steps": steps}
+            return {"status": "failed", "app": app_name, "started": started, "steps": steps}
 
         # Step 2: Restart services
         rc, out, err = run_command(
-            ["docker", "compose", "up", "-d", "--remove-orphans"], cwd=COMPOSE_DIR
+            ["docker", "compose", "-f", compose_file, "up", "-d", "--remove-orphans"],
+            cwd=compose_dir,
         )
-        steps.append({"step": "restart", "success": rc == 0, "detail": err if rc != 0 else "ok"})
+        steps.append({"step": "restart", "success": rc == 0, "detail": err.strip() if rc != 0 else "ok"})
         if rc != 0:
-            return {"status": "failed", "started": started, "steps": steps}
+            return {"status": "failed", "app": app_name, "started": started, "steps": steps}
 
         # Step 3: Wait for services to be ready
-        import time
         time.sleep(5)
 
         # Step 4: Smoke tests
-        smoke = run_smoke_tests()
-        steps.append({"step": "smoke_tests", "success": smoke["all_passed"], "detail": smoke})
+        if health_checks:
+            smoke = run_smoke_tests(health_checks)
+            steps.append({"step": "smoke_tests", "success": smoke["all_passed"], "detail": smoke})
+        else:
+            steps.append({"step": "smoke_tests", "success": True, "detail": "no health checks configured"})
 
         status = "success" if all(s["success"] for s in steps) else "partial"
-        logger.info(f"Deploy {status}: {steps}")
+        logger.info(f"Deploy {status}: app={app_name} tag={tag}")
 
         return {
             "status": status,
+            "app": app_name,
+            "tag": tag,
             "started": started,
             "completed": datetime.now(timezone.utc).isoformat(),
             "steps": steps,
         }
 
     finally:
-        _deploy_lock.release()
+        lock.release()
