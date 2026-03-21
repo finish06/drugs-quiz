@@ -3,6 +3,16 @@ services:
     build: .
     ports:
       - "8080:80"
+    depends_on:
+      - bff
+    restart: unless-stopped
+
+  bff:
+    build: ./bff
     env_file:
       - .env
+    environment:
+      - PORT=3001
+    expose:
+      - "3001"
     restart: unless-stopped

@@ -11,12 +11,8 @@ import type {
   ApiError,
 } from "@/types/api";
 
-/** API base path — same-origin proxy handles auth and forwards to drug-gate */
+/** API base path — same-origin proxy (BFF in prod, Vite proxy in dev) handles auth */
 const API_BASE = "/api";
-
-/** In-memory request cache — avoids redundant network calls during quiz generation */
-const requestCache = new Map<string, { data: unknown; expires: number }>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 class DrugApiError extends Error {
   constructor(
@@ -37,11 +33,6 @@ function buildQueryString(params: Record<string, string | number | undefined>): 
 }
 
 async function request<T>(path: string): Promise<T> {
-  const cached = requestCache.get(path);
-  if (cached && cached.expires > Date.now()) {
-    return cached.data as T;
-  }
-
   const response = await fetch(`${API_BASE}${path}`);
 
   if (!response.ok) {
@@ -49,9 +40,7 @@ async function request<T>(path: string): Promise<T> {
     throw new DrugApiError(response.status, error);
   }
 
-  const data = await response.json() as T;
-  requestCache.set(path, { data, expires: Date.now() + CACHE_TTL_MS });
-  return data;
+  return await response.json() as T;
 }
 
 /** GET /v1/drugs/names — browse or search drug names */
@@ -90,11 +79,6 @@ export function getDrugsInClass(
 /** GET /v1/drugs/ndc/{ndc} — look up drug by NDC */
 export function getDrugByNdc(ndc: string): Promise<NdcLookup> {
   return request(`/v1/drugs/ndc/${encodeURIComponent(ndc)}`);
-}
-
-/** Clear the request cache (useful for tests) */
-export function clearRequestCache(): void {
-  requestCache.clear();
 }
 
 export { DrugApiError };
