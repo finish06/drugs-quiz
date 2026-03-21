@@ -59,7 +59,13 @@ export function useQuizSession(): UseQuizSessionReturn {
     if (!cancelledRef.current) {
       setSession((prev) => {
         if (!prev) return prev;
-        return { ...prev, generationComplete: true };
+        // If fewer questions were generated than requested (due to failures),
+        // adjust the config count to match actual questions to prevent blank screen
+        const actualCount = prev.questions.length;
+        const adjustedConfig = actualCount < prev.config.questionCount
+          ? { ...prev.config, questionCount: actualCount }
+          : prev.config;
+        return { ...prev, config: adjustedConfig, generationComplete: true };
       });
     }
   }, []);

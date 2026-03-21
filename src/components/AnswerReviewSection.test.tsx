@@ -74,19 +74,19 @@ describe("AC-006: Review entry shows question details", () => {
 });
 
 describe("AC-007: Review section is collapsible", () => {
-  it("should be expanded by default", () => {
+  it("should be collapsed by default (buttons visible)", () => {
     render(<AnswerReviewSection answers={mockAnswers} />);
-    // Content should be visible
-    expect(screen.getByText(/Simvastatin/)).toBeVisible();
+    // Content should be hidden by default
+    expect(screen.getByText(/Simvastatin/).closest("div[style]")).toHaveStyle("display: none");
   });
 
-  it("should collapse when header is clicked", async () => {
+  it("should expand when header is clicked", async () => {
     const user = userEvent.setup();
     render(<AnswerReviewSection answers={mockAnswers} />);
 
     await user.click(screen.getByText("Review Answers"));
 
-    // Content should be hidden (display: none)
-    expect(screen.getByText(/Simvastatin/).closest("div[style]")).toHaveStyle("display: none");
+    // Content should now be visible
+    expect(screen.getByText(/Simvastatin/)).toBeVisible();
   });
 });

@@ -13,9 +13,9 @@ export function QuizResults({ results, onNewQuiz, onRetry, weakDrugCount, onStud
   const { totalQuestions, correctAnswers, percentage } = results;
 
   function getGradeColor(): string {
-    if (percentage >= 80) return "text-green-600";
-    if (percentage >= 60) return "text-amber-600";
-    return "text-red-600";
+    if (percentage >= 80) return "text-green-600 dark:text-green-400";
+    if (percentage >= 60) return "text-amber-600 dark:text-amber-400";
+    return "text-red-600 dark:text-red-400";
   }
 
   function getGradeMessage(): string {

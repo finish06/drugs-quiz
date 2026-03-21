@@ -6,7 +6,7 @@ interface AnswerReviewSectionProps {
 }
 
 export function AnswerReviewSection({ answers }: AnswerReviewSectionProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <div className="rounded-lg border border-gray-100 dark:border-gray-700 p-4">
