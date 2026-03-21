@@ -414,3 +414,44 @@ describe("generateQuestions", () => {
     expect(new Set(drugNames).size).toBe(3);
   });
 });
+
+describe("AC-005: Batched pre-fetch performance", () => {
+  it("generates 5 questions under time budget with mocked API latency", async () => {
+    const pool = makeClassPool(
+      Array.from({ length: 50 }, (_, i) => `Class-${i}`),
+    );
+    let callCount = 0;
+
+    // Simulate 10ms API latency per call
+    mockedApi.getDrugsInClass.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          callCount++;
+          const current = callCount;
+          setTimeout(
+            () =>
+              resolve({
+                data: [{ generic_name: `drug-${current}`, brand_name: "" }],
+                pagination: { page: 1, limit: 5, total: 1, total_pages: 1 },
+              }),
+            10,
+          );
+        }),
+    );
+
+    const start = performance.now();
+    const usedDrugs = new Set<string>();
+    const questions = [];
+    for (let i = 0; i < 5; i++) {
+      questions.push(await generateNameTheClassQuestion(pool, usedDrugs));
+    }
+    const duration = performance.now() - start;
+
+    expect(questions).toHaveLength(5);
+    // With batching (8 parallel per batch), 5 questions should need ~1-2 batches
+    // Sequential would be 5*10ms minimum = 50ms+ (more with retries)
+    // Batched should be ~10-20ms per batch = much faster
+    // Use generous budget for CI stability
+    expect(duration).toBeLessThan(500);
+  });
+});

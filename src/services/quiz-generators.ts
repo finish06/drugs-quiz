@@ -1,5 +1,5 @@
 import { getDrugClasses, getDrugsInClass } from "./api-client";
-import type { DrugClass } from "@/types/api";
+import type { DrugClass, DrugInClass } from "@/types/api";
 import type { MultipleChoiceQuestion, MatchingQuestion, QuizType, Question } from "@/types/quiz";
 import { toTitleCase } from "@/utils/text";
 
@@ -32,8 +32,32 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 /**
+ * Pre-fetch drugs for a batch of classes in parallel using Promise.allSettled.
+ * Returns a map of className → drugs array for successful fetches.
+ */
+async function batchFetchDrugs(
+  classes: DrugClass[],
+  limit: number,
+): Promise<Map<string, DrugInClass[]>> {
+  const results = await Promise.allSettled(
+    classes.map(async (cls) => {
+      const resp = await getDrugsInClass({ class: cls.name, limit });
+      return { className: cls.name, drugs: resp.data };
+    }),
+  );
+
+  const map = new Map<string, DrugInClass[]>();
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      map.set(result.value.className, result.value.drugs);
+    }
+  }
+  return map;
+}
+
+/**
  * Fetch a large pool of EPC classes from multiple random pages.
- * Fetches 2 random pages to get ~200 classes for variety.
+ * Fetches 2 random pages in parallel to get ~200 classes for variety.
  */
 export async function fetchEpcClassPool(): Promise<DrugClass[]> {
   const initial = await getDrugClasses({ type: "epc", limit: 100, page: 1 });
@@ -43,103 +67,97 @@ export async function fetchEpcClassPool(): Promise<DrugClass[]> {
     return initial.data;
   }
 
-  // Fetch 2 different random pages for a larger pool
   const page1 = randomInt(1, totalPages);
-  const page2Data: DrugClass[] = [];
+  const page2Num = page1 === totalPages ? (page1 % totalPages) + 1 : page1 + 1;
 
-  const data1 = page1 === 1
-    ? initial.data
-    : (await getDrugClasses({ type: "epc", limit: 100, page: page1 })).data;
+  // Fetch both pages in parallel
+  const [page1Result, page2Result] = await Promise.allSettled([
+    page1 === 1
+      ? Promise.resolve(initial.data)
+      : getDrugClasses({ type: "epc", limit: 100, page: page1 }).then((r) => r.data),
+    page2Num !== page1
+      ? getDrugClasses({ type: "epc", limit: 100, page: page2Num }).then((r) => r.data)
+      : Promise.resolve([] as DrugClass[]),
+  ]);
 
-  // Try a second different page for more variety
-  let page2 = randomInt(1, totalPages);
-  if (page2 === page1 && totalPages > 1) {
-    page2 = (page1 % totalPages) + 1;
-  }
-  if (page2 !== page1) {
-    try {
-      const resp = await getDrugClasses({ type: "epc", limit: 100, page: page2 });
-      page2Data.push(...resp.data);
-    } catch {
-      // Fine — one page is enough
-    }
-  }
+  const data1 = page1Result.status === "fulfilled" ? page1Result.value : initial.data;
+  const data2 = page2Result.status === "fulfilled" ? page2Result.value : [];
 
-  return [...data1, ...page2Data];
+  return [...data1, ...data2];
 }
 
 /**
  * Generate a "Name the Class" question.
- * Accepts a usedDrugs set to avoid repeating drugs across questions.
+ * Pre-fetches drugs for a batch of classes in parallel, then picks one.
  */
 export async function generateNameTheClassQuestion(
   classPool: DrugClass[],
   usedDrugs: Set<string>,
 ): Promise<MultipleChoiceQuestion> {
   const shuffledClasses = shuffle(classPool);
+  const BATCH_SIZE = 8;
 
-  let drugName: string | null = null;
-  let correctClass: string | null = null;
+  for (let offset = 0; offset < shuffledClasses.length; offset += BATCH_SIZE) {
+    const batch = shuffledClasses.slice(offset, offset + BATCH_SIZE);
+    const drugMap = await batchFetchDrugs(batch, 5);
 
-  for (const cls of shuffledClasses) {
-    try {
-      const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
-      const examDrugs = drugsResponse.data.filter(
+    for (const cls of batch) {
+      const drugs = drugMap.get(cls.name);
+      if (!drugs) continue;
+
+      const examDrugs = drugs.filter(
         (d) => isExamRelevantDrug(d.generic_name) && !usedDrugs.has(d.generic_name.toLowerCase()),
       );
       const drug = examDrugs[0];
       if (drug) {
-        drugName = toTitleCase(drug.generic_name);
-        correctClass = cls.name;
+        const drugName = toTitleCase(drug.generic_name);
+        const correctClass = cls.name;
         usedDrugs.add(drug.generic_name.toLowerCase());
-        break;
+
+        const distractors = shuffledClasses
+          .map((c) => c.name)
+          .filter((name) => name !== correctClass)
+          .slice(0, 3);
+
+        if (distractors.length < 3) {
+          throw new Error("Not enough distractor classes available");
+        }
+
+        return {
+          kind: "multiple-choice",
+          drugName,
+          correctAnswer: correctClass,
+          options: shuffle([correctClass, ...distractors]),
+        };
       }
-    } catch {
-      continue;
     }
   }
 
-  if (!drugName || !correctClass) {
-    throw new Error("Failed to find a drug with an EPC class");
-  }
-
-  const distractors = shuffledClasses
-    .map((c) => c.name)
-    .filter((name) => name !== correctClass)
-    .slice(0, 3);
-
-  if (distractors.length < 3) {
-    throw new Error("Not enough distractor classes available");
-  }
-
-  const options = shuffle([correctClass, ...distractors]);
-
-  return {
-    kind: "multiple-choice",
-    drugName,
-    correctAnswer: correctClass,
-    options,
-  };
+  throw new Error("Failed to find a drug with an EPC class");
 }
 
 /**
  * Generate a "Match Drug to Class" question.
- * Accepts a usedDrugs set to avoid repeating drugs across questions.
+ * Pre-fetches drugs for a batch of classes in parallel, then picks 4.
  */
 export async function generateMatchDrugToClassQuestion(
   classPool: DrugClass[],
   usedDrugs: Set<string>,
 ): Promise<MatchingQuestion> {
   const shuffledClasses = shuffle(classPool);
-
+  const BATCH_SIZE = 12;
   const pairs: { drug: string; className: string }[] = [];
 
-  for (const cls of shuffledClasses) {
-    if (pairs.length >= 4) break;
+  for (let offset = 0; offset < shuffledClasses.length && pairs.length < 4; offset += BATCH_SIZE) {
+    const batch = shuffledClasses.slice(offset, offset + BATCH_SIZE);
+    const drugMap = await batchFetchDrugs(batch, 5);
 
-    try {
-      const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 5 });
-      const examDrugs = drugsResponse.data.filter(
+    for (const cls of batch) {
+      if (pairs.length >= 4) break;
+      const drugs = drugMap.get(cls.name);
+      if (!drugs) continue;
+
+      const examDrugs = drugs.filter(
         (d) => isExamRelevantDrug(d.generic_name) && !usedDrugs.has(d.generic_name.toLowerCase()),
       );
       const drug = examDrugs[0];
@@ -147,8 +165,6 @@ export async function generateMatchDrugToClassQuestion(
         pairs.push({ drug: toTitleCase(drug.generic_name), className: cls.name });
         usedDrugs.add(drug.generic_name.toLowerCase());
       }
-    } catch {
-      continue;
     }
   }
 
@@ -181,23 +197,26 @@ function hasRealBrandName(d: { generic_name: string; brand_name: string }): bool
 
 /**
  * Generate a "Brand/Generic Match" question.
- * Accepts a usedDrugs set to avoid repeating drugs across questions.
+ * Pre-fetches drugs for a batch of classes in parallel, then picks 4 with brand names.
  */
 export async function generateBrandGenericMatchQuestion(
   classPool: DrugClass[],
   usedDrugs: Set<string>,
 ): Promise<MatchingQuestion> {
   const shuffledClasses = shuffle(classPool);
-
+  const BATCH_SIZE = 12;
   const pairs: { generic: string; brand: string }[] = [];
 
-  for (const cls of shuffledClasses) {
-    if (pairs.length >= 4) break;
+  for (let offset = 0; offset < shuffledClasses.length && pairs.length < 4; offset += BATCH_SIZE) {
+    const batch = shuffledClasses.slice(offset, offset + BATCH_SIZE);
+    const drugMap = await batchFetchDrugs(batch, 10);
 
-    try {
-      const drugsResponse = await getDrugsInClass({ class: cls.name, limit: 10 });
-      const examDrugs = drugsResponse.data.filter((d) => isExamRelevantDrug(d.generic_name));
+    for (const cls of batch) {
+      if (pairs.length >= 4) break;
+      const drugs = drugMap.get(cls.name);
+      if (!drugs) continue;
 
+      const examDrugs = drugs.filter((d) => isExamRelevantDrug(d.generic_name));
       for (const drug of examDrugs) {
         if (pairs.length >= 4) break;
         const genericKey = drug.generic_name.toLowerCase();
@@ -206,8 +225,6 @@ export async function generateBrandGenericMatchQuestion(
           usedDrugs.add(genericKey);
         }
       }
-    } catch {
-      continue;
     }
   }
 
