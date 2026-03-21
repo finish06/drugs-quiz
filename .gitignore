@@ -6,6 +6,9 @@ node_modules/
 # Build
 dist/
 build/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
 
 # Environment
 .env
@@ -26,6 +29,8 @@ Thumbs.db
 
 # Testing
 coverage/
+playwright-report/
+test-results/
 
 # Capacitor
 ios/
@@ -37,7 +42,11 @@ staging-key.pub
 
 # ADD — ephemeral artifacts (don't commit)
 .add/away-logs/
+.add/away-log.md
 tests/screenshots/errors/
+
+# Swarm artifacts (ephemeral)
+.swarm/
 
 # ADD — these SHOULD be committed (don't ignore)
 # .add/config.json
