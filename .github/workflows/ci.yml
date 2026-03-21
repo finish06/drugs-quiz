@@ -58,13 +58,22 @@ jobs:
       - name: Log in to registry
         run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login dockerhub.calebdunn.tech -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
-      - name: Build and push beta image
+      - name: Build and push frontend beta image
         run: |
           docker build -t "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG" \
                        -t "dockerhub.calebdunn.tech/drugs-quiz:beta" .
           docker push "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG"
           docker push "dockerhub.calebdunn.tech/drugs-quiz:beta"
           echo "Pushed: dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG + :beta"
+
+      - name: Build and push BFF beta image
+        run: |
+          docker build -t "dockerhub.calebdunn.tech/drugs-quiz-bff:$BETA_TAG" \
+                       -t "dockerhub.calebdunn.tech/drugs-quiz-bff:beta" \
+                       ./bff
+          docker push "dockerhub.calebdunn.tech/drugs-quiz-bff:$BETA_TAG"
+          docker push "dockerhub.calebdunn.tech/drugs-quiz-bff:beta"
+          echo "Pushed: dockerhub.calebdunn.tech/drugs-quiz-bff:$BETA_TAG + :beta"
 
       - name: Cleanup old beta tags (keep last 10)
         run: |
@@ -104,4 +113,22 @@ jobs:
               echo "  Warning: could not get digest for $TAG, skipping"
             fi
           done
+        continue-on-error: true
+
+      - name: Trigger staging deploy
+        if: success()
+        run: |
+          BODY='{"ref":"${{ github.ref }}","sha":"${{ github.sha }}","tag":"${{ env.BETA_TAG }}"}'
+          SIGNATURE="sha256=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | awk '{print $NF}')"
+          echo "Triggering staging deploy..."
+          HTTP_CODE=$(curl -s -o /tmp/deploy-response.json -w "%{http_code}" \
+            -X POST "${{ secrets.STAGING_WEBHOOK_URL }}/deploy" \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: $SIGNATURE" \
+            -d "$BODY")
+          echo "Deploy response (HTTP $HTTP_CODE):"
+          cat /tmp/deploy-response.json
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "::warning::Staging deploy returned HTTP $HTTP_CODE"
+          fi
         continue-on-error: true

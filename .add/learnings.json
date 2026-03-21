@@ -80,6 +80,32 @@
       "date": "2026-03-20",
       "classified_by": "agent",
       "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-007",
+      "title": "Cycle 6 complete: 9 tier-1 bugs fixed, swarm-validated on staging",
+      "body": "Bug-finder swarm (3 agents: Product, Architecture, Support) identified 32 bugs. Triaged to 9 tier-1. All fixed in single session, merged autonomously, tagged v0.3.1. Re-ran swarm to validate — 8/9 confirmed fixed immediately, 9th (CORS) fixed after staging redeployment from /opt with BFF. Key lesson: staging VM had deployment drift (old nginx config overriding BFF CORS). Automated staging deployment is critical to prevent drift.",
+      "scope": "project",
+      "stack": ["typescript", "react"],
+      "category": "process",
+      "severity": "medium",
+      "source": "drugs-quiz",
+      "date": "2026-03-21",
+      "classified_by": "agent",
+      "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-008",
+      "title": "Multi-agent swarm testing catches bugs humans miss — but verify infrastructure claims",
+      "body": "3-agent swarm found 32 bugs across Product/Architecture/Support perspectives. High consensus on top bugs gave confidence. However, swarm made 2 false claims: .env.staging committed to git (actually gitignored) and staging running old code (actually a deployment drift issue, not code). Always cross-reference swarm infrastructure claims against actual state before acting.",
+      "scope": "workstation",
+      "stack": [],
+      "category": "process",
+      "severity": "high",
+      "source": "drugs-quiz",
+      "date": "2026-03-21",
+      "classified_by": "agent",
+      "checkpoint_type": "retro"
     }
   ]
 }
