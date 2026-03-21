@@ -42,7 +42,11 @@ export function useTheme(): { theme: Theme; toggleTheme: () => void } {
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {
       const next = prev === "dark" ? "light" : "dark";
-      localStorage.setItem(STORAGE_KEY, next);
+      try {
+        localStorage.setItem(STORAGE_KEY, next);
+      } catch {
+        // Safari private browsing or localStorage full — degrade gracefully
+      }
       return next;
     });
   }, []);

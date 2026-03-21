@@ -19,32 +19,27 @@ function App() {
   const { recordResult, getWeakDrugs } = useDrugPerformance();
   const [showFlashcards, setShowFlashcards] = useState(false);
 
-  const savedSessionRef = useRef<string | null>(null);
+  const savedSessionRef = useRef(false);
   useEffect(() => {
-    if (results && session?.config) {
-      const sessionId = `${session.config.type}-${Date.now()}`;
-      if (savedSessionRef.current !== sessionId) {
-        savedSessionRef.current = sessionId;
-        saveSession({
-          id: sessionId,
-          completedAt: new Date().toISOString(),
-          quizType: session.config.type,
-          questionCount: results.totalQuestions,
-          correctCount: results.correctAnswers,
-          percentage: results.percentage,
-        });
-      }
+    if (results && session?.config && !savedSessionRef.current) {
+      savedSessionRef.current = true;
+      saveSession({
+        id: crypto.randomUUID(),
+        completedAt: new Date().toISOString(),
+        quizType: session.config.type,
+        questionCount: results.totalQuestions,
+        correctCount: results.correctAnswers,
+        percentage: results.percentage,
+      });
     }
   }, [results, session?.config, saveSession]);
 
   // Record drug performance for spaced repetition
-  const recordedSessionRef = useRef<string | null>(null);
+  const recordedSessionRef = useRef(false);
   useEffect(() => {
-    if (results && session?.config) {
-      const sessionKey = `sr-${session.config.type}-${results.totalQuestions}`;
-      if (recordedSessionRef.current !== sessionKey) {
-        recordedSessionRef.current = sessionKey;
-        for (const answer of results.answers) {
+    if (results && session?.config && !recordedSessionRef.current) {
+      recordedSessionRef.current = true;
+      for (const answer of results.answers) {
           if (answer.question.kind === "multiple-choice") {
             recordResult(
               answer.question.drugName.toLowerCase(),
@@ -64,21 +59,26 @@ function App() {
             }
           }
         }
-      }
     }
   }, [results, session?.config, recordResult]);
 
   function handleRetry() {
     if (session?.config) {
+      savedSessionRef.current = false;
+      recordedSessionRef.current = false;
       startQuiz(session.config);
     }
   }
 
   function handleStart(config: QuizConfigType) {
+    savedSessionRef.current = false;
+    recordedSessionRef.current = false;
     startQuiz(config);
   }
 
   function handleQuick5() {
+    savedSessionRef.current = false;
+    recordedSessionRef.current = false;
     startQuiz({ type: "quick-5", questionCount: 5 });
   }
 
@@ -135,16 +135,13 @@ function App() {
     }
 
     // Flashcard drill mode
-    if (session.status === "complete" && showFlashcards) {
-      if (weakDrugs.length > 0) {
-        return (
-          <FlashcardDrill
-            weakDrugs={weakDrugs}
-            onExit={() => setShowFlashcards(false)}
-          />
-        );
-      }
-      setShowFlashcards(false);
+    if (session.status === "complete" && showFlashcards && weakDrugs.length > 0) {
+      return (
+        <FlashcardDrill
+          weakDrugs={weakDrugs}
+          onExit={() => setShowFlashcards(false)}
+        />
+      );
     }
 
     // Results state

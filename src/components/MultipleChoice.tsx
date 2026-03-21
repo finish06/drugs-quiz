@@ -55,7 +55,7 @@ export function MultipleChoice({
         <div className="h-2 flex-1 mx-4 rounded-full bg-gray-100 dark:bg-gray-700">
           <div
             className="h-2 rounded-full bg-brand transition-all duration-300"
-            style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
+            style={{ width: `${((questionNumber - 1 + (answered ? 1 : 0)) / totalQuestions) * 100}%` }}
           />
         </div>
       </div>
