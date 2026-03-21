@@ -64,10 +64,14 @@ def verify_signature(payload: bytes, signature: str | None) -> bool:
 
 
 def run_command(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
-    """Run a shell command and return (returncode, stdout, stderr)."""
+    """Run a shell command and return (returncode, stdout, stderr).
+
+    Note: cwd must exist on the host when using docker compose via
+    the mounted Docker socket. We pass --project-directory instead.
+    """
     logger.info(f"Running: {' '.join(cmd)}")
     result = subprocess.run(
-        cmd, capture_output=True, text=True, cwd=cwd, timeout=300
+        cmd, capture_output=True, text=True, timeout=300
     )
     if result.stdout:
         logger.info(result.stdout.strip())
@@ -192,19 +196,16 @@ async def deploy(
         logger.info(f"Deploy started: app={app_name} tag={tag} sha={sha}")
         steps = []
 
+        compose_base = ["docker", "compose", "--project-directory", compose_dir, "-f", f"{compose_dir}/{compose_file}"]
+
         # Step 1: Pull latest images
-        rc, out, err = run_command(
-            ["docker", "compose", "-f", compose_file, "pull"], cwd=compose_dir
-        )
+        rc, out, err = run_command(compose_base + ["pull"])
         steps.append({"step": "pull", "success": rc == 0, "detail": err.strip() if rc != 0 else "ok"})
         if rc != 0:
             return {"status": "failed", "app": app_name, "started": started, "steps": steps}
 
         # Step 2: Restart services
-        rc, out, err = run_command(
-            ["docker", "compose", "-f", compose_file, "up", "-d", "--remove-orphans"],
-            cwd=compose_dir,
-        )
+        rc, out, err = run_command(compose_base + ["up", "-d", "--remove-orphans"])
         steps.append({"step": "restart", "success": rc == 0, "detail": err.strip() if rc != 0 else "ok"})
         if rc != 0:
             return {"status": "failed", "app": app_name, "started": started, "steps": steps}

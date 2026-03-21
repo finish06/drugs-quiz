@@ -6,7 +6,9 @@ services:
       - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /opt:/opt:ro
       - ./apps.yaml:/etc/deploy-hook/apps.yaml:ro
+      - ${DOCKER_CONFIG:-/home/finish06/.docker/config.json}:/root/.docker/config.json:ro
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
       - CONFIG_PATH=/etc/deploy-hook/apps.yaml
