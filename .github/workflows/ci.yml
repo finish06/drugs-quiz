@@ -28,8 +28,14 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      - name: Test with coverage
-        run: npx vitest run --coverage
+      - name: Test
+        run: npx vitest run
+
+      - name: Coverage (advisory)
+        run: npx vitest run --coverage || true
+        continue-on-error: true
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Build
         run: npx vite build

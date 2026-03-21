@@ -1,9 +1,10 @@
 import { useState } from "react";
 import type { MultipleChoiceQuestion } from "@/types/quiz";
+import { AnswerFeedback } from "./AnswerFeedback";
 
 interface MultipleChoiceProps {
   question: MultipleChoiceQuestion;
-  onAnswer: (correct: boolean) => void;
+  onAnswer: (correct: boolean, userAnswer: string) => void;
   onNext: () => void;
   questionNumber: number;
   totalQuestions: number;
@@ -24,7 +25,7 @@ export function MultipleChoice({
 
     setSelectedOption(option);
     setAnswered(true);
-    onAnswer(option === question.correctAnswer);
+    onAnswer(option === question.correctAnswer, option);
   }
 
   function getOptionStyle(option: string): string {
@@ -81,12 +82,19 @@ export function MultipleChoice({
       </div>
 
       {answered && (
-        <button
-          onClick={onNext}
-          className="w-full rounded-xl bg-brand py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md"
-        >
-          {questionNumber === totalQuestions ? "See Results" : "Next Question"}
-        </button>
+        <>
+          <AnswerFeedback
+            correct={selectedOption === question.correctAnswer}
+            drugName={question.drugName}
+            correctClass={question.correctAnswer}
+          />
+          <button
+            onClick={onNext}
+            className="w-full rounded-xl bg-brand py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md"
+          >
+            {questionNumber === totalQuestions ? "See Results" : "Next Question"}
+          </button>
+        </>
       )}
     </div>
   );

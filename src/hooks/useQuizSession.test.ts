@@ -110,12 +110,51 @@ describe("useQuizSession", () => {
     });
 
     act(() => {
-      result.current.submitAnswer(true);
+      result.current.submitAnswer(true, "HMG-CoA Reductase Inhibitor");
     });
 
     expect(result.current.session?.answers).toHaveLength(1);
     expect(result.current.session?.answers[0]!.correct).toBe(true);
     expect(result.current.session?.answers[0]!.questionIndex).toBe(0);
+  });
+
+  it("AC-008: captures question and userAnswer in AnswerDetail", async () => {
+    setupStandardMocks();
+
+    const { result } = renderHook(() => useQuizSession());
+
+    await act(async () => {
+      await result.current.startQuiz({ type: "name-the-class", questionCount: 2 });
+    });
+
+    act(() => {
+      result.current.submitAnswer(true, "HMG-CoA Reductase Inhibitor");
+    });
+
+    const answer = result.current.session?.answers[0];
+    expect(answer).toHaveProperty("question");
+    expect(answer).toHaveProperty("userAnswer");
+    expect(answer!.question).toEqual(mockMCQuestion);
+    expect(answer!.userAnswer).toBe("HMG-CoA Reductase Inhibitor");
+  });
+
+  it("AC-008: captures matching question pairs in AnswerDetail", async () => {
+    setupStandardMocks(mockMatchQuestion);
+
+    const { result } = renderHook(() => useQuizSession());
+
+    await act(async () => {
+      await result.current.startQuiz({ type: "match-drug-to-class", questionCount: 2 });
+    });
+
+    const userPairs = { simvastatin: "HMG-CoA Reductase Inhibitor", lisinopril: "ACE Inhibitor" };
+    act(() => {
+      result.current.submitAnswer(true, userPairs);
+    });
+
+    const answer = result.current.session?.answers[0];
+    expect(answer!.question.kind).toBe("matching");
+    expect(answer!.userAnswer).toEqual(userPairs);
   });
 
   it("advances to next question", async () => {
@@ -128,7 +167,7 @@ describe("useQuizSession", () => {
     });
 
     act(() => {
-      result.current.submitAnswer(true);
+      result.current.submitAnswer(true, "HMG-CoA Reductase Inhibitor");
       result.current.nextQuestion();
     });
 
@@ -145,7 +184,7 @@ describe("useQuizSession", () => {
     });
 
     act(() => {
-      result.current.submitAnswer(true);
+      result.current.submitAnswer(true, "HMG-CoA Reductase Inhibitor");
       result.current.nextQuestion();
     });
 
@@ -168,15 +207,15 @@ describe("useQuizSession", () => {
 
     // Answer: correct, incorrect, correct
     act(() => {
-      result.current.submitAnswer(true);
+      result.current.submitAnswer(true, "HMG-CoA Reductase Inhibitor");
       result.current.nextQuestion();
     });
     act(() => {
-      result.current.submitAnswer(false);
+      result.current.submitAnswer(false, "ACE Inhibitor");
       result.current.nextQuestion();
     });
     act(() => {
-      result.current.submitAnswer(true);
+      result.current.submitAnswer(true, "HMG-CoA Reductase Inhibitor");
       result.current.nextQuestion();
     });
 
@@ -233,7 +272,7 @@ describe("useQuizSession", () => {
     const { result } = renderHook(() => useQuizSession());
 
     act(() => {
-      result.current.submitAnswer(true);
+      result.current.submitAnswer(true, "HMG-CoA Reductase Inhibitor");
     });
 
     expect(result.current.session).toBeNull();
@@ -259,7 +298,7 @@ describe("useQuizSession", () => {
     });
 
     act(() => {
-      result.current.submitAnswer(true);
+      result.current.submitAnswer(true, "HMG-CoA Reductase Inhibitor");
       result.current.nextQuestion();
     });
 
@@ -267,7 +306,7 @@ describe("useQuizSession", () => {
     const answersBefore = result.current.session?.answers.length;
 
     act(() => {
-      result.current.submitAnswer(false);
+      result.current.submitAnswer(false, "ACE Inhibitor");
     });
 
     expect(result.current.session?.answers.length).toBe(answersBefore);

@@ -2,7 +2,14 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { QuizResults } from "./QuizResults";
-import type { QuizResults as QuizResultsType } from "@/types/quiz";
+import type { QuizResults as QuizResultsType, MultipleChoiceQuestion } from "@/types/quiz";
+
+const mockMCQuestion: MultipleChoiceQuestion = {
+  kind: "multiple-choice",
+  drugName: "Simvastatin",
+  correctAnswer: "HMG-CoA Reductase Inhibitor",
+  options: ["ACE Inhibitor", "HMG-CoA Reductase Inhibitor", "PPI", "SSRI"],
+};
 
 function makeResults(correct: number, total: number): QuizResultsType {
   return {
@@ -12,6 +19,8 @@ function makeResults(correct: number, total: number): QuizResultsType {
     answers: Array.from({ length: total }, (_, i) => ({
       questionIndex: i,
       correct: i < correct,
+      question: mockMCQuestion,
+      userAnswer: i < correct ? "HMG-CoA Reductase Inhibitor" : "ACE Inhibitor",
     })),
   };
 }
@@ -112,5 +121,50 @@ describe("QuizResults", () => {
     await user.click(screen.getByText("New Quiz"));
 
     expect(onNewQuiz).toHaveBeenCalledOnce();
+  });
+
+  it("AC-006: shows Study Weak Drugs button when weak drugs exist", () => {
+    const onStudy = vi.fn();
+    render(
+      <QuizResults
+        results={makeResults(5, 10)}
+        onNewQuiz={vi.fn()}
+        onRetry={vi.fn()}
+        weakDrugCount={5}
+        onStudyWeakDrugs={onStudy}
+      />,
+    );
+
+    expect(screen.getByText(/Study Weak Drugs/)).toBeInTheDocument();
+    expect(screen.getByText(/5 to review/)).toBeInTheDocument();
+  });
+
+  it("does not show Study button when no weak drugs", () => {
+    render(
+      <QuizResults
+        results={makeResults(10, 10)}
+        onNewQuiz={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/Study Weak Drugs/)).not.toBeInTheDocument();
+  });
+
+  it("calls onStudyWeakDrugs when Study button is clicked", async () => {
+    const user = userEvent.setup();
+    const onStudy = vi.fn();
+    render(
+      <QuizResults
+        results={makeResults(5, 10)}
+        onNewQuiz={vi.fn()}
+        onRetry={vi.fn()}
+        weakDrugCount={3}
+        onStudyWeakDrugs={onStudy}
+      />,
+    );
+
+    await user.click(screen.getByText(/Study Weak Drugs/));
+    expect(onStudy).toHaveBeenCalledOnce();
   });
 });

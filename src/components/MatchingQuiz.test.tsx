@@ -167,7 +167,10 @@ describe("MatchingQuiz", () => {
 
     await user.click(screen.getByText("Check Answers"));
 
-    expect(onAnswer).toHaveBeenCalledWith(true);
+    expect(onAnswer).toHaveBeenCalledWith(true, expect.objectContaining({
+      simvastatin: "HMG-CoA Reductase Inhibitor",
+      lisinopril: "ACE Inhibitor",
+    }));
   });
 
   it("calls onAnswer(false) when pairs are incorrect", async () => {
@@ -197,7 +200,10 @@ describe("MatchingQuiz", () => {
 
     await user.click(screen.getByText("Check Answers"));
 
-    expect(onAnswer).toHaveBeenCalledWith(false);
+    expect(onAnswer).toHaveBeenCalledWith(false, expect.objectContaining({
+      simvastatin: "ACE Inhibitor",
+      lisinopril: "HMG-CoA Reductase Inhibitor",
+    }));
   });
 
   it("shows correct answers after submission", async () => {

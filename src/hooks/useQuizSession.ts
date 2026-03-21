@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { QuizConfig, QuizSession, Question, Answer, QuizResults } from "@/types/quiz";
+import type { QuizConfig, QuizSession, Question, AnswerDetail, QuizResults } from "@/types/quiz";
 import { generateSingleQuestion, fetchEpcClassPool } from "@/services/quiz-generators";
 import type { DrugClass } from "@/types/api";
 
@@ -9,7 +9,7 @@ interface UseQuizSessionReturn {
   error: string | null;
   loadingProgress: { current: number; total: number } | null;
   startQuiz: (config: QuizConfig) => Promise<void>;
-  submitAnswer: (correct: boolean) => void;
+  submitAnswer: (correct: boolean, userAnswer: string | Record<string, string>) => void;
   nextQuestion: () => void;
   resetQuiz: () => void;
 }
@@ -115,13 +115,16 @@ export function useQuizSession(): UseQuizSessionReturn {
     }
   }, [backgroundGenerate]);
 
-  const submitAnswer = useCallback((correct: boolean) => {
+  const submitAnswer = useCallback((correct: boolean, userAnswer: string | Record<string, string>) => {
     setSession((prev) => {
       if (!prev || prev.status !== "in-progress") return prev;
 
-      const answer: Answer = {
+      const currentQuestion = prev.questions[prev.currentIndex];
+      const answer: AnswerDetail = {
         questionIndex: prev.currentIndex,
         correct,
+        question: currentQuestion!,
+        userAnswer,
       };
 
       return {

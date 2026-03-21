@@ -1,40 +1,28 @@
 # Project Learnings — drugs-quiz
 
 > **Tier 3: Project-Specific Knowledge**
->
-> This file is maintained automatically by ADD agents. Entries are added at checkpoints
-> (after verify, TDD cycles, deployments, away sessions) and reviewed during retrospectives.
->
-> This is one of three knowledge tiers agents read before starting work:
-> 1. **Tier 1: Plugin-Global** (`knowledge/global.md`) — universal ADD best practices
-> 2. **Tier 2: User-Local** (`~/.claude/add/library.md`) — your cross-project wisdom
-> 3. **Tier 3: Project-Specific** (this file) — discoveries specific to this project
->
-> **Agents:** Read ALL three tiers before starting any task.
-> **Humans:** Review with `/add:retro --agent-summary` or during full `/add:retro`.
+> Generated from `.add/learnings.json` — do not edit directly.
+> Agents read JSON for filtering; this file is for human review.
 
-## Technical Discoveries
-<!-- Things learned about the tech stack, libraries, APIs, infrastructure -->
-<!-- Format: - {date}: {discovery}. Source: {how we learned this}. -->
-
-## Architecture Decisions
-<!-- Decisions made and their rationale -->
-<!-- Format: - {date}: Chose {X} over {Y} because {reason}. -->
+## Architecture
 
 - 2026-03-15: Chose React + Vite + Capacitor over React Native because the app needs to work well at a URL (web) AND as a native iOS app. Capacitor wraps the same web codebase. Source: /add:init interview.
 - 2026-03-15: Chose Tailwind CSS for styling, matching calebdunn.tech brand (accent #3b82f6, system font stack). Source: /add:init interview.
 - 2026-03-15: Chose strict quality mode (90% coverage, all gates blocking, E2E required). Source: /add:init interview.
+- **[medium] localStorage-first features ship fast with no backend dependency** (L-002, 2026-03-20)
+  Session history and Quick 5 both used localStorage exclusively. Zero backend changes, zero API changes. This validated the PRD's localStorage-first strategy for M3 — features that avoid backend coordination ship significantly faster at alpha maturity.
 
-## What Worked
-<!-- Patterns, approaches, tools that proved effective -->
+## Technical
 
-## What Didn't Work
-<!-- Patterns, approaches, tools that caused problems -->
+- **[medium] AnswerDetail type extension pattern: extend Answer interface for backward compat** (L-004, 2026-03-20)
+  Extended Answer to AnswerDetail (adds question + userAnswer fields) without breaking existing code. QuizSession.answers changed from Answer[] to AnswerDetail[]. Key insight: existing tests needed mock data updated to include new fields, but the runtime code was backward compatible because AnswerDetail extends Answer.
 
-## Agent Checkpoints
-<!-- Automatic entries from verification, TDD cycles, deploys, away sessions -->
-<!-- These are processed and archived during /add:retro -->
+## Process
 
-## Profile Update Candidates
-<!-- Cross-project patterns flagged for promotion to ~/.claude/add/profile.md -->
-<!-- Only promoted during /add:retro with human confirmation -->
+- **[medium] Cycle 3 complete: session-history + quick-5 shipped in single session** (L-001, 2026-03-20)
+  Both features advanced SPECCED→DONE in one session. 26 new tests added (151→177), 93.4% coverage maintained. Serial execution (session-history first, quick-5 second) worked well since quick-5 depended on SessionRecord type. SessionHistory.tsx component has lower coverage (70.6%) due to rendering branches — worth adding tests in a future cycle.
+- **[medium] Cycle 4 complete: answer-review + spaced-repetition shipped, M3 done** (L-003, 2026-03-20)
+  Both features advanced SPECCED→DONE in one session. 37 new tests (177→214), 94.1% coverage. Serial execution critical — answer-review introduced AnswerDetail type that spaced-repetition depended on. Spec writing + TDD in same session worked well for alpha maturity. Performance optimization pass (useMemo for weakDrugs, personalBest, MatchingQuiz Sets) kept coverage above threshold.
+
+---
+*4 entries. Last updated: 2026-03-20. Source: .add/learnings.json*

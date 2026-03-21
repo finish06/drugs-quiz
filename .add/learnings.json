@@ -1,0 +1,59 @@
+{
+  "$schema": "https://github.com/MountainUnicorn/add/learnings.schema.json",
+  "version": "1.0.0",
+  "project": "drugs-quiz",
+  "entries": [
+    {
+      "id": "L-001",
+      "title": "Cycle 3 complete: session-history + quick-5 shipped in single session",
+      "body": "Both features advanced SPECCED→DONE in one session. 26 new tests added (151→177), 93.4% coverage maintained. Serial execution (session-history first, quick-5 second) worked well since quick-5 depended on SessionRecord type. SessionHistory.tsx component has lower coverage (70.6%) due to rendering branches — worth adding tests in a future cycle.",
+      "scope": "project",
+      "stack": ["typescript", "react"],
+      "category": "process",
+      "severity": "medium",
+      "source": "drugs-quiz",
+      "date": "2026-03-20",
+      "classified_by": "agent",
+      "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-002",
+      "title": "localStorage-first features ship fast with no backend dependency",
+      "body": "Session history and Quick 5 both used localStorage exclusively. Zero backend changes, zero API changes. This validated the PRD's localStorage-first strategy for M3 — features that avoid backend coordination ship significantly faster at alpha maturity.",
+      "scope": "workstation",
+      "stack": ["typescript", "react"],
+      "category": "architecture",
+      "severity": "medium",
+      "source": "drugs-quiz",
+      "date": "2026-03-20",
+      "classified_by": "agent",
+      "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-003",
+      "title": "Cycle 4 complete: answer-review + spaced-repetition shipped, M3 done",
+      "body": "Both features advanced SPECCED→DONE in one session. 37 new tests (177→214), 94.1% coverage. Serial execution critical — answer-review introduced AnswerDetail type that spaced-repetition depended on. Spec writing + TDD in same session worked well for alpha maturity. Performance optimization pass (useMemo for weakDrugs, personalBest, MatchingQuiz Sets) kept coverage above threshold.",
+      "scope": "project",
+      "stack": ["typescript", "react"],
+      "category": "process",
+      "severity": "medium",
+      "source": "drugs-quiz",
+      "date": "2026-03-20",
+      "classified_by": "agent",
+      "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-004",
+      "title": "AnswerDetail type extension pattern: extend Answer interface for backward compat",
+      "body": "Extended Answer to AnswerDetail (adds question + userAnswer fields) without breaking existing code. QuizSession.answers changed from Answer[] to AnswerDetail[]. Key insight: existing tests needed mock data updated to include new fields, but the runtime code was backward compatible because AnswerDetail extends Answer.",
+      "scope": "workstation",
+      "stack": ["typescript", "react"],
+      "category": "technical",
+      "severity": "medium",
+      "source": "drugs-quiz",
+      "date": "2026-03-20",
+      "classified_by": "agent",
+      "checkpoint_type": "retro"
+    }
+  ]
+}

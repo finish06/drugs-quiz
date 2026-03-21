@@ -2,9 +2,9 @@
 
 **Milestone:** M3 — Learning Loop & Retention
 **Maturity:** Alpha
-**Status:** PLANNED
+**Status:** COMPLETE
 **Started:** 2026-03-20
-**Completed:** TBD
+**Completed:** 2026-03-20
 **Duration Budget:** Single session (~3-4 hours)
 
 ## Work Items
@@ -31,12 +31,12 @@ Single-threaded execution. Session history ships first because Quick 5 depends o
 - **quick-5:** 10 ACs, random type selection, same results flow, saves to history as "quick-5"
 
 ### Cycle Success Criteria
-- [ ] All 20 ACs implemented and tested
-- [ ] Unit tests cover localStorage read/write, eviction, personal best computation
-- [ ] Unit tests cover random type selection, session save
-- [ ] Full test suite passes (151+ existing tests, no regressions)
-- [ ] Coverage remains >= 90%
-- [ ] Deployed to staging via PR workflow
+- [x] All 20 ACs implemented and tested
+- [x] Unit tests cover localStorage read/write, eviction, personal best computation
+- [x] Unit tests cover random type selection, session save
+- [x] Full test suite passes (177 tests, no regressions)
+- [x] Coverage remains >= 90% (93.4% statements, 97% lines)
+- [x] Merged to main via PR #2 (56ac72a)
 
 ## Agent Autonomy & Checkpoints
 

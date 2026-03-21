@@ -88,6 +88,87 @@ describe("AC-005: Personal best display", () => {
   });
 });
 
+describe("AC-004: Relative date formatting", () => {
+  it("should show 'Just now' for very recent sessions", () => {
+    render(
+      <SessionHistory
+        sessions={[makeSession({ completedAt: new Date().toISOString() })]}
+        personalBest={{}}
+        isCollapsed={false}
+        onToggleCollapsed={() => {}}
+      />,
+    );
+    expect(screen.getByText("Just now")).toBeInTheDocument();
+  });
+
+  it("should show minutes ago for sessions within an hour", () => {
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60000).toISOString();
+    render(
+      <SessionHistory
+        sessions={[makeSession({ completedAt: thirtyMinAgo })]}
+        personalBest={{}}
+        isCollapsed={false}
+        onToggleCollapsed={() => {}}
+      />,
+    );
+    expect(screen.getByText("30m ago")).toBeInTheDocument();
+  });
+
+  it("should show hours ago for sessions within a day", () => {
+    const fiveHoursAgo = new Date(Date.now() - 5 * 3600000).toISOString();
+    render(
+      <SessionHistory
+        sessions={[makeSession({ completedAt: fiveHoursAgo })]}
+        personalBest={{}}
+        isCollapsed={false}
+        onToggleCollapsed={() => {}}
+      />,
+    );
+    expect(screen.getByText("5h ago")).toBeInTheDocument();
+  });
+
+  it("should show 'Yesterday' for sessions 1 day ago", () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    render(
+      <SessionHistory
+        sessions={[makeSession({ completedAt: yesterday })]}
+        personalBest={{}}
+        isCollapsed={false}
+        onToggleCollapsed={() => {}}
+      />,
+    );
+    expect(screen.getByText("Yesterday")).toBeInTheDocument();
+  });
+
+  it("should show days ago for sessions within a week", () => {
+    const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
+    render(
+      <SessionHistory
+        sessions={[makeSession({ completedAt: threeDaysAgo })]}
+        personalBest={{}}
+        isCollapsed={false}
+        onToggleCollapsed={() => {}}
+      />,
+    );
+    expect(screen.getByText("3d ago")).toBeInTheDocument();
+  });
+
+  it("should show date for sessions older than a week", () => {
+    const twoWeeksAgo = new Date(Date.now() - 14 * 86400000).toISOString();
+    render(
+      <SessionHistory
+        sessions={[makeSession({ completedAt: twoWeeksAgo })]}
+        personalBest={{}}
+        isCollapsed={false}
+        onToggleCollapsed={() => {}}
+      />,
+    );
+    // toLocaleDateString output varies by locale, just check it's not a relative format
+    expect(screen.queryByText(/ago/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Yesterday")).not.toBeInTheDocument();
+  });
+});
+
 describe("AC-008: Empty state", () => {
   it("should show empty state message when no sessions", () => {
     render(
