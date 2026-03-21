@@ -10,6 +10,7 @@ interface QuizConfigProps {
   personalBest?: Partial<Record<SessionQuizType, number>>;
   isHistoryCollapsed?: boolean;
   onToggleHistoryCollapsed?: () => void;
+  isLoading?: boolean;
 }
 
 const QUIZ_TYPES: { value: QuizType; label: string; description: string }[] = [
@@ -32,7 +33,7 @@ const QUIZ_TYPES: { value: QuizType; label: string; description: string }[] = [
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
 
-export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}, isHistoryCollapsed = false, onToggleHistoryCollapsed }: QuizConfigProps) {
+export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}, isHistoryCollapsed = false, onToggleHistoryCollapsed, isLoading = false }: QuizConfigProps) {
   const [selectedType, setSelectedType] = useState<QuizType>("name-the-class");
   const [questionCount, setQuestionCount] = useState<number>(10);
 
@@ -89,9 +90,24 @@ export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}
 
       <button
         onClick={handleStart}
-        className="w-full rounded-xl bg-brand py-3.5 text-lg font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark dark:hover:bg-brand-light hover:shadow-md active:scale-[0.98]"
+        disabled={isLoading}
+        className={`w-full rounded-xl py-3.5 text-lg font-semibold text-white shadow-sm transition-all duration-200 ${
+          isLoading
+            ? "bg-brand/60 cursor-not-allowed"
+            : "bg-brand hover:bg-brand-dark dark:hover:bg-brand-light hover:shadow-md active:scale-[0.98]"
+        }`}
       >
-        Start Quiz
+        {isLoading ? (
+          <span className="inline-flex items-center gap-2">
+            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Starting...
+          </span>
+        ) : (
+          "Start Quiz"
+        )}
       </button>
 
       <SessionHistory
