@@ -217,39 +217,11 @@ function App() {
         <div className="mx-auto max-w-2xl px-4 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <svg className="h-8 w-8" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="pill-grad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#60a5fa"/>
-                    <stop offset="100%" stopColor="#2563eb"/>
-                  </linearGradient>
-                  <clipPath id="pill-clip">
-                    <rect x="-12" y="-26" width="24" height="52" rx="12"/>
-                  </clipPath>
-                  <clipPath id="pill-top">
-                    <rect x="-12" y="-26" width="24" height="26"/>
-                  </clipPath>
-                  <clipPath id="pill-bottom">
-                    <rect x="-12" y="0" width="24" height="26"/>
-                  </clipPath>
-                </defs>
-                <rect width="64" height="64" rx="14" fill="#0f172a"/>
-                <g transform="translate(32,32) rotate(-45)">
-                  <g clipPath="url(#pill-top)">
-                    <rect x="-12" y="-26" width="24" height="52" rx="12" fill="#93c5fd"/>
-                  </g>
-                  <g clipPath="url(#pill-bottom)">
-                    <rect x="-12" y="-26" width="24" height="52" rx="12" fill="url(#pill-grad)"/>
-                  </g>
-                  <line x1="-12" y1="0" x2="12" y2="0" stroke="#0f172a" strokeWidth="2.5"/>
-                  <g clipPath="url(#pill-clip)">
-                    <text x="0" y="-13" textAnchor="middle" dominantBaseline="central" fontFamily="system-ui,-apple-system,sans-serif" fontWeight="800" fontSize="22" fill="#1e3a5f" transform="rotate(45,0,-13)">D</text>
-                  </g>
-                  <g clipPath="url(#pill-clip)">
-                    <text x="0" y="13" textAnchor="middle" dominantBaseline="central" fontFamily="system-ui,-apple-system,sans-serif" fontWeight="800" fontSize="22" fill="#e2e8f0" transform="rotate(45,0,13)">Q</text>
-                  </g>
-                </g>
-              </svg>
+              <img
+                src={theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+                alt="drugs-quiz logo"
+                className="h-8 w-8 rounded"
+              />
               <div>
                 <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">drugs-quiz</h1>
                 <p className="text-xs text-gray-400 dark:text-gray-500">Pharmacy exam prep</p>
