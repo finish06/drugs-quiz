@@ -4,6 +4,7 @@ import { MultipleChoice } from "@/components/MultipleChoice";
 import { MatchingQuiz } from "@/components/MatchingQuiz";
 import { QuizResults } from "@/components/QuizResults";
 import { FlashcardDrill } from "@/components/FlashcardDrill";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
 import { useDrugPerformance } from "@/hooks/useDrugPerformance";
@@ -116,11 +117,12 @@ function App() {
           personalBest={personalBest}
           isHistoryCollapsed={isHistoryCollapsed}
           onToggleHistoryCollapsed={toggleHistoryCollapsed}
+          isLoading={false}
         />
       );
     }
 
-    // Loading state
+    // Loading state with config visible but disabled
     if (session.status === "loading") {
       return (
         <div className="rounded-xl bg-white dark:bg-gray-800 p-12 shadow-sm text-center">
@@ -209,6 +211,7 @@ function App() {
   }
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-150">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors duration-150">
         <div className="mx-auto max-w-2xl px-4 py-5">
@@ -270,7 +273,15 @@ function App() {
               </button>
               {session && (
                 <button
-                  onClick={resetQuiz}
+                  onClick={() => {
+                    if (session.status === "in-progress") {
+                      if (window.confirm("Are you sure? Your progress will be lost.")) {
+                        resetQuiz();
+                      }
+                    } else {
+                      resetQuiz();
+                    }
+                  }}
                   className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
                 >
                   Exit
@@ -282,6 +293,7 @@ function App() {
       </header>
       <main className="mx-auto max-w-2xl px-4 py-8">{renderContent()}</main>
     </div>
+    </ErrorBoundary>
   );
 }
 

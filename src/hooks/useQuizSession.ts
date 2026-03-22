@@ -22,6 +22,7 @@ export function useQuizSession(): UseQuizSessionReturn {
   const cancelledRef = useRef(false);
   const classPoolRef = useRef<DrugClass[]>([]);
   const usedDrugsRef = useRef<Set<string>>(new Set());
+  const generationIdRef = useRef(0);
 
   // Cancel background generation on unmount
   useEffect(() => {
@@ -30,9 +31,9 @@ export function useQuizSession(): UseQuizSessionReturn {
     };
   }, []);
 
-  const backgroundGenerate = useCallback(async (config: QuizConfig, startIndex: number) => {
+  const backgroundGenerate = useCallback(async (config: QuizConfig, startIndex: number, genId: number) => {
     for (let i = startIndex; i < config.questionCount; i++) {
-      if (cancelledRef.current) return;
+      if (cancelledRef.current || generationIdRef.current !== genId) return;
 
       try {
         const question = await generateSingleQuestion(
@@ -41,7 +42,7 @@ export function useQuizSession(): UseQuizSessionReturn {
           usedDrugsRef.current,
         );
 
-        if (cancelledRef.current) return;
+        if (cancelledRef.current || generationIdRef.current !== genId) return;
 
         setSession((prev) => {
           if (!prev) return prev;
@@ -56,7 +57,7 @@ export function useQuizSession(): UseQuizSessionReturn {
       }
     }
 
-    if (!cancelledRef.current) {
+    if (!cancelledRef.current && generationIdRef.current === genId) {
       setSession((prev) => {
         if (!prev) return prev;
         // If fewer questions were generated than requested (due to failures),
@@ -74,6 +75,7 @@ export function useQuizSession(): UseQuizSessionReturn {
     setError(null);
     setLoadingProgress(null);
     cancelledRef.current = false;
+    const currentGenId = ++generationIdRef.current;
 
     setSession({
       config,
@@ -93,13 +95,13 @@ export function useQuizSession(): UseQuizSessionReturn {
       const initialQuestions: Question[] = [];
 
       for (let i = 0; i < initialCount; i++) {
-        if (cancelledRef.current) return;
+        if (cancelledRef.current || generationIdRef.current !== currentGenId) return;
         const question = await generateSingleQuestion(config.type, classPool, usedDrugsRef.current);
         initialQuestions.push(question);
         setLoadingProgress({ current: i + 1, total: config.questionCount });
       }
 
-      if (cancelledRef.current) return;
+      if (cancelledRef.current || generationIdRef.current !== currentGenId) return;
 
       setLoadingProgress(null);
       const isComplete = config.questionCount <= 2;
@@ -113,7 +115,7 @@ export function useQuizSession(): UseQuizSessionReturn {
       });
 
       if (!isComplete) {
-        backgroundGenerate(config, 2);
+        backgroundGenerate(config, 2, currentGenId);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate questions");
