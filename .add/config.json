@@ -130,15 +130,16 @@
       "code": "ui-monospace, SFMono-Regular, monospace"
     },
     "tone": "Professional yet approachable — make complex systems feel simple, useful, and intuitive",
-    "logoPath": null,
+    "logoPath": "images/logo-light.png",
+    "logoDarkPath": "images/logo-dark.png",
     "styleGuideSource": "https://www.calebdunn.tech"
   },
   "imageGeneration": {
-    "enabled": false,
-    "tool": null,
-    "plugin": null,
-    "nudged": false,
-    "lastDetected": null
+    "enabled": true,
+    "tool": "mcp__imgGen__generate_image",
+    "plugin": "imgGen",
+    "nudged": true,
+    "lastDetected": "2026-03-22"
   },
   "changelog": {
     "lastProcessedCommit": "336e48d3c2ea8019db73956cab181edcb666e866",

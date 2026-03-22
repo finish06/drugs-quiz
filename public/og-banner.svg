@@ -1,22 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#0f172a"/>
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
-    <linearGradient id="pill-g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#60a5fa"/>
-      <stop offset="100%" stop-color="#2563eb"/>
-    </linearGradient>
-    <clipPath id="pill-shape">
-      <rect x="-12" y="-26" width="24" height="52" rx="12"/>
-    </clipPath>
-    <clipPath id="pill-top-half">
-      <rect x="-12" y="-26" width="24" height="26"/>
-    </clipPath>
-    <clipPath id="pill-bottom-half">
-      <rect x="-12" y="0" width="24" height="26"/>
-    </clipPath>
   </defs>
 
   <!-- Background -->
@@ -24,30 +11,13 @@
 
   <!-- Subtle grid pattern -->
   <g opacity="0.03">
-    <line x1="0" y1="0" x2="1200" y2="630" stroke="#60a5fa" stroke-width="1"/>
-    <line x1="200" y1="0" x2="1200" y2="500" stroke="#60a5fa" stroke-width="1"/>
-    <line x1="0" y1="130" x2="1000" y2="630" stroke="#60a5fa" stroke-width="1"/>
+    <line x1="0" y1="0" x2="1200" y2="630" stroke="#3b82f6" stroke-width="1"/>
+    <line x1="200" y1="0" x2="1200" y2="500" stroke="#3b82f6" stroke-width="1"/>
+    <line x1="0" y1="130" x2="1000" y2="630" stroke="#3b82f6" stroke-width="1"/>
   </g>
 
-  <!-- Capsule icon (scaled up) -->
-  <g transform="translate(200,315) scale(4)">
-    <rect x="-20" y="-20" width="40" height="40" rx="9" fill="rgba(15,23,42,0)"/>
-    <g transform="rotate(-45)">
-      <g clip-path="url(#pill-top-half)">
-        <rect x="-12" y="-26" width="24" height="52" rx="12" fill="#93c5fd"/>
-      </g>
-      <g clip-path="url(#pill-bottom-half)">
-        <rect x="-12" y="-26" width="24" height="52" rx="12" fill="url(#pill-g)"/>
-      </g>
-      <line x1="-12" y1="0" x2="12" y2="0" stroke="#0f172a" stroke-width="2.5"/>
-      <g clip-path="url(#pill-shape)">
-        <text x="0" y="-13" text-anchor="middle" dominant-baseline="central" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="22" fill="#1e3a5f" transform="rotate(45,0,-13)">D</text>
-      </g>
-      <g clip-path="url(#pill-shape)">
-        <text x="0" y="13" text-anchor="middle" dominant-baseline="central" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="22" fill="#e2e8f0" transform="rotate(45,0,13)">Q</text>
-      </g>
-    </g>
-  </g>
+  <!-- Logo icon -->
+  <image x="100" y="215" width="200" height="200" href="data:image/jpeg;base64,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"/>
 
   <!-- Title text -->
   <text x="420" y="260" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="72" fill="#f8fafc">drugs-quiz</text>
