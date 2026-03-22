@@ -77,7 +77,7 @@ test.describe("Name the Class - Happy Path", () => {
     await page.goto("/");
 
     // Select 5 questions
-    await page.getByRole("button", { name: "5" }).click();
+    await page.getByRole("button", { name: "5", exact: true }).click();
 
     // Start quiz
     await page.getByRole("button", { name: "Start Quiz" }).click();
@@ -117,7 +117,7 @@ test.describe("Match Drug to Class - Happy Path", () => {
     await page.getByText("Match Drug to Class").click();
 
     // Select 5 questions
-    await page.getByRole("button", { name: "5" }).click();
+    await page.getByRole("button", { name: "5", exact: true }).click();
 
     // Start quiz
     await page.getByRole("button", { name: "Start Quiz" }).click();
@@ -170,7 +170,7 @@ test.describe("Brand/Generic Match - Happy Path", () => {
     await page.getByText("Brand/Generic Match").click();
 
     // Select 5 questions
-    await page.getByRole("button", { name: "5" }).click();
+    await page.getByRole("button", { name: "5", exact: true }).click();
 
     // Start quiz
     await page.getByRole("button", { name: "Start Quiz" }).click();
@@ -268,7 +268,7 @@ test.describe("Session History Persistence", () => {
     await page.goto("/");
 
     // Select 5 questions and start
-    await page.getByRole("button", { name: "5" }).click();
+    await page.getByRole("button", { name: "5", exact: true }).click();
     await page.getByRole("button", { name: "Start Quiz" }).click();
 
     await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
@@ -303,7 +303,7 @@ test.describe("Answer Review on Results", () => {
     await setupMocks(page);
     await page.goto("/");
 
-    await page.getByRole("button", { name: "5" }).click();
+    await page.getByRole("button", { name: "5", exact: true }).click();
     await page.getByRole("button", { name: "Start Quiz" }).click();
 
     await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
@@ -339,7 +339,7 @@ test.describe("Study Weak Drugs Flashcard", () => {
     await setupMocks(page);
     await page.goto("/");
 
-    await page.getByRole("button", { name: "5" }).click();
+    await page.getByRole("button", { name: "5", exact: true }).click();
     await page.getByRole("button", { name: "Start Quiz" }).click();
 
     await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
@@ -414,7 +414,7 @@ test.describe("Exit Mid-Quiz with Confirmation", () => {
     await setupMocks(page);
     await page.goto("/");
 
-    await page.getByRole("button", { name: "5" }).click();
+    await page.getByRole("button", { name: "5", exact: true }).click();
     await page.getByRole("button", { name: "Start Quiz" }).click();
 
     // Wait for first question
@@ -462,7 +462,7 @@ test.describe("Progress Bar", () => {
     await setupMocks(page);
     await page.goto("/");
 
-    await page.getByRole("button", { name: "5" }).click();
+    await page.getByRole("button", { name: "5", exact: true }).click();
     await page.getByRole("button", { name: "Start Quiz" }).click();
 
     // Wait for first question
