@@ -23,6 +23,9 @@ Document hierarchy: PRD → Spec → Plan → User Test Cases → Automated Test
 | Bundler | Vite | 6.x |
 | Styling | Tailwind CSS | 4.x |
 | BFF Proxy | Hono | latest |
+| ORM | Drizzle ORM | latest |
+| Database | PostgreSQL | 16 |
+| Auth | Google OAuth 2.0 (arctic) + JWT (jose) | latest |
 | Testing | Vitest + React Testing Library | latest |
 | E2E | Playwright | latest |
 | Deploy Webhook | FastAPI (Python) | latest |
@@ -58,27 +61,48 @@ docker compose up                # Run full stack locally (nginx + BFF)
 ```
 Browser (React SPA)
   → nginx (:8080, serves static assets + proxies /api/)
-    → Hono BFF (:3001, injects X-API-Key)
+    → Hono BFF (:3001, injects X-API-Key, auth middleware)
       → drug-gate API (upstream)
+      → PostgreSQL (users, quiz_sessions)
 ```
 
 In development, Vite's dev server proxy replaces nginx + BFF, injecting the API key directly.
+
+### Auth Flow
+
+```
+Browser → /api/auth/google → Google OAuth consent → /api/auth/google/callback
+  → BFF creates/finds user in DB → issues JWT (httpOnly cookie, 30-day expiry)
+  → redirect to app → AuthContext reads /api/auth/me → header shows user avatar
+```
+
+Auth is **additive** — all existing features work without an account. Authenticated users unlock cloud features (session sync, sharing).
 
 ### Key Directories
 ```
 src/                             # React application source
   components/                    # UI components (see Components below)
+  contexts/                      # React contexts (AuthContext)
   hooks/                         # Custom React hooks (see Hooks below)
   utils/                         # Utility functions (text.ts)
   services/                      # API client (api-client.ts) and question generators (quiz-generators.ts)
   types/                         # TypeScript type definitions (api.ts, quiz.ts)
 bff/                             # Hono BFF proxy server
-  src/index.ts                   # Proxy: /api/* → drug-gate with X-API-Key injection
+  src/index.ts                   # Proxy: /api/* → drug-gate with X-API-Key injection + auth routes
+  src/db/                        # Drizzle ORM: schema, connection, migrations
+    schema.ts                    # users + quiz_sessions table definitions
+    index.ts                     # Drizzle client + Postgres connection
+    migrate.ts                   # Auto-migration on startup
+  src/auth/                      # Auth layer
+    google.ts                    # OAuth routes (redirect, callback, /me, logout)
+    jwt.ts                       # JWT sign/verify utilities (jose)
+    middleware.ts                # Auth middleware for protected routes
+  drizzle/                       # Versioned SQL migration files
 deploy-hook/                     # Staging deploy webhook service (FastAPI + Python)
   app/main.py                    # Webhook handler: signature verify, compose pull, smoke tests
   apps.yaml                      # Per-app config (compose_dir, health_checks)
   docker-compose.yml             # Deploy-hook container config
-specs/                           # Feature specifications (16 spec files)
+specs/                           # Feature specifications (19 spec files)
 docs/                            # PRD, plans, milestones, sequence diagrams
   plans/                         # Implementation plans
   milestones/                    # Milestone tracking
@@ -104,6 +128,8 @@ Note: Unit/component tests are collocated next to source files (e.g., `QuizConfi
 | QuizResults | `src/components/QuizResults.tsx` | End-of-session results: score, breakdown, answer review, "Study Weak Drugs" option |
 | AnswerReviewSection | `src/components/AnswerReviewSection.tsx` | Collapsible per-question review with user answers vs correct answers |
 | FlashcardDrill | `src/components/FlashcardDrill.tsx` | Study mode for weak drugs: reveal card, show class and accuracy stats |
+| UserMenu | `src/components/UserMenu.tsx` | Sign-in button (unauthenticated) or user avatar + dropdown with sign-out (authenticated) |
+| ErrorBoundary | `src/components/ErrorBoundary.tsx` | React error boundary wrapping the app |
 
 ### Hooks
 
@@ -113,6 +139,13 @@ Note: Unit/component tests are collocated next to source files (e.g., `QuizConfi
 | useTheme | `src/hooks/useTheme.ts` | Dark mode with localStorage persistence and OS preference detection |
 | useSessionHistory | `src/hooks/useSessionHistory.ts` | Last 10 sessions in localStorage, personal best per quiz type, collapsible state |
 | useDrugPerformance | `src/hooks/useDrugPerformance.ts` | Spaced repetition: per-drug accuracy tracking, weight computation, weak drug detection (< 60% accuracy), 200-drug LRU eviction |
+| useAuth | `src/hooks/useAuth.ts` | Consumes AuthContext — provides user, isAuthenticated, isLoading, login(), logout() |
+
+### Contexts
+
+| Context | File | Description |
+|---------|------|-------------|
+| AuthContext | `src/contexts/AuthContext.tsx` | AuthProvider wraps the app, checks `/api/auth/me` on mount, manages auth state |
 
 ### API Integration
 
@@ -124,6 +157,24 @@ The app consumes the drug-gate API (see `frontend-api-contract.md`):
 - `GET /v1/drugs/ndc/{ndc}` — look up drug by NDC
 
 All requests go through `/api` — the BFF proxy (production) or Vite dev proxy (development) injects the `X-API-Key` header. The api-client (`src/services/api-client.ts`) is a thin typed wrapper with `DrugApiError` for non-OK responses.
+
+### Auth Endpoints (BFF)
+
+- `GET /api/auth/google` — initiate Google OAuth redirect (generates CSRF state cookie)
+- `GET /api/auth/google/callback` — handle OAuth callback, create/find user, issue JWT cookie
+- `GET /api/auth/me` — return current user profile (401 if not authenticated)
+- `POST /api/auth/logout` — clear JWT cookie
+
+JWT is stored as httpOnly cookie (`auth_token`), 30-day expiry, Secure + SameSite=Lax.
+
+### Database
+
+Drizzle ORM with PostgreSQL. Schema in `bff/src/db/schema.ts`:
+
+- **users** — id (UUID), email (unique), name, avatar_url, oauth_provider, created_at, updated_at
+- **quiz_sessions** — id (UUID), user_id (FK → users), quiz_type (enum), question_count, correct_count, percentage, completed_at, answers_json (JSONB)
+
+Migrations in `bff/drizzle/`, auto-run on BFF startup. Connection via `DATABASE_URL` env var.
 
 ### Question Generation
 
@@ -137,8 +188,10 @@ Quiz generators (`src/services/quiz-generators.ts`) use batched pre-fetching for
 
 ### Docker Compose
 
-- **`docker-compose.yml`**: Local development — builds from source (app + BFF)
+- **`docker-compose.yml`**: Local development — builds from source (app + BFF + Postgres)
 - **`docker-compose.staging.yml`**: Staging — pulls images from `dockerhub.calebdunn.tech`, uses `internal` network, separate `nginx-staging.conf`
+
+Services in `docker-compose.yml`: `app` (nginx frontend), `bff` (Hono proxy + auth + DB), `postgres` (PostgreSQL 16-alpine with persistent volume + healthcheck). BFF depends on Postgres being healthy before starting.
 
 ### Environments
 

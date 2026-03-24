@@ -435,7 +435,78 @@ sequenceDiagram
     Note over Hook: Background generation errors are silently<br/>skipped — only initial 2 questions are fatal
 ```
 
-## 13. Deploy Webhook Flow (CI to Staging)
+## 13. Google OAuth Login Flow
+
+The full authentication flow from browser click through Google consent to JWT session.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Browser as Browser (React SPA)
+    participant Auth as AuthContext
+    participant BFF as Hono BFF
+    participant Google as Google OAuth
+    participant DB as PostgreSQL
+
+    Note over Auth: On app load
+    Auth->>BFF: GET /api/auth/me (with cookie)
+    alt Valid JWT cookie
+        BFF->>BFF: Verify JWT (jose)
+        BFF->>DB: SELECT user by id
+        BFF-->>Auth: { id, email, name, avatarUrl }
+        Auth-->>Browser: Show user avatar + name in header
+    else No cookie or invalid
+        BFF-->>Auth: 401 Unauthorized
+        Auth-->>Browser: Show "Sign in with Google" button
+    end
+
+    Note over User: User clicks "Sign in with Google"
+    User->>Browser: Click sign-in button
+    Browser->>Auth: login()
+    Auth->>Browser: window.location.href = "/api/auth/google"
+    Browser->>BFF: GET /api/auth/google
+    BFF->>BFF: Generate CSRF state (crypto.randomUUID)
+    BFF->>BFF: Set oauth_state cookie (10min TTL)
+    BFF-->>Browser: 302 Redirect to Google
+
+    Browser->>Google: Authorization request (client_id, scope, state)
+    Google-->>User: Show consent screen
+    User->>Google: Approve access
+    Google-->>Browser: 302 Redirect to /api/auth/google/callback?code=...&state=...
+
+    Browser->>BFF: GET /api/auth/google/callback?code=...&state=...
+    BFF->>BFF: Validate CSRF state matches cookie
+    BFF->>Google: Exchange code for tokens (arctic)
+    Google-->>BFF: Access token
+    BFF->>Google: GET /oauth2/v2/userinfo (Bearer token)
+    Google-->>BFF: { email, name, picture }
+
+    alt New user
+        BFF->>DB: INSERT INTO users (email, name, avatar_url, oauth_provider)
+        DB-->>BFF: { id: new-uuid }
+    else Existing user
+        BFF->>DB: UPDATE users SET name, avatar_url, updated_at
+        DB-->>BFF: { id: existing-uuid }
+    end
+
+    BFF->>BFF: Sign JWT { sub: userId, email, name } (30-day expiry)
+    BFF-->>Browser: 302 Redirect to APP_URL + Set-Cookie: auth_token (httpOnly, Secure, SameSite=Lax)
+    Browser->>Auth: Page loads, useEffect calls /api/auth/me
+    Auth-->>Browser: Update state: user = { id, email, name, avatarUrl }
+    Browser-->>User: Header shows avatar + name
+
+    Note over User: Logout flow
+    User->>Browser: Click "Sign out" in dropdown
+    Browser->>Auth: logout()
+    Auth->>BFF: POST /api/auth/logout
+    BFF->>BFF: Delete auth_token cookie
+    BFF-->>Auth: { ok: true }
+    Auth-->>Browser: Clear user state
+    Browser-->>User: Header shows "Sign in with Google" button
+    Note over Browser: localStorage data (history, performance) preserved
+```
+
+## 14. Deploy Webhook Flow (CI to Staging)
 
 How GitHub Actions triggers a staging deployment via the deploy-hook service.
 
