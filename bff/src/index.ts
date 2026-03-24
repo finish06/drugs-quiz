@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
+import { runMigrations } from "./db/migrate.js";
 
 const app = new Hono();
 
@@ -52,6 +53,17 @@ app.get("/api/v1/*", async (c) => {
   }
 });
 
-serve({ fetch: app.fetch, port: PORT }, () => {
-  console.log(`BFF proxy listening on :${PORT}`);
-});
+async function start() {
+  try {
+    await runMigrations();
+  } catch (err) {
+    console.error("Migration failed:", err);
+    process.exit(1);
+  }
+
+  serve({ fetch: app.fetch, port: PORT }, () => {
+    console.log(`BFF proxy listening on :${PORT}`);
+  });
+}
+
+start();
