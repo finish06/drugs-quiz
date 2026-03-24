@@ -1,41 +1,37 @@
 # Session Handoff
-**Written:** 2026-03-21T20:00:00Z
+**Written:** 2026-03-23
 
 ## In Progress
-- M4: 3/4 features done. Full E2E remaining (cycle 8).
+- M5 cycle 9 complete. PR #8 awaiting human review + merge.
+- Cycle 10 (localStorage migration + shareable scores) not yet planned.
 
 ## Completed This Session
-- **M3 retro** — scores recorded (collab 7.0, methodology 7.2, swarm 5.5), promoted Alpha → Beta
-- **v0.3.0** tagged + released (ghcr.io + personal registry)
-- **BFF proxy** (cycle 5) — Hono in bff/, merged PR #4, deployed to staging
-- **Batched pre-fetching** (cycle 5) — Promise.allSettled in generators, perf test
-- **9 tier-1 bug fixes** (cycle 6) — merged PR #5, tagged v0.3.1, swarm-validated
-- **Automated staging deploy** (cycle 7) — FastAPI webhook in deploy-hook/, merged PR #6
-  - App-aware with apps.yaml config, HMAC signature verification
-  - CI pushes frontend + BFF images, triggers webhook, staging auto-deploys
-  - End-to-end tested: merge → CI → webhook → pull → restart → smoke tests → HTTP 200
-- **Staging redeployed** from /opt/drugs-quiz/ with BFF proxy + correct CORS
-- **Deploy-hook** running at /opt/deploy-hook/ on staging VM (port 9000)
-- **GitHub secrets** configured: WEBHOOK_SECRET, STAGING_WEBHOOK_URL
-- **.gitignore cleanup** — tsbuildinfo, vite artifacts, playwright-report, test-results, .swarm/
-- **Docs updated** — CLAUDE.md (components, hooks, architecture) + 13 sequence diagrams
+- **M5 milestone doc** — `docs/milestones/M5-go-social.md` created
+- **Cycle 9 plan** — `cycle-9.md` with db-schema-orm + google-oauth
+- **Specs** — `specs/db-schema-orm.md` (15 ACs) + `specs/google-oauth.md` (18 ACs)
+- **Plans** — `docs/plans/db-schema-orm-plan.md` + `docs/plans/google-oauth-plan.md`
+- **db-schema-orm** — Drizzle ORM in BFF, users + quiz_sessions tables, Postgres in docker-compose, auto-migrate, 19 schema tests
+- **google-oauth** — OAuth routes (arctic), JWT (jose), auth middleware, AuthContext, UserMenu, 31 auth tests
+- **PR #8 created** — https://github.com/finish06/drugs-quiz/pull/8
+- **262 total tests passing** (225 frontend + 37 BFF), types clean, lint clean
 
 ## Decisions Made
-- Beta maturity (promoted from alpha, evidence score 9/10)
-- Deploy-hook is app-aware central service (not per-app), config in apps.yaml
-- FastAPI + Python for webhook (not Hono)
-- HMAC-SHA256 signature verification for deploy security
-- CORS fail-closed on BFF (no CORS_ORIGIN = no cross-origin access)
-- Staging compose uses registry images (not local builds)
-- Deploy-hook needs /opt mounted + Docker config for registry auth
-- Health check URLs use host IP (container names not resolvable across networks)
-- Swarm false positives should be verified before acting (L-008)
+- Drizzle ORM (TypeScript-native, lightweight) over Prisma
+- arctic library for Google OAuth (simple, well-typed)
+- jose library for JWT (standard, no native deps)
+- Auth is additive — app works fully without account
+- JWT 30-day expiry in httpOnly cookie
+- useAuth hook in separate file to satisfy react-refresh lint
+- Instructor share links punted to backlog
+- v1.0.0 deferred to app store (M6+), M5 tags v0.5.0
 
 ## Blockers
-- None
+- Google Cloud Console OAuth credentials need to be configured before testing the OAuth flow end-to-end
+- DATABASE_URL needs to be set for staging/production
 
 ## Next Steps
-1. **Cycle 8: Full E2E** — Playwright tests for all quiz flows + error states (completes M4)
-2. **Tier 2 bugs** — 9 bugs from swarm audit (race condition, error boundary, etc.)
-3. **v0.4.0 tag** after M4 completion
-4. **M5: Go Social** — Google OAuth, shareable score cards, instructor links
+1. **Review + merge PR #8**
+2. **Configure Google OAuth credentials** in Google Cloud Console
+3. **Set env vars** on staging: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET, DATABASE_URL
+4. **Plan cycle 10** — localStorage migration + shareable score cards
+5. **Specs needed** — `specs/localstorage-migrate.md`, `specs/shareable-scores.md`

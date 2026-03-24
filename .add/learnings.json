@@ -140,6 +140,19 @@
       "date": "2026-03-22",
       "classified_by": "agent",
       "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-010",
+      "title": "Cycle 9 complete: db-schema-orm + google-oauth shipped in single away session",
+      "body": "Both features advanced SHAPED→VERIFIED in one session (~3 hours actual). 50 new tests added (212→262). Drizzle ORM schema tests work without a running DB (testing column metadata). Arctic + jose are lightweight OAuth/JWT choices — no native deps, fast install. Auth is additive pattern (AuthProvider defaults to unauthenticated) means zero changes to existing component tests.",
+      "scope": "project",
+      "stack": ["typescript", "react", "hono"],
+      "category": "process",
+      "severity": "medium",
+      "source": "drugs-quiz",
+      "date": "2026-03-23",
+      "classified_by": "agent",
+      "checkpoint_type": "retro"
     }
   ]
 }
