@@ -5,6 +5,8 @@ import { MatchingQuiz } from "@/components/MatchingQuiz";
 import { QuizResults } from "@/components/QuizResults";
 import { FlashcardDrill } from "@/components/FlashcardDrill";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { UserMenu } from "@/components/UserMenu";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
 import { useDrugPerformance } from "@/hooks/useDrugPerformance";
@@ -212,6 +214,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+    <AuthProvider>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-150">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors duration-150">
         <div className="mx-auto max-w-2xl px-4 py-5">
@@ -228,6 +231,7 @@ function App() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <UserMenu />
               <button
                 onClick={toggleTheme}
                 className="rounded-lg p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
@@ -265,6 +269,7 @@ function App() {
       </header>
       <main className="mx-auto max-w-2xl px-4 py-8">{renderContent()}</main>
     </div>
+    </AuthProvider>
     </ErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 import { runMigrations } from "./db/migrate.js";
+import { createAuthRouter } from "./auth/google.js";
 
 const app = new Hono();
 
@@ -25,6 +26,10 @@ if (CORS_ORIGIN) {
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 app.get("/api/health", (c) => c.json({ status: "ok" }));
+
+// Auth routes: /api/auth/*
+const authRouter = createAuthRouter();
+app.route("/api/auth", authRouter);
 
 app.get("/api/v1/*", async (c) => {
   const upstreamPath = c.req.path.replace(/^\/api/, "");
