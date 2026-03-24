@@ -2,9 +2,9 @@
 
 **Milestone:** M4 — Infrastructure + Quality Hardening
 **Maturity:** Beta
-**Status:** PLANNED
+**Status:** COMPLETE
 **Started:** 2026-03-21
-**Completed:** TBD
+**Completed:** 2026-03-22
 **Duration Budget:** ~4-5 hours (async, human returns in a few hours)
 
 ## Work Items

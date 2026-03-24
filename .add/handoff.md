@@ -1,32 +1,41 @@
 # Session Handoff
-**Written:** 2026-03-21T16:30:00Z
+**Written:** 2026-03-21T20:00:00Z
 
 ## In Progress
-- Cycle 7 (M4): Automated staging deploy — implementation complete, PR pending
+- M4: 3/4 features done. Full E2E remaining (cycle 8).
 
 ## Completed This Session
-- FastAPI deploy-hook in `deploy-hook/` — HMAC signature verification, smoke tests
-- CI updated: BFF beta image push + staging webhook trigger
-- `docker-compose.staging.yml` updated to use registry images (no local builds)
-- Spec written: specs/automated-staging.md (12 ACs)
-- 212 tests passing, types clean, lint clean
+- **M3 retro** — scores recorded (collab 7.0, methodology 7.2, swarm 5.5), promoted Alpha → Beta
+- **v0.3.0** tagged + released (ghcr.io + personal registry)
+- **BFF proxy** (cycle 5) — Hono in bff/, merged PR #4, deployed to staging
+- **Batched pre-fetching** (cycle 5) — Promise.allSettled in generators, perf test
+- **9 tier-1 bug fixes** (cycle 6) — merged PR #5, tagged v0.3.1, swarm-validated
+- **Automated staging deploy** (cycle 7) — FastAPI webhook in deploy-hook/, merged PR #6
+  - App-aware with apps.yaml config, HMAC signature verification
+  - CI pushes frontend + BFF images, triggers webhook, staging auto-deploys
+  - End-to-end tested: merge → CI → webhook → pull → restart → smoke tests → HTTP 200
+- **Staging redeployed** from /opt/drugs-quiz/ with BFF proxy + correct CORS
+- **Deploy-hook** running at /opt/deploy-hook/ on staging VM (port 9000)
+- **GitHub secrets** configured: WEBHOOK_SECRET, STAGING_WEBHOOK_URL
+- **.gitignore cleanup** — tsbuildinfo, vite artifacts, playwright-report, test-results, .swarm/
+- **Docs updated** — CLAUDE.md (components, hooks, architecture) + 13 sequence diagrams
 
 ## Decisions Made
-- FastAPI for webhook (Python, as requested)
-- GitHub HMAC-SHA256 signature verification
-- Docker container with host socket access, separate compose from drugs-quiz
-- Port 9000 for webhook listener
-- Staging auto-deploys on beta push, production stays manual
-- `WEBHOOK_SECRET` and `STAGING_WEBHOOK_URL` as GitHub repo secrets
+- Beta maturity (promoted from alpha, evidence score 9/10)
+- Deploy-hook is app-aware central service (not per-app), config in apps.yaml
+- FastAPI + Python for webhook (not Hono)
+- HMAC-SHA256 signature verification for deploy security
+- CORS fail-closed on BFF (no CORS_ORIGIN = no cross-origin access)
+- Staging compose uses registry images (not local builds)
+- Deploy-hook needs /opt mounted + Docker config for registry auth
+- Health check URLs use host IP (container names not resolvable across networks)
+- Swarm false positives should be verified before acting (L-008)
 
 ## Blockers
-- GitHub secrets need to be configured: `WEBHOOK_SECRET`, `STAGING_WEBHOOK_URL`
-- Deploy-hook container needs to be built and started on staging VM
-- Port 9000 may need firewall rule on staging VM
+- None
 
 ## Next Steps
-1. Human reviews PR
-2. Configure GitHub secrets
-3. Deploy webhook container on staging VM
-4. Test end-to-end: merge → CI → webhook → staging updated
-5. Cycle 8: full-e2e to complete M4
+1. **Cycle 8: Full E2E** — Playwright tests for all quiz flows + error states (completes M4)
+2. **Tier 2 bugs** — 9 bugs from swarm audit (race condition, error boundary, etc.)
+3. **v0.4.0 tag** after M4 completion
+4. **M5: Go Social** — Google OAuth, shareable score cards, instructor links
