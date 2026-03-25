@@ -1,32 +1,40 @@
 # Session Handoff
-**Written:** 2026-03-21T16:30:00Z
+**Written:** 2026-03-23
 
 ## In Progress
-- Cycle 7 (M4): Automated staging deploy — implementation complete, PR pending
+- M5 cycle 9 complete. PR #8 awaiting human review + merge.
+- M6 milestone roughed out with Capacitor iOS spec.
+- Cycle 10 (localStorage migration + shareable scores) not yet planned.
 
 ## Completed This Session
-- FastAPI deploy-hook in `deploy-hook/` — HMAC signature verification, smoke tests
-- CI updated: BFF beta image push + staging webhook trigger
-- `docker-compose.staging.yml` updated to use registry images (no local builds)
-- Spec written: specs/automated-staging.md (12 ACs)
-- 212 tests passing, types clean, lint clean
+- **M5 planning** — milestone doc, cycle 9 plan, 2 specs, 2 plans
+- **db-schema-orm** — Drizzle ORM, users + quiz_sessions tables, Postgres in docker-compose, 19 tests
+- **google-oauth** — OAuth routes (arctic), JWT (jose), auth middleware, AuthContext, UserMenu, 31 tests
+- **PR #8** — https://github.com/finish06/drugs-quiz/pull/8 (262 total tests)
+- **M6 milestone doc** — `docs/milestones/M6-compete-go-native.md`
+- **Capacitor iOS spec** — `specs/capacitor-ios.md` (24 ACs, 6 TCs)
+- **PRD updated** — M3/M4 → DONE, M5 → NOW, maturity → Beta, M5/M6 scope changes
+- **CLAUDE.md updated** — auth components, DB, contexts, hooks, auth endpoints, docker-compose
+- **CHANGELOG.md updated** — v0.1.0 through v0.4.0 + unreleased
+- **Sequence diagrams** — added OAuth login flow (diagram 13)
 
 ## Decisions Made
-- FastAPI for webhook (Python, as requested)
-- GitHub HMAC-SHA256 signature verification
-- Docker container with host socket access, separate compose from drugs-quiz
-- Port 9000 for webhook listener
-- Staging auto-deploys on beta push, production stays manual
-- `WEBHOOK_SECRET` and `STAGING_WEBHOOK_URL` as GitHub repo secrets
+- Drizzle ORM (lightweight, TypeScript-native) over Prisma
+- arctic + jose for OAuth/JWT (no native deps)
+- Auth is additive — app works without account
+- Instructor share links punted to backlog
+- v1.0.0 deferred to App Store (M6); M5 tags v0.5.0
+- Capacitor iOS: hybrid (bundled assets + remote API), iOS only for M6
+- App name "Rx Quiz", bundle ID `com.calebdunn.rxquiz`
+- TestFlight first, then App Store for v1.0.0
 
 ## Blockers
-- GitHub secrets need to be configured: `WEBHOOK_SECRET`, `STAGING_WEBHOOK_URL`
-- Deploy-hook container needs to be built and started on staging VM
-- Port 9000 may need firewall rule on staging VM
+- Google Cloud Console OAuth credentials needed
+- Apple Developer Program enrollment ($99/year) needed for M6
+- DATABASE_URL needed for staging/production
 
 ## Next Steps
-1. Human reviews PR
-2. Configure GitHub secrets
-3. Deploy webhook container on staging VM
-4. Test end-to-end: merge → CI → webhook → staging updated
-5. Cycle 8: full-e2e to complete M4
+1. **Review + merge PR #8**
+2. **Configure Google OAuth credentials** + env vars on staging
+3. **Plan cycle 10** — specs for localstorage-migrate + shareable-scores
+4. **Remaining M6 specs** — pwa-offline, exam-countdown, school-leaderboards

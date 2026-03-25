@@ -82,7 +82,7 @@ SSH key for staging access will be generated in the project directory for direct
 
 ## 6. Milestones & Roadmap
 
-### Current Maturity: Alpha
+### Current Maturity: Beta
 
 ### Roadmap
 
@@ -90,10 +90,10 @@ SSH key for staging access will be generated in the project directory for direct
 |-----------|------|-----------------|--------|------------------|
 | M1: MVP Quiz | Core quiz experience with 3 quiz types and scoring | Alpha | DONE | All 3 quiz types work, scoring displays, responsive UI |
 | M2: SEO & Discoverability | Organic search discovery and social sharing | Alpha | DONE | OG tags, structured data, sitemap, robots.txt, keyword-optimized meta |
-| M3: Close the Learning Loop | Transform quiz into a study tool — answer review, spaced repetition, session history, Quick 5 | Alpha | NOW | Daily active usage, 30%+ 7-day return rate, users learn from mistakes |
-| M4: Infrastructure + Quality Hardening | BFF proxy, automated staging deploy, full E2E, batched pre-fetching | Alpha | NEXT | Automated staging deploys, full E2E coverage, sub-1s quiz load on warm cache |
-| M5: Go Social — Accounts + Viral Distribution | Google OAuth, shareable score cards, instructor share links, v1.0.0 | Beta | NEXT | 20%+ account signup rate, 1K organic MAU within 60 days |
-| M6: Compete + Go Native | Exam countdown, school leaderboards, PWA + offline | Beta | LATER | School leaderboard adoption, PWA installs, exam mode completion >60% |
+| M3: Close the Learning Loop | Transform quiz into a study tool — answer review, spaced repetition, session history, Quick 5 | Alpha | DONE | Daily active usage, 30%+ 7-day return rate, users learn from mistakes |
+| M4: Infrastructure + Quality Hardening | BFF proxy, automated staging deploy, full E2E, batched pre-fetching | Beta | DONE | Automated staging deploys, full E2E coverage, sub-1s quiz load on warm cache |
+| M5: Go Social — Accounts + Viral Distribution | Google OAuth, shareable score cards, v0.5.0 | Beta | NOW | 20%+ account signup rate, 1K organic MAU within 60 days |
+| M6: Compete + Go Native | Exam countdown, school leaderboards, PWA + offline, Capacitor iOS, v1.0.0 | Beta | NEXT | App Store listing, school leaderboard adoption, PWA installs, exam mode completion >60% |
 | Backlog: Monetization | Pro tier, advanced analytics, referral program | — | LATER | Free-first strategy — revisit when MAU justifies it |
 
 ### Milestone Detail
@@ -132,7 +132,7 @@ SSH key for staging access will be generated in the project directory for direct
 - Sitemap and robots.txt
 - Keyword-optimized meta descriptions
 
-#### M3: Close the Learning Loop [NOW]
+#### M3: Close the Learning Loop [DONE]
 **Goal:** Transform the quiz from a test into a study tool. Give users a reason to come back tomorrow.
 
 **Appetite:** 2-3 weeks
@@ -154,7 +154,7 @@ SSH key for staging access will be generated in the project directory for direct
 - [ ] All data persists in localStorage (no backend required)
 - [ ] 30%+ 7-day return rate
 
-#### M4: Infrastructure + Quality Hardening [NEXT]
+#### M4: Infrastructure + Quality Hardening [DONE]
 **Goal:** Build the technical foundation for user accounts and social features. Make the existing product bulletproof.
 
 **Appetite:** 2 weeks
@@ -173,41 +173,48 @@ SSH key for staging access will be generated in the project directory for direct
 - [ ] Full E2E coverage for all quiz flows and error states
 - [ ] Quiz generation uses batched pre-fetching, sub-1s load on warm cache
 
-#### M5: Go Social — Accounts + Viral Distribution [NEXT]
+#### M5: Go Social — Accounts + Viral Distribution [NOW]
 **Goal:** Add Google OAuth accounts, shareable results, and the viral distribution loop. Convert localStorage users to cloud-synced accounts.
 
-**Appetite:** 3-4 weeks
+**Appetite:** 2 weeks
 
 **Target maturity:** Beta
 
 **Features:**
-- **Google OAuth + User Accounts** — OAuth via BFF, JWT sessions. "Sync your localStorage history to the cloud" upgrade path.
+- **Google OAuth + User Accounts** — OAuth via BFF, JWT sessions. "Sync your localStorage history to the cloud" upgrade path. ✅ (PR #8)
+- **Database Schema + ORM** — Drizzle ORM with Postgres, users + quiz_sessions tables. ✅ (PR #8)
 - **Shareable Score Cards** — Auto-generated result card with share to Reddit/Twitter/iMessage. Every session becomes a distribution event.
-- **Instructor Share Links** — Pre-configured quiz URLs for specific drug classes. B2B2C wedge — one professor = 120 students.
-- **Semantic Release (v1.0.0)** — Ship the first public release with changelog. Signals maturity to instructors and institutions.
+- **localStorage Migration** — "Sync your history to the cloud" on first login.
+
+**Scope changes from PRD v0.2.0:**
+- Instructor share links punted to backlog
+- v1.0.0 deferred to App Store availability (M6); tagging v0.5.0 instead
 
 **Success criteria:**
-- [ ] Google OAuth login via BFF
+- [x] Google OAuth login via BFF
+- [x] Database schema with users + quiz_sessions via ORM
 - [ ] localStorage data migrates to cloud on account creation
 - [ ] Shareable score cards generate and display correctly
-- [ ] Instructor share links create pre-configured quizzes
-- [ ] v1.0.0 tagged and released with changelog
+- [ ] v0.5.0 tagged and released
 - [ ] 20%+ account signup rate
 - [ ] 1,000 organic MAU within 60 days
 
-#### M6: Compete + Go Native [LATER]
-**Goal:** Add the competitive layer and native experience that makes drugs-quiz the default pharmacy study tool.
+#### M6: Compete + Go Native [NEXT]
+**Goal:** Add the competitive layer and native iOS experience that makes drugs-quiz the default pharmacy study tool. Ship v1.0.0 to the App Store.
 
 **Appetite:** 3-4 weeks
 
 **Target maturity:** Beta
 
 **Features:**
+- **Capacitor iOS App** — Wrap React SPA in native shell, OAuth deep links, haptic feedback, native share sheet, App Store submission. The v1.0.0 gate.
+- **PWA + Offline Support** — Installable from browser. Offline quiz with cached data. Push notifications for streak reminders.
 - **Exam Countdown Mode** — NAPLEX/PTCE simulation with daily quota and timer. The word-of-mouth feature for faculty recommendations.
 - **School-Affiliated Leaderboards** — Peer-group competition drives cohort engagement. Students recruit classmates to climb rankings.
-- **PWA + Offline Support** — Installable from browser. Offline quiz with cached data. Push notifications for streak reminders.
 
 **Success criteria:**
+- [ ] iOS app on App Store (or TestFlight)
+- [ ] v1.0.0 tagged after App Store approval
 - [ ] Exam countdown mode with daily quota and timer
 - [ ] School-affiliated leaderboards functional
 - [ ] PWA installable with offline quiz support

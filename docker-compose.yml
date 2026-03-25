@@ -13,6 +13,30 @@ services:
       - .env
     environment:
       - PORT=3001
+      - DATABASE_URL=postgres://drugs_quiz:${POSTGRES_PASSWORD:-localdev}@postgres:5432/drugs_quiz
     expose:
       - "3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: drugs_quiz
+      POSTGRES_USER: drugs_quiz
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drugs_quiz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
