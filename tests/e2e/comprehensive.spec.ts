@@ -69,6 +69,51 @@ async function setupMocks(page: Page, options?: { failApi?: boolean }) {
   });
 }
 
+// --- Helpers ---
+
+/** Answer a matching question by pairing left items with right items in order */
+async function answerMatchingQuestion(page: Page) {
+  // The matching quiz renders a 2-column grid. Left column has drug buttons, right has class buttons.
+  // Select each left item then its corresponding right item to form pairs.
+  const grid = page.locator(".grid.grid-cols-2");
+  const columns = grid.locator("> div");
+  const leftButtons = columns.nth(0).locator("button");
+  const rightButtons = columns.nth(1).locator("button");
+
+  const leftCount = await leftButtons.count();
+  for (let i = 0; i < leftCount; i++) {
+    await leftButtons.nth(i).click();
+    await rightButtons.nth(i).click();
+  }
+
+  // Click Check Answers (appears once all items are paired)
+  const checkButton = page.getByRole("button", { name: "Check Answers" });
+  await checkButton.waitFor({ timeout: 3000 });
+  await checkButton.click();
+
+  // Click Next Question or See Results
+  const nextButton = page.getByRole("button", { name: /Next Question|See Results/ });
+  await nextButton.waitFor({ timeout: 3000 });
+  await nextButton.click();
+}
+
+/** Answer a multiple-choice question by clicking the first Class option */
+async function answerMcQuestion(page: Page, pickLast = false) {
+  const options = page.locator("button").filter({ hasText: /Class \d+/ });
+  await options.first().waitFor({ timeout: 5000 });
+  if (pickLast) {
+    const count = await options.count();
+    await options.nth(count - 1).click();
+  } else {
+    await options.first().click();
+  }
+
+  // Click Next Question or See Results
+  const nextButton = page.getByRole("button", { name: /Next Question|See Results/ });
+  await nextButton.waitFor({ timeout: 3000 });
+  await nextButton.click();
+}
+
 // --- Tests ---
 
 test.describe("Name the Class - Happy Path", () => {
@@ -85,22 +130,10 @@ test.describe("Name the Class - Happy Path", () => {
     // Wait for first question to appear
     await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
 
-    // Answer 5 questions by clicking the first option each time
+    // Answer 5 questions
     for (let i = 0; i < 5; i++) {
-      // Wait for the question text
       await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 5000 });
-
-      // Click the first option button (MC options are rendered as buttons)
-      const options = page.locator('[data-testid="option-button"], button').filter({ hasText: /Class/ });
-      const firstOption = options.first();
-      await firstOption.waitFor({ timeout: 5000 });
-      await firstOption.click();
-
-      // Click Next (or see results on last question)
-      const nextButton = page.getByRole("button", { name: /Next|View Results/ });
-      if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await nextButton.click();
-      }
+      await answerMcQuestion(page);
     }
 
     // Should see results with percentage
@@ -123,37 +156,12 @@ test.describe("Match Drug to Class - Happy Path", () => {
     await page.getByRole("button", { name: "Start Quiz" }).click();
 
     // Wait for matching UI to appear
-    await expect(page.getByText(/Question \d+ of 5/).or(page.getByText("Generating"))).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 15000 });
 
-    // For each matching question, click left items then right items to pair them
+    // Answer 5 matching questions
     for (let q = 0; q < 5; q++) {
       await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 5000 });
-
-      // Get left and right items - matching quiz has two columns
-      const leftItems = page.locator('[data-testid="left-item"], [data-side="left"] button');
-      const rightItems = page.locator('[data-testid="right-item"], [data-side="right"] button');
-
-      // Try to make matches - click left then right for each pair
-      const leftCount = await leftItems.count().catch(() => 0);
-      if (leftCount > 0) {
-        for (let i = 0; i < leftCount; i++) {
-          await leftItems.nth(i).click();
-          await rightItems.nth(i).click();
-        }
-      }
-
-      // Click Check Answers / Submit
-      const checkButton = page.getByRole("button", { name: /Check Answers|Submit|Next|View Results/ });
-      if (await checkButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await checkButton.click();
-      }
-
-      // If there's a Next button after checking, click it
-      const nextButton = page.getByRole("button", { name: /Next|View Results/ });
-      if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await nextButton.click();
-      }
+      await answerMatchingQuestion(page);
     }
 
     // Should see results
@@ -176,33 +184,12 @@ test.describe("Brand/Generic Match - Happy Path", () => {
     await page.getByRole("button", { name: "Start Quiz" }).click();
 
     // Wait for quiz to load
-    await expect(page.getByText(/Question \d+ of 5/).or(page.getByText("Generating"))).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 15000 });
 
     // Answer all matching questions
     for (let q = 0; q < 5; q++) {
       await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 5000 });
-
-      const leftItems = page.locator('[data-testid="left-item"], [data-side="left"] button');
-      const rightItems = page.locator('[data-testid="right-item"], [data-side="right"] button');
-
-      const leftCount = await leftItems.count().catch(() => 0);
-      if (leftCount > 0) {
-        for (let i = 0; i < leftCount; i++) {
-          await leftItems.nth(i).click();
-          await rightItems.nth(i).click();
-        }
-      }
-
-      const checkButton = page.getByRole("button", { name: /Check Answers|Submit|Next|View Results/ });
-      if (await checkButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await checkButton.click();
-      }
-
-      const nextButton = page.getByRole("button", { name: /Next|View Results/ });
-      if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await nextButton.click();
-      }
+      await answerMatchingQuestion(page);
     }
 
     // Should see results with percentage
@@ -219,41 +206,20 @@ test.describe("Quick 5 Mixed Quiz", () => {
     await page.getByRole("button", { name: /Quick 5/i }).click();
 
     // Wait for quiz to load
-    await expect(
-      page.getByText(/Question \d+ of 5/).or(page.getByText("Generating")),
-    ).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 15000 });
 
     // Answer 5 questions (mix of MC and matching)
     for (let q = 0; q < 5; q++) {
       await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 5000 });
 
-      // Check if it's a multiple-choice or matching question
-      const mcOptions = page.locator('[data-testid="option-button"], button').filter({ hasText: /Class/ });
-      const leftItems = page.locator('[data-testid="left-item"], [data-side="left"] button');
+      // Detect question type: matching has a 2-col grid, MC has Class option buttons
+      const grid = page.locator(".grid.grid-cols-2");
+      const isMatching = await grid.isVisible({ timeout: 1000 }).catch(() => false);
 
-      const mcCount = await mcOptions.count().catch(() => 0);
-      const matchCount = await leftItems.count().catch(() => 0);
-
-      if (mcCount > 0) {
-        // Multiple choice - click first option
-        await mcOptions.first().click();
-      } else if (matchCount > 0) {
-        // Matching - pair items
-        const rightItems = page.locator('[data-testid="right-item"], [data-side="right"] button');
-        for (let i = 0; i < matchCount; i++) {
-          await leftItems.nth(i).click();
-          await rightItems.nth(i).click();
-        }
-        const checkButton = page.getByRole("button", { name: /Check Answers|Submit/ });
-        if (await checkButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await checkButton.click();
-        }
-      }
-
-      const nextButton = page.getByRole("button", { name: /Next|View Results/ });
-      if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await nextButton.click();
+      if (isMatching) {
+        await answerMatchingQuestion(page);
+      } else {
+        await answerMcQuestion(page);
       }
     }
 
@@ -276,15 +242,7 @@ test.describe("Session History Persistence", () => {
     // Answer all 5 questions quickly
     for (let i = 0; i < 5; i++) {
       await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 5000 });
-      const options = page.locator('[data-testid="option-button"], button').filter({ hasText: /Class/ });
-      const firstOption = options.first();
-      await firstOption.waitFor({ timeout: 5000 });
-      await firstOption.click();
-
-      const nextButton = page.getByRole("button", { name: /Next|View Results/ });
-      if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await nextButton.click();
-      }
+      await answerMcQuestion(page);
     }
 
     // Should see results
@@ -293,8 +251,8 @@ test.describe("Session History Persistence", () => {
     // Click New Quiz to go back to config
     await page.getByRole("button", { name: /New Quiz/i }).click();
 
-    // Should see session history with a recent entry
-    await expect(page.getByText(/Recent Sessions/i).or(page.getByText(/Name the Class/i))).toBeVisible({ timeout: 5000 });
+    // Should see session history heading
+    await expect(page.getByRole("heading", { name: /Recent Sessions/i })).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -310,14 +268,7 @@ test.describe("Answer Review on Results", () => {
 
     for (let i = 0; i < 5; i++) {
       await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 5000 });
-      const options = page.locator('[data-testid="option-button"], button').filter({ hasText: /Class/ });
-      await options.first().waitFor({ timeout: 5000 });
-      await options.first().click();
-
-      const nextButton = page.getByRole("button", { name: /Next|View Results/ });
-      if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await nextButton.click();
-      }
+      await answerMcQuestion(page);
     }
 
     // Should see results
@@ -329,8 +280,8 @@ test.describe("Answer Review on Results", () => {
       await reviewSection.click();
     }
 
-    // Verify drug names are visible in results (from mock data they contain "drug-" prefix)
-    await expect(page.getByText(/drug-/i).first()).toBeVisible({ timeout: 5000 });
+    // Verify drug names are visible in results (from mock data they contain "Drug-" prefix)
+    await expect(page.getByText(/Drug-Class/i).first()).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -344,19 +295,10 @@ test.describe("Study Weak Drugs Flashcard", () => {
 
     await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
 
-    // Answer questions - deliberately pick wrong answers by clicking non-first options when possible
+    // Answer questions - deliberately pick wrong answers
     for (let i = 0; i < 5; i++) {
       await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 5000 });
-      const options = page.locator('[data-testid="option-button"], button').filter({ hasText: /Class/ });
-      await options.first().waitFor({ timeout: 5000 });
-      // Click last option (likely wrong)
-      const count = await options.count();
-      await options.nth(count - 1).click();
-
-      const nextButton = page.getByRole("button", { name: /Next|View Results/ });
-      if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await nextButton.click();
-      }
+      await answerMcQuestion(page, true); // pick last option (likely wrong)
     }
 
     // Should see results
@@ -367,14 +309,11 @@ test.describe("Study Weak Drugs Flashcard", () => {
     if (await studyButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await studyButton.click();
 
-      // Should see flashcard UI
-      await expect(page.getByText(/Tap|Flip|Reveal/i).or(page.getByText(/drug-/i))).toBeVisible({ timeout: 5000 });
+      // Should see flashcard UI — use first() to avoid strict mode
+      await expect(page.getByRole("button", { name: /Tap to reveal/i })).toBeVisible({ timeout: 5000 });
 
       // Tap to reveal answer
-      const flashcard = page.locator('[data-testid="flashcard"], .cursor-pointer').first();
-      if (await flashcard.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await flashcard.click();
-      }
+      await page.getByRole("button", { name: /Tap to reveal/i }).click();
 
       // Look for Next button in flashcard mode
       const nextFlashcard = page.getByRole("button", { name: /Next/i });
@@ -420,8 +359,8 @@ test.describe("Exit Mid-Quiz with Confirmation", () => {
     // Wait for first question
     await expect(page.getByText(/Question \d+ of 5/)).toBeVisible({ timeout: 10000 });
 
-    // Answer one question
-    const options = page.locator('[data-testid="option-button"], button').filter({ hasText: /Class/ });
+    // Answer one question (just click an option, don't click Next)
+    const options = page.locator("button").filter({ hasText: /Class \d+/ });
     await options.first().waitFor({ timeout: 5000 });
     await options.first().click();
 
@@ -471,13 +410,13 @@ test.describe("Progress Bar", () => {
     // Verify progress indicator shows question 1 of 5
     await expect(page.getByText(/1 of 5|Question 1/)).toBeVisible();
 
-    // Answer first question
-    const options = page.locator('[data-testid="option-button"], button').filter({ hasText: /Class/ });
+    // Answer first question (click option, then Next)
+    const options = page.locator("button").filter({ hasText: /Class \d+/ });
     await options.first().waitFor({ timeout: 5000 });
     await options.first().click();
 
     // Click Next
-    const nextButton = page.getByRole("button", { name: /Next/ });
+    const nextButton = page.getByRole("button", { name: /Next Question/ });
     if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await nextButton.click();
     }

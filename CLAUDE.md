@@ -199,6 +199,25 @@ Services in `docker-compose.yml`: `app` (nginx frontend), `bff` (Hono proxy + au
 - **Staging:** Dedicated VM on homelab, deployed via deploy-hook webhook, images from private registry
 - **Production:** AWS EC2 instance
 
+### Environment Variables
+
+All env vars are documented in `.env.example`. Key variables:
+
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `DRUG_GATE_URL` | Upstream drug-gate API URL | Yes |
+| `DRUG_GATE_API_KEY` | API key for drug-gate | Yes |
+| `DATABASE_URL` | PostgreSQL connection string | Yes (BFF) |
+| `POSTGRES_PASSWORD` | Postgres password (docker-compose) | Yes (local) |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 client ID | Yes (auth) |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 client secret | Yes (auth) |
+| `JWT_SECRET` | Secret for signing JWT tokens (min 32 chars) | Yes (auth) |
+| `APP_URL` | Application URL for OAuth redirects | Yes (auth) |
+| `CORS_ORIGIN` | Allowed CORS origin (optional, same-origin if unset) | No |
+| `PORT` | BFF listen port (default: 3001) | No |
+
+**GCP Project:** `rx-quiz-app` (Google Cloud project for OAuth credentials)
+
 ### Deploy Webhook
 
 The `deploy-hook/` service runs on the staging VM and handles automated deployments:
