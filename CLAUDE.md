@@ -160,8 +160,8 @@ All requests go through `/api` — the BFF proxy (production) or Vite dev proxy 
 
 ### Auth Endpoints (BFF)
 
-- `GET /api/auth/google` — initiate Google OAuth redirect (generates CSRF state cookie)
-- `GET /api/auth/google/callback` — handle OAuth callback, create/find user, issue JWT cookie
+- `GET /api/auth/google` — initiate Google OAuth redirect (generates CSRF state + PKCE code verifier cookies)
+- `GET /api/auth/google/callback` — handle OAuth callback (PKCE verification), create/find user, issue JWT cookie
 - `GET /api/auth/me` — return current user profile (401 if not authenticated)
 - `POST /api/auth/logout` — clear JWT cookie
 

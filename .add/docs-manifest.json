@@ -1,175 +1,174 @@
 {
   "$schema": "https://github.com/MountainUnicorn/add/docs-manifest.schema.json",
-  "generated": "2026-03-16",
-  "project": "drugs-quiz",
-  "type": "frontend-spa",
-  "framework": "React 19 + Vite + TypeScript",
-  "entryPoint": "src/main.tsx",
-  "components": [
+  "version": "1.0.0",
+  "generated": "2026-03-24T14:30:00Z",
+  "stack": {
+    "language": "typescript",
+    "framework": "react",
+    "backend": "hono",
+    "database": "postgresql",
+    "doc_tools": ["none"]
+  },
+  "directories": {
+    "handlers": ["bff/src/auth/", "bff/src/"],
+    "models": ["bff/src/db/"],
+    "schemas": ["src/types/"],
+    "services": ["src/services/"],
+    "components": ["src/components/"],
+    "hooks": ["src/hooks/"],
+    "contexts": ["src/contexts/"],
+    "utils": ["src/utils/"],
+    "tests": ["tests/"],
+    "docs": ["docs/"]
+  },
+  "routes": [
     {
-      "name": "App",
-      "path": "src/App.tsx",
-      "description": "Root application component. Orchestrates the quiz flow state machine: config -> loading -> in-progress -> results/error. Renders the appropriate child component based on session state.",
-      "props": null,
-      "stateManagement": "useQuizSession hook",
-      "children": ["QuizConfig", "MultipleChoice", "MatchingQuiz", "QuizResults"]
+      "method": "GET",
+      "path": "/health",
+      "handler_file": "bff/src/index.ts",
+      "handler_function": "inline",
+      "middleware": [],
+      "tags": ["health"],
+      "response_model": "{ status: 'ok' }"
     },
     {
-      "name": "QuizConfig",
-      "path": "src/components/QuizConfig.tsx",
-      "description": "Quiz configuration screen. Lets user select quiz type (3 options) and question count (5/10/15/20). Calls onStart with the chosen config.",
-      "props": {
-        "onStart": "(config: QuizConfig) => void"
-      },
-      "localState": ["selectedType: QuizType", "questionCount: number"],
-      "testFile": "src/components/QuizConfig.test.tsx"
+      "method": "GET",
+      "path": "/api/health",
+      "handler_file": "bff/src/index.ts",
+      "handler_function": "inline",
+      "middleware": [],
+      "tags": ["health"],
+      "response_model": "{ status: 'ok' }"
     },
     {
-      "name": "MultipleChoice",
-      "path": "src/components/MultipleChoice.tsx",
-      "description": "Renders a single Name-the-Class multiple-choice question. Shows drug name, 4 answer options, progress bar. Highlights correct/incorrect on answer, then shows Next/See Results button.",
-      "props": {
-        "question": "MultipleChoiceQuestion",
-        "onAnswer": "(correct: boolean) => void",
-        "onNext": "() => void",
-        "questionNumber": "number",
-        "totalQuestions": "number"
-      },
-      "localState": ["selectedOption: string | null", "answered: boolean"],
-      "testFile": "src/components/MultipleChoice.test.tsx"
+      "method": "GET",
+      "path": "/api/v1/*",
+      "handler_file": "bff/src/index.ts",
+      "handler_function": "proxy",
+      "middleware": ["cors"],
+      "tags": ["proxy"],
+      "response_model": "passthrough from drug-gate"
     },
     {
-      "name": "MatchingQuiz",
-      "path": "src/components/MatchingQuiz.tsx",
-      "description": "Renders a matching question (drug-to-class or brand-to-generic). Two-column layout where user clicks left item then right item to form pairs. Color-coded pair indicators. Shows correct answers after submit.",
-      "props": {
-        "question": "MatchingQuestion",
-        "onAnswer": "(correct: boolean) => void",
-        "onNext": "() => void",
-        "questionNumber": "number",
-        "totalQuestions": "number",
-        "leftLabel": "string",
-        "rightLabel": "string"
-      },
-      "localState": ["pairs: Record<string, string>", "selectedLeft: string | null", "submitted: boolean"],
-      "testFile": "src/components/MatchingQuiz.test.tsx"
+      "method": "GET",
+      "path": "/api/auth/google",
+      "handler_file": "bff/src/auth/google.ts",
+      "handler_function": "GET /google",
+      "middleware": ["cors"],
+      "tags": ["auth"],
+      "response_model": "302 redirect to Google"
     },
     {
-      "name": "QuizResults",
-      "path": "src/components/QuizResults.tsx",
-      "description": "Displays end-of-session results: percentage score with color-coded grade, correct/incorrect/total breakdown, per-question dot indicators, and Retry/New Quiz buttons.",
-      "props": {
-        "results": "QuizResults",
-        "onNewQuiz": "() => void",
-        "onRetry": "() => void"
-      },
-      "testFile": "src/components/QuizResults.test.tsx"
+      "method": "GET",
+      "path": "/api/auth/google/callback",
+      "handler_file": "bff/src/auth/google.ts",
+      "handler_function": "GET /google/callback",
+      "middleware": ["cors"],
+      "tags": ["auth"],
+      "response_model": "302 redirect to APP_URL + Set-Cookie"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "handler_file": "bff/src/auth/google.ts",
+      "handler_function": "GET /me",
+      "middleware": ["cors", "authMiddleware"],
+      "tags": ["auth"],
+      "response_model": "{ id, email, name, avatarUrl }"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "handler_file": "bff/src/auth/google.ts",
+      "handler_function": "POST /logout",
+      "middleware": ["cors"],
+      "tags": ["auth"],
+      "response_model": "{ ok: true }"
     }
   ],
-  "hooks": [
+  "middleware_chain": [
     {
-      "name": "useQuizSession",
-      "path": "src/hooks/useQuizSession.ts",
-      "description": "Core session state machine. Manages quiz lifecycle: start (generates questions via API), submit answers, advance questions, compute results, reset. Handles loading and error states.",
-      "returns": {
-        "session": "QuizSession | null",
-        "results": "QuizResults | null",
-        "error": "string | null",
-        "startQuiz": "(config: QuizConfig) => Promise<void>",
-        "submitAnswer": "(correct: boolean) => void",
-        "nextQuestion": "() => void",
-        "resetQuiz": "() => void"
-      },
-      "testFile": "src/hooks/useQuizSession.test.ts"
+      "name": "cors",
+      "file": "bff/src/index.ts",
+      "order": 1,
+      "purpose": "CORS headers (only if CORS_ORIGIN env var set)"
     },
     {
-      "name": "useTheme",
-      "path": "src/hooks/useTheme.ts",
-      "description": "Dark mode hook. Resolves initial theme from localStorage or OS preference (prefers-color-scheme). Toggles .dark class on documentElement. Listens for OS preference changes when no explicit override is stored.",
-      "returns": {
-        "theme": "Theme ('light' | 'dark')",
-        "toggleTheme": "() => void"
-      },
-      "testFile": "src/hooks/useTheme.test.ts"
+      "name": "authMiddleware",
+      "file": "bff/src/auth/middleware.ts",
+      "order": 2,
+      "purpose": "Verify JWT from auth_token cookie, set c.get('user')"
+    }
+  ],
+  "models": [
+    {
+      "name": "users",
+      "file": "bff/src/db/schema.ts",
+      "field_count": 7,
+      "relationships": ["quiz_sessions (one-to-many)"]
+    },
+    {
+      "name": "quiz_sessions",
+      "file": "bff/src/db/schema.ts",
+      "field_count": 8,
+      "relationships": ["users (many-to-one, ON DELETE CASCADE)"]
     }
   ],
   "services": [
     {
       "name": "api-client",
-      "path": "src/services/api-client.ts",
-      "description": "Typed wrapper around the drug-gate API. All requests go through /api proxy (Vite dev server adds X-API-Key header and forwards to drug-gate). Exports 5 functions matching the 5 API endpoints. Includes in-memory response cache (5-min TTL) to avoid redundant requests during quiz generation. Throws DrugApiError on non-OK responses.",
-      "exports": [
-        "getDrugNames(params?) -> PaginatedResponse<DrugName>",
-        "getDrugClasses(params?) -> PaginatedResponse<DrugClass>",
-        "getDrugClass(name) -> DrugClassLookup",
-        "getDrugsInClass(params) -> PaginatedResponse<DrugInClass>",
-        "getDrugByNdc(ndc) -> NdcLookup",
-        "DrugApiError (class)",
-        "clearRequestCache() -> void"
-      ],
-      "testFile": "src/services/api-client.test.ts"
+      "file": "src/services/api-client.ts",
+      "public_functions": ["getDrugNames", "getDrugClasses", "getDrugClass", "getDrugsInClass", "getDrugByNdc", "clearRequestCache"]
     },
     {
       "name": "quiz-generators",
-      "path": "src/services/quiz-generators.ts",
-      "description": "Question generation logic implementing the three quiz recipes from the API contract. Uses fetchRandomEpcClasses() to pick a random page of EPC classes (pagination-aware), then finds drugs within those classes. Brand-generic matching collects across multiple classes using a hasRealBrandName filter. Returns typed question objects.",
-      "exports": [
-        "generateNameTheClassQuestion() -> MultipleChoiceQuestion",
-        "generateMatchDrugToClassQuestion() -> MatchingQuestion",
-        "generateBrandGenericMatchQuestion() -> MatchingQuestion",
-        "generateQuestions(type, count) -> Question[]"
-      ],
-      "testFile": "src/services/quiz-generators.test.ts"
+      "file": "src/services/quiz-generators.ts",
+      "public_functions": ["fetchEpcClassPool", "generateNameTheClassQuestion", "generateMatchDrugToClassQuestion", "generateBrandGenericMatchQuestion", "generateSingleQuestion", "isExamRelevantDrug"]
     }
   ],
-  "types": [
-    {
-      "name": "api",
-      "path": "src/types/api.ts",
-      "description": "TypeScript interfaces mirroring the drug-gate API response shapes: Pagination, PaginatedResponse<T>, DrugName, DrugClass, DrugClassLookup, DrugClassEntry, DrugInClass, NdcLookup, ApiError, and query param interfaces."
-    },
-    {
-      "name": "quiz",
-      "path": "src/types/quiz.ts",
-      "description": "Quiz domain types: QuizType union, QuizConfig, MultipleChoiceQuestion, MatchingQuestion, Question union, Answer, QuizSession (with status: loading|in-progress|complete), QuizResults."
-    }
+  "components": [
+    { "name": "App", "file": "src/App.tsx" },
+    { "name": "QuizConfig", "file": "src/components/QuizConfig.tsx" },
+    { "name": "Quick5Button", "file": "src/components/Quick5Button.tsx" },
+    { "name": "SessionHistory", "file": "src/components/SessionHistory.tsx" },
+    { "name": "MultipleChoice", "file": "src/components/MultipleChoice.tsx" },
+    { "name": "MatchingQuiz", "file": "src/components/MatchingQuiz.tsx" },
+    { "name": "AnswerFeedback", "file": "src/components/AnswerFeedback.tsx" },
+    { "name": "QuizResults", "file": "src/components/QuizResults.tsx" },
+    { "name": "AnswerReviewSection", "file": "src/components/AnswerReviewSection.tsx" },
+    { "name": "FlashcardDrill", "file": "src/components/FlashcardDrill.tsx" },
+    { "name": "UserMenu", "file": "src/components/UserMenu.tsx" },
+    { "name": "ErrorBoundary", "file": "src/components/ErrorBoundary.tsx" }
   ],
-  "pages": [],
-  "apiProxy": {
-    "path": "/api",
-    "target": "DRUG_GATE_URL (env var, default http://192.168.1.86:8085)",
-    "rewrite": "/api/* -> /*",
-    "authInjection": "X-API-Key header added from DRUG_GATE_API_KEY env var",
-    "configuredIn": "vite.config.ts"
-  },
-  "utils": [
-    {
-      "name": "text",
-      "path": "src/utils/text.ts",
-      "description": "Text utility functions for formatting and display.",
-      "testFile": "src/utils/text.test.ts"
-    }
+  "hooks": [
+    { "name": "useQuizSession", "file": "src/hooks/useQuizSession.ts" },
+    { "name": "useTheme", "file": "src/hooks/useTheme.ts" },
+    { "name": "useSessionHistory", "file": "src/hooks/useSessionHistory.ts" },
+    { "name": "useDrugPerformance", "file": "src/hooks/useDrugPerformance.ts" },
+    { "name": "useAuth", "file": "src/hooks/useAuth.ts" }
   ],
-  "styling": {
-    "framework": "Tailwind CSS v4",
-    "entrypoint": "src/index.css",
-    "approach": "utility-first, inline classes",
-    "darkMode": "class-based (.dark on documentElement), managed by useTheme hook"
-  },
-  "testing": {
-    "unit": "Vitest + React Testing Library (collocated .test.ts/.test.tsx files)",
-    "e2e": "Playwright (tests/e2e/, currently empty)",
-    "coverageThreshold": 90
-  },
-  "directoryStructure": {
-    "src/": "React application source",
-    "src/components/": "UI components (QuizConfig, MultipleChoice, MatchingQuiz, QuizResults)",
-    "src/hooks/": "Custom React hooks (useQuizSession)",
-    "src/services/": "API client and quiz question generators",
-    "src/types/": "TypeScript type definitions (api.ts, quiz.ts)",
-    "specs/": "Feature specifications (5 spec files)",
-    "docs/": "PRD, plans, milestones",
-    "tests/": "Test infrastructure (setup.ts, empty e2e/integration/unit subdirs)",
-    ".add/": "ADD methodology config, away-logs, learnings"
+  "contexts": [
+    { "name": "AuthContext", "file": "src/contexts/AuthContext.tsx" }
+  ],
+  "existing_docs": [
+    { "path": "docs/sequence-diagram.md", "type": "diagram", "topic": "request-flows" },
+    { "path": "docs/prd.md", "type": "other", "topic": "product-requirements" },
+    { "path": "docs/staging-deployment.md", "type": "other", "topic": "deployment" },
+    { "path": "CLAUDE.md", "type": "readme", "topic": "project-overview" },
+    { "path": "CHANGELOG.md", "type": "other", "topic": "changelog" },
+    { "path": "README.md", "type": "readme", "topic": "project-overview" }
+  ],
+  "flows": {
+    "documented": [
+      "GET /api/v1/* (proxy)",
+      "GET /api/auth/google",
+      "GET /api/auth/google/callback",
+      "GET /api/auth/me",
+      "POST /api/auth/logout",
+      "GET /health",
+      "GET /api/health"
+    ],
+    "undocumented": [],
+    "stale": []
   }
 }

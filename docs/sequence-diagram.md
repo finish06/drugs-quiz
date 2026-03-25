@@ -465,18 +465,19 @@ sequenceDiagram
     Browser->>Auth: login()
     Auth->>Browser: window.location.href = "/api/auth/google"
     Browser->>BFF: GET /api/auth/google
-    BFF->>BFF: Generate CSRF state (crypto.randomUUID)
-    BFF->>BFF: Set oauth_state cookie (10min TTL)
+    BFF->>BFF: Generate CSRF state (generateState)
+    BFF->>BFF: Generate PKCE code verifier (generateCodeVerifier)
+    BFF->>BFF: Set oauth_state + oauth_code_verifier cookies (10min TTL)
     BFF-->>Browser: 302 Redirect to Google
 
-    Browser->>Google: Authorization request (client_id, scope, state)
+    Browser->>Google: Authorization request (client_id, scope, state, code_challenge)
     Google-->>User: Show consent screen
     User->>Google: Approve access
     Google-->>Browser: 302 Redirect to /api/auth/google/callback?code=...&state=...
 
     Browser->>BFF: GET /api/auth/google/callback?code=...&state=...
-    BFF->>BFF: Validate CSRF state matches cookie
-    BFF->>Google: Exchange code for tokens (arctic)
+    BFF->>BFF: Validate CSRF state + code verifier from cookies
+    BFF->>Google: Exchange code + code verifier for tokens (arctic PKCE)
     Google-->>BFF: Access token
     BFF->>Google: GET /oauth2/v2/userinfo (Bearer token)
     Google-->>BFF: { email, name, picture }

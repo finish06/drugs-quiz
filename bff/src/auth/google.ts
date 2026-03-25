@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { setCookie, getCookie, deleteCookie } from "hono/cookie";
-import { Google } from "arctic";
+import { Google, generateCodeVerifier, generateState } from "arctic";
 import { eq } from "drizzle-orm";
 import { signJwt } from "./jwt.js";
 import { authMiddleware } from "./middleware.js";
@@ -31,18 +31,22 @@ export function createAuthRouter(): Hono {
   // GET /api/auth/google — redirect to Google consent screen
   auth.get("/google", async (c) => {
     const google = getGoogleClient();
-    const state = crypto.randomUUID();
+    const state = generateState();
+    const codeVerifier = generateCodeVerifier();
     const scopes = ["openid", "email", "profile"];
-    const authUrl = google.createAuthorizationURL(state, "", scopes);
+    const authUrl = google.createAuthorizationURL(state, codeVerifier, scopes);
 
-    // Store state in cookie for CSRF validation
-    setCookie(c, "oauth_state", state, {
+    const cookieOpts = {
       httpOnly: true,
       secure: APP_URL.startsWith("https"),
-      sameSite: "Lax",
+      sameSite: "Lax" as const,
       path: "/",
       maxAge: 600, // 10 minutes
-    });
+    };
+
+    // Store state and code verifier in cookies for callback validation
+    setCookie(c, "oauth_state", state, cookieOpts);
+    setCookie(c, "oauth_code_verifier", codeVerifier, cookieOpts);
 
     return c.redirect(authUrl.toString());
   });
@@ -52,18 +56,21 @@ export function createAuthRouter(): Hono {
     const code = c.req.query("code");
     const state = c.req.query("state");
     const storedState = getCookie(c, "oauth_state");
+    const storedCodeVerifier = getCookie(c, "oauth_code_verifier");
 
-    // CSRF validation
-    if (!code || !state || !storedState || state !== storedState) {
+    // CSRF + PKCE validation
+    if (!code || !state || !storedState || state !== storedState || !storedCodeVerifier) {
       deleteCookie(c, "oauth_state");
+      deleteCookie(c, "oauth_code_verifier");
       return c.redirect(`${APP_URL}?auth_error=invalid_state`);
     }
 
     deleteCookie(c, "oauth_state");
+    deleteCookie(c, "oauth_code_verifier");
 
     try {
       const google = getGoogleClient();
-      const tokens = await google.validateAuthorizationCode(code);
+      const tokens = await google.validateAuthorizationCode(code, storedCodeVerifier);
       const accessToken = tokens.accessToken();
 
       // Fetch user profile from Google
