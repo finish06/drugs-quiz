@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { MultipleChoiceQuestion } from "@/types/quiz";
 import { AnswerFeedback } from "./AnswerFeedback";
 
@@ -6,6 +6,7 @@ interface MultipleChoiceProps {
   question: MultipleChoiceQuestion;
   onAnswer: (correct: boolean, userAnswer: string) => void;
   onNext: () => void;
+  onExit?: () => void;
   questionNumber: number;
   totalQuestions: number;
 }
@@ -14,6 +15,7 @@ export function MultipleChoice({
   question,
   onAnswer,
   onNext,
+  onExit,
   questionNumber,
   totalQuestions,
 }: MultipleChoiceProps) {
@@ -27,6 +29,40 @@ export function MultipleChoice({
     setAnswered(true);
     onAnswer(option === question.correctAnswer, option);
   }
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Ignore if any modifier is held (don't interfere with browser shortcuts)
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+
+    // Ignore if focus is in an input/textarea
+    const tag = (e.target as HTMLElement)?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+
+    if (!answered) {
+      // Number keys 1-4 select answer
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= question.options.length) {
+        e.preventDefault();
+        handleSelect(question.options[num - 1]!);
+      }
+    }
+
+    if (answered && e.key === "Enter") {
+      e.preventDefault();
+      onNext();
+    }
+
+    if (e.key === "Escape" && onExit) {
+      e.preventDefault();
+      onExit();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answered, question.options, onNext, onExit]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   function getOptionStyle(option: string): string {
     const base = "w-full text-left rounded-lg border-2 p-4 transition-all duration-200";
@@ -68,7 +104,7 @@ export function MultipleChoice({
       </div>
 
       <div className="grid gap-3">
-        {question.options.map((option) => (
+        {question.options.map((option, idx) => (
           <button
             key={option}
             onClick={() => handleSelect(option)}
@@ -76,7 +112,15 @@ export function MultipleChoice({
             title={option}
             className={getOptionStyle(option)}
           >
-            {option}
+            <span className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-gray-100 dark:bg-gray-700 text-xs font-semibold text-gray-400 dark:text-gray-500"
+              >
+                {idx + 1}
+              </span>
+              <span>{option}</span>
+            </span>
           </button>
         ))}
       </div>
@@ -93,6 +137,9 @@ export function MultipleChoice({
             className="w-full rounded-xl bg-brand py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md"
           >
             {questionNumber === totalQuestions ? "See Results" : "Next Question"}
+            {answered && (
+              <span className="ml-2 text-xs opacity-70">Enter ↵</span>
+            )}
           </button>
         </>
       )}

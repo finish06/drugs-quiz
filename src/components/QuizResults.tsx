@@ -1,16 +1,19 @@
+import { useState } from "react";
 import type { QuizResults as QuizResultsType } from "@/types/quiz";
 import { AnswerReviewSection } from "./AnswerReviewSection";
 
 interface QuizResultsProps {
   results: QuizResultsType;
+  quizTypeLabel?: string;
   onNewQuiz: () => void;
   onRetry: () => void;
   weakDrugCount?: number;
   onStudyWeakDrugs?: () => void;
 }
 
-export function QuizResults({ results, onNewQuiz, onRetry, weakDrugCount, onStudyWeakDrugs }: QuizResultsProps) {
+export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDrugCount, onStudyWeakDrugs }: QuizResultsProps) {
   const { totalQuestions, correctAnswers, percentage } = results;
+  const [copied, setCopied] = useState(false);
 
   function getGradeColor(): string {
     if (percentage >= 80) return "text-green-600 dark:text-green-400";
@@ -25,6 +28,39 @@ export function QuizResults({ results, onNewQuiz, onRetry, weakDrugCount, onStud
     if (percentage >= 60) return "Not bad!";
     return "Keep practicing!";
   }
+
+  function getShareText(): string {
+    const label = quizTypeLabel || "Quiz";
+    return `🎯 Rx Quiz: Scored ${percentage}% on ${label} (${correctAnswers}/${totalQuestions}) — drug-quiz.calebdunn.tech`;
+  }
+
+  async function handleShare() {
+    const text = getShareText();
+
+    // Try Web Share API first (mobile)
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to clipboard
+      }
+    }
+
+    // Clipboard fallback
+    if (typeof navigator.clipboard?.writeText === "function") {
+      try {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Clipboard failed silently
+      }
+    }
+  }
+
+  const canShare = typeof navigator !== "undefined" &&
+    (typeof navigator.share === "function" || typeof navigator.clipboard?.writeText === "function");
 
   return (
     <div className="rounded-xl bg-white dark:bg-gray-800 p-8 shadow-sm space-y-8 text-center transition-colors duration-150">
@@ -84,6 +120,21 @@ export function QuizResults({ results, onNewQuiz, onRetry, weakDrugCount, onStud
           className="w-full rounded-xl border-2 border-brand py-3 font-semibold text-brand transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20"
         >
           Study Weak Drugs ({weakDrugCount} to review)
+        </button>
+      )}
+
+      {canShare && (
+        <button
+          onClick={handleShare}
+          aria-label="Share quiz results"
+          className="w-full rounded-xl border-2 border-gray-300 dark:border-gray-600 py-3 font-semibold text-gray-600 dark:text-gray-300 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+        >
+          <span className="inline-flex items-center gap-2">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+            </svg>
+            {copied ? "Copied!" : "Share Results"}
+          </span>
         </button>
       )}
 

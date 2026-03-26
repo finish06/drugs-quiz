@@ -13,6 +13,13 @@ import { useDrugPerformance } from "@/hooks/useDrugPerformance";
 import { useTheme } from "@/hooks/useTheme";
 import type { QuizConfig as QuizConfigType } from "@/types/quiz";
 
+const QUIZ_TYPE_LABELS: Record<string, string> = {
+  "name-the-class": "Name the Class",
+  "match-drug-to-class": "Match Drug to Class",
+  "brand-generic-match": "Brand/Generic Match",
+  "quick-5": "Quick 5",
+};
+
 function App() {
   const { session, results, error, loadingProgress, startQuiz, submitAnswer, nextQuestion, resetQuiz } =
     useQuizSession();
@@ -154,6 +161,7 @@ function App() {
       return (
         <QuizResults
           results={results}
+          quizTypeLabel={QUIZ_TYPE_LABELS[session.config.type] || session.config.type}
           onNewQuiz={resetQuiz}
           onRetry={handleRetry}
           weakDrugCount={weakDrugs.length}
@@ -187,6 +195,7 @@ function App() {
           question={currentQuestion}
           onAnswer={submitAnswer}
           onNext={nextQuestion}
+          onExit={() => setShowExitConfirm(true)}
           questionNumber={session.currentIndex + 1}
           totalQuestions={session.config.questionCount}
         />
