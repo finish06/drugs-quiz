@@ -77,7 +77,7 @@ describe("MultipleChoice", () => {
 
     await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
 
-    expect(onAnswer).toHaveBeenCalledWith(true, "HMG-CoA Reductase Inhibitor");
+    expect(onAnswer).toHaveBeenCalledWith(true, "HMG-CoA Reductase Inhibitor", undefined, false);
   });
 
   it("calls onAnswer(false) when incorrect option is selected", async () => {
@@ -95,7 +95,7 @@ describe("MultipleChoice", () => {
 
     await user.click(screen.getByText("ACE Inhibitor"));
 
-    expect(onAnswer).toHaveBeenCalledWith(false, "ACE Inhibitor");
+    expect(onAnswer).toHaveBeenCalledWith(false, "ACE Inhibitor", undefined, false);
   });
 
   it("shows Next button after answering", async () => {

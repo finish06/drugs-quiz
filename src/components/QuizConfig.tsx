@@ -5,7 +5,7 @@ import { Quick5Button } from "./Quick5Button";
 
 interface QuizConfigProps {
   onStart: (config: QuizConfig) => void;
-  onQuick5?: () => void;
+  onQuick5?: (timedConfig?: { timedMode: boolean; timeLimitSeconds: 30 | 60 | 90 }) => void;
   sessions?: SessionRecord[];
   personalBest?: Partial<Record<SessionQuizType, number>>;
   isHistoryCollapsed?: boolean;
@@ -32,18 +32,31 @@ const QUIZ_TYPES: { value: QuizType; label: string; description: string }[] = [
 ];
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
+const TIME_LIMITS = [30, 60, 90] as const;
 
 export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}, isHistoryCollapsed = false, onToggleHistoryCollapsed, isLoading = false }: QuizConfigProps) {
   const [selectedType, setSelectedType] = useState<QuizType>("name-the-class");
   const [questionCount, setQuestionCount] = useState<number>(10);
+  const [timedMode, setTimedMode] = useState(false);
+  const [timeLimitSeconds, setTimeLimitSeconds] = useState<30 | 60 | 90>(60);
 
   function handleStart() {
-    onStart({ type: selectedType, questionCount });
+    onStart({
+      type: selectedType,
+      questionCount,
+      ...(timedMode && { timedMode: true, timeLimitSeconds }),
+    });
+  }
+
+  function handleQuick5() {
+    if (onQuick5) {
+      onQuick5(timedMode ? { timedMode: true, timeLimitSeconds } : undefined);
+    }
   }
 
   return (
     <div className="space-y-8">
-      {onQuick5 && <Quick5Button onStart={onQuick5} />}
+      {onQuick5 && <Quick5Button onStart={handleQuick5} />}
 
       <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm transition-colors duration-150">
         <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-4">Quiz Type</h2>
@@ -86,6 +99,53 @@ export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Timed Mode */}
+      <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm transition-colors duration-150">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wide">Timed Mode</h2>
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Countdown timer per question</p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={timedMode}
+            aria-label="Toggle timed mode"
+            onClick={() => setTimedMode(!timedMode)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+              timedMode ? "bg-brand" : "bg-gray-300 dark:bg-gray-600"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                timedMode ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+
+        {timedMode && (
+          <div className="mt-4">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Time per question</p>
+            <div className="flex gap-3">
+              {TIME_LIMITS.map((limit) => (
+                <button
+                  key={limit}
+                  onClick={() => setTimeLimitSeconds(limit)}
+                  className={`flex-1 rounded-lg border-2 py-2 text-center text-sm font-medium transition-all duration-200 ${
+                    timeLimitSeconds === limit
+                      ? "border-brand bg-blue-50 dark:bg-blue-900/30 text-brand-dark dark:text-brand-light"
+                      : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                  aria-pressed={timeLimitSeconds === limit}
+                >
+                  {limit}s
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <button

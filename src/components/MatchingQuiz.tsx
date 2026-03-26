@@ -1,14 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import type { MatchingQuestion } from "@/types/quiz";
+import { TimerBar } from "./TimerBar";
+import { useQuestionTimer } from "@/hooks/useQuestionTimer";
 
 interface MatchingQuizProps {
   question: MatchingQuestion;
-  onAnswer: (correct: boolean, userAnswer: Record<string, string>) => void;
+  onAnswer: (correct: boolean, userAnswer: Record<string, string>, timeSpent?: number, timedOut?: boolean) => void;
   onNext: () => void;
   questionNumber: number;
   totalQuestions: number;
   leftLabel: string;
   rightLabel: string;
+  timeLimitSeconds?: number;
 }
 
 const PAIR_COLORS = [
@@ -26,10 +29,28 @@ export function MatchingQuiz({
   totalQuestions,
   leftLabel,
   rightLabel,
+  timeLimitSeconds,
 }: MatchingQuizProps) {
   const [pairs, setPairs] = useState<Record<string, string>>({});
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const startTimeRef = useRef(0);
+  useEffect(() => { startTimeRef.current = Date.now(); }, []);
+
+  const isTimed = typeof timeLimitSeconds === "number" && timeLimitSeconds > 0;
+
+  function handleTimerExpire() {
+    if (submitted) return;
+    setSubmitted(true);
+    onAnswer(false, { ...pairs }, timeLimitSeconds!, true);
+    setTimeout(() => onNext(), 1500);
+  }
+
+  const timer = useQuestionTimer({
+    totalSeconds: timeLimitSeconds || 60,
+    onExpire: handleTimerExpire,
+    active: isTimed && !submitted,
+  });
 
   const pairedLeftItems = useMemo(() => new Set(Object.keys(pairs)), [pairs]);
   const pairedRightItems = useMemo(() => new Set(Object.values(pairs)), [pairs]);
@@ -72,11 +93,19 @@ export function MatchingQuiz({
   }
 
   function handleSubmit() {
+    if (isTimed) timer.stop();
+    const timeSpent = (Date.now() - startTimeRef.current) / 1000;
+
     setSubmitted(true);
     const correctCount = Object.entries(pairs).filter(
       ([left, right]) => question.correctPairs[left] === right,
     ).length;
-    onAnswer(correctCount === question.leftItems.length, { ...pairs });
+    onAnswer(
+      correctCount === question.leftItems.length,
+      { ...pairs },
+      isTimed ? Math.round(timeSpent) : undefined,
+      false,
+    );
   }
 
   function getPairIndex(item: string, side: "left" | "right"): number {
@@ -138,6 +167,10 @@ export function MatchingQuiz({
           />
         </div>
       </div>
+
+      {isTimed && (
+        <TimerBar secondsLeft={timer.secondsLeft} fraction={timer.fraction} expired={timer.expired} />
+      )}
 
       {!submitted && (
         <p className="text-center text-sm text-gray-400 dark:text-gray-500">

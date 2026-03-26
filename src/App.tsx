@@ -87,10 +87,17 @@ function App() {
     startQuiz(config);
   }
 
-  function handleQuick5() {
+  function handleQuick5(timedConfig?: { timedMode: boolean; timeLimitSeconds: 30 | 60 | 90 }) {
     savedSessionRef.current = false;
     recordedSessionRef.current = false;
-    startQuiz({ type: "quick-5", questionCount: 5 });
+    startQuiz({
+      type: "quick-5",
+      questionCount: 5,
+      ...(timedConfig && timedConfig.timedMode && {
+        timedMode: true,
+        timeLimitSeconds: timedConfig.timeLimitSeconds,
+      }),
+    });
   }
 
   const weakDrugs = useMemo(() => getWeakDrugs(), [getWeakDrugs]);
@@ -198,6 +205,7 @@ function App() {
           onExit={() => setShowExitConfirm(true)}
           questionNumber={session.currentIndex + 1}
           totalQuestions={session.config.questionCount}
+          timeLimitSeconds={session.config.timedMode ? session.config.timeLimitSeconds : undefined}
         />
       );
     }
@@ -215,6 +223,7 @@ function App() {
           totalQuestions={session.config.questionCount}
           leftLabel={isClassMatch ? "Drugs" : "Generic"}
           rightLabel={isClassMatch ? "Classes" : "Brand"}
+          timeLimitSeconds={session.config.timedMode ? session.config.timeLimitSeconds : undefined}
         />
       );
     }

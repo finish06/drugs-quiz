@@ -170,7 +170,7 @@ describe("MatchingQuiz", () => {
     expect(onAnswer).toHaveBeenCalledWith(true, expect.objectContaining({
       simvastatin: "HMG-CoA Reductase Inhibitor",
       lisinopril: "ACE Inhibitor",
-    }));
+    }), undefined, false);
   });
 
   it("calls onAnswer(false) when pairs are incorrect", async () => {
@@ -203,7 +203,7 @@ describe("MatchingQuiz", () => {
     expect(onAnswer).toHaveBeenCalledWith(false, expect.objectContaining({
       simvastatin: "ACE Inhibitor",
       lisinopril: "HMG-CoA Reductase Inhibitor",
-    }));
+    }), undefined, false);
   });
 
   it("shows correct answers after submission", async () => {

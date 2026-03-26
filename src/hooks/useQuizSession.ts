@@ -123,7 +123,12 @@ export function useQuizSession(): UseQuizSessionReturn {
     }
   }, [backgroundGenerate]);
 
-  const submitAnswer = useCallback((correct: boolean, userAnswer: string | Record<string, string>) => {
+  const submitAnswer = useCallback((
+    correct: boolean,
+    userAnswer: string | Record<string, string>,
+    timeSpentSeconds?: number,
+    timedOut?: boolean,
+  ) => {
     setSession((prev) => {
       if (!prev || prev.status !== "in-progress") return prev;
 
@@ -133,6 +138,8 @@ export function useQuizSession(): UseQuizSessionReturn {
         correct,
         question: currentQuestion!,
         userAnswer,
+        timeSpentSeconds,
+        timedOut,
       };
 
       return {
@@ -169,16 +176,28 @@ export function useQuizSession(): UseQuizSessionReturn {
 
   const results: QuizResults | null =
     session?.status === "complete"
-      ? {
-          totalQuestions: session.answers.length,
-          correctAnswers: session.answers.filter((a) => a.correct).length,
-          percentage: session.answers.length > 0
-            ? Math.round(
-                (session.answers.filter((a) => a.correct).length / session.answers.length) * 100,
-              )
-            : 0,
-          answers: session.answers,
-        }
+      ? (() => {
+          const answeredWithTime = session.answers.filter(
+            (a) => typeof a.timeSpentSeconds === "number" && !a.timedOut,
+          );
+          const avgTime = answeredWithTime.length > 0
+            ? Math.round(answeredWithTime.reduce((sum, a) => sum + a.timeSpentSeconds!, 0) / answeredWithTime.length)
+            : undefined;
+          const timedOutCount = session.answers.filter((a) => a.timedOut).length;
+
+          return {
+            totalQuestions: session.answers.length,
+            correctAnswers: session.answers.filter((a) => a.correct).length,
+            percentage: session.answers.length > 0
+              ? Math.round(
+                  (session.answers.filter((a) => a.correct).length / session.answers.length) * 100,
+                )
+              : 0,
+            answers: session.answers,
+            averageTimeSeconds: avgTime,
+            timedOutCount: timedOutCount > 0 ? timedOutCount : undefined,
+          };
+        })()
       : null;
 
   return {

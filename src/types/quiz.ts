@@ -10,12 +10,16 @@ export interface SessionRecord {
   questionCount: number;
   correctCount: number;
   percentage: number;
+  timedMode?: boolean;
+  timeLimitSeconds?: number;
 }
 
 /** Quiz configuration chosen by the user */
 export interface QuizConfig {
   type: QuizType | "quick-5";
   questionCount: number;
+  timedMode?: boolean;
+  timeLimitSeconds?: 30 | 60 | 90;
 }
 
 /** A single multiple-choice question (Name the Class) */
@@ -50,6 +54,10 @@ export interface AnswerDetail extends Answer {
   question: Question;
   /** User's selected answer (option string for MC, pairs record for matching) */
   userAnswer: string | Record<string, string>;
+  /** Seconds spent on this question (timed mode only) */
+  timeSpentSeconds?: number;
+  /** Whether this question timed out (timed mode only) */
+  timedOut?: boolean;
 }
 
 /** Session state */
@@ -68,4 +76,6 @@ export interface QuizResults {
   correctAnswers: number;
   percentage: number;
   answers: AnswerDetail[];
+  averageTimeSeconds?: number;
+  timedOutCount?: number;
 }

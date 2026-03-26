@@ -1,14 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { MultipleChoiceQuestion } from "@/types/quiz";
 import { AnswerFeedback } from "./AnswerFeedback";
+import { TimerBar } from "./TimerBar";
+import { useQuestionTimer } from "@/hooks/useQuestionTimer";
 
 interface MultipleChoiceProps {
   question: MultipleChoiceQuestion;
-  onAnswer: (correct: boolean, userAnswer: string) => void;
+  onAnswer: (correct: boolean, userAnswer: string, timeSpent?: number, timedOut?: boolean) => void;
   onNext: () => void;
   onExit?: () => void;
   questionNumber: number;
   totalQuestions: number;
+  timeLimitSeconds?: number;
 }
 
 export function MultipleChoice({
@@ -18,16 +21,44 @@ export function MultipleChoice({
   onExit,
   questionNumber,
   totalQuestions,
+  timeLimitSeconds,
 }: MultipleChoiceProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [answered, setAnswered] = useState(false);
+  const startTimeRef = useRef(0);
+  useEffect(() => { startTimeRef.current = Date.now(); }, []);
+
+  const isTimed = typeof timeLimitSeconds === "number" && timeLimitSeconds > 0;
+
+  function handleTimerExpire() {
+    if (answered) return;
+    setAnswered(true);
+    const timeSpent = timeLimitSeconds!;
+    onAnswer(false, "", timeSpent, true);
+    // Auto-advance after delay
+    setTimeout(() => onNext(), 1500);
+  }
+
+  const timer = useQuestionTimer({
+    totalSeconds: timeLimitSeconds || 60,
+    onExpire: handleTimerExpire,
+    active: isTimed && !answered,
+  });
 
   function handleSelect(option: string) {
     if (answered) return;
 
+    if (isTimed) timer.stop();
+    const timeSpent = (Date.now() - startTimeRef.current) / 1000;
+
     setSelectedOption(option);
     setAnswered(true);
-    onAnswer(option === question.correctAnswer, option);
+    onAnswer(
+      option === question.correctAnswer,
+      option,
+      isTimed ? Math.round(timeSpent) : undefined,
+      false,
+    );
   }
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -95,6 +126,10 @@ export function MultipleChoice({
           />
         </div>
       </div>
+
+      {isTimed && (
+        <TimerBar secondsLeft={timer.secondsLeft} fraction={timer.fraction} expired={timer.expired} />
+      )}
 
       <div className="text-center py-4">
         <p className="text-sm font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">

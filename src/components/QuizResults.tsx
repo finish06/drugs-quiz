@@ -93,6 +93,25 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
         </div>
       </div>
 
+      {(results.averageTimeSeconds != null || results.timedOutCount != null) && (
+        <div className="rounded-lg bg-gray-50 dark:bg-gray-900 p-4 border border-gray-100 dark:border-gray-700">
+          <div className="flex justify-center gap-8 text-center">
+            {results.averageTimeSeconds != null && (
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{results.averageTimeSeconds}s</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Avg Time</p>
+              </div>
+            )}
+            {results.timedOutCount != null && results.timedOutCount > 0 && (
+              <div>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{results.timedOutCount}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Timed Out</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-lg border border-gray-100 dark:border-gray-700 p-4">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Question Breakdown</p>
         <div className="flex flex-wrap gap-2 justify-center">
@@ -100,13 +119,21 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
             <div
               key={index}
               className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
-                answer.correct
-                  ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"
-                  : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                answer.timedOut
+                  ? "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300"
+                  : answer.correct
+                    ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"
+                    : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
               }`}
-              title={`Question ${index + 1}: ${answer.correct ? "Correct" : "Incorrect"}`}
+              title={`Question ${index + 1}: ${answer.timedOut ? "Timed out" : answer.correct ? "Correct" : "Incorrect"}`}
             >
-              {index + 1}
+              {answer.timedOut ? (
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              ) : (
+                index + 1
+              )}
             </div>
           ))}
         </div>
