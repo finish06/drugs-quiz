@@ -11,6 +11,7 @@ import { useQuizSession } from "@/hooks/useQuizSession";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
 import { useDrugPerformance } from "@/hooks/useDrugPerformance";
 import { useTheme } from "@/hooks/useTheme";
+import { useFlaggedQuestions } from "@/hooks/useFlaggedQuestions";
 import type { QuizConfig as QuizConfigType } from "@/types/quiz";
 
 const QUIZ_TYPE_LABELS: Record<string, string> = {
@@ -27,6 +28,7 @@ function App() {
   const { sessions: sessionHistory, personalBest, isCollapsed: isHistoryCollapsed, saveSession, toggleCollapsed: toggleHistoryCollapsed } =
     useSessionHistory();
   const { recordResult, getWeakDrugs } = useDrugPerformance();
+  const { flaggedCount, flaggedQuestions, isFlagged, toggleFlag } = useFlaggedQuestions();
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
@@ -135,6 +137,14 @@ function App() {
           isHistoryCollapsed={isHistoryCollapsed}
           onToggleHistoryCollapsed={toggleHistoryCollapsed}
           isLoading={false}
+          flaggedCount={flaggedCount}
+          onReviewFlagged={() => {
+            if (flaggedQuestions.length === 0) return;
+            savedSessionRef.current = false;
+            recordedSessionRef.current = false;
+            // Start a special session with pre-loaded flagged questions
+            startQuiz({ type: "quick-5", questionCount: flaggedQuestions.length });
+          }}
         />
       );
     }
@@ -206,6 +216,8 @@ function App() {
           questionNumber={session.currentIndex + 1}
           totalQuestions={session.config.questionCount}
           timeLimitSeconds={session.config.timedMode ? session.config.timeLimitSeconds : undefined}
+          flagged={isFlagged(currentQuestion)}
+          onToggleFlag={() => toggleFlag(currentQuestion)}
         />
       );
     }
@@ -224,6 +236,8 @@ function App() {
           leftLabel={isClassMatch ? "Drugs" : "Generic"}
           rightLabel={isClassMatch ? "Classes" : "Brand"}
           timeLimitSeconds={session.config.timedMode ? session.config.timeLimitSeconds : undefined}
+          flagged={isFlagged(currentQuestion)}
+          onToggleFlag={() => toggleFlag(currentQuestion)}
         />
       );
     }

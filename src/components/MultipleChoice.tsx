@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { MultipleChoiceQuestion } from "@/types/quiz";
 import { AnswerFeedback } from "./AnswerFeedback";
 import { TimerBar } from "./TimerBar";
+import { FlagButton } from "./FlagButton";
 import { useQuestionTimer } from "@/hooks/useQuestionTimer";
 
 interface MultipleChoiceProps {
@@ -12,6 +13,8 @@ interface MultipleChoiceProps {
   questionNumber: number;
   totalQuestions: number;
   timeLimitSeconds?: number;
+  flagged?: boolean;
+  onToggleFlag?: () => void;
 }
 
 export function MultipleChoice({
@@ -22,6 +25,8 @@ export function MultipleChoice({
   questionNumber,
   totalQuestions,
   timeLimitSeconds,
+  flagged = false,
+  onToggleFlag,
 }: MultipleChoiceProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [answered, setAnswered] = useState(false);
@@ -115,8 +120,8 @@ export function MultipleChoice({
 
   return (
     <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm space-y-6 transition-colors duration-150">
-      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-        <span>
+      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+        <span className="shrink-0">
           Question {questionNumber} of {totalQuestions}
         </span>
         <div className="h-2 flex-1 mx-4 rounded-full bg-gray-100 dark:bg-gray-700">
@@ -125,6 +130,7 @@ export function MultipleChoice({
             style={{ width: `${((questionNumber - 1 + (answered ? 1 : 0)) / totalQuestions) * 100}%` }}
           />
         </div>
+        {onToggleFlag && <FlagButton flagged={flagged} onToggle={onToggleFlag} />}
       </div>
 
       {isTimed && (

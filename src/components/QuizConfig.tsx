@@ -11,6 +11,8 @@ interface QuizConfigProps {
   isHistoryCollapsed?: boolean;
   onToggleHistoryCollapsed?: () => void;
   isLoading?: boolean;
+  flaggedCount?: number;
+  onReviewFlagged?: () => void;
 }
 
 const QUIZ_TYPES: { value: QuizType; label: string; description: string }[] = [
@@ -34,7 +36,7 @@ const QUIZ_TYPES: { value: QuizType; label: string; description: string }[] = [
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
 const TIME_LIMITS = [30, 60, 90] as const;
 
-export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}, isHistoryCollapsed = false, onToggleHistoryCollapsed, isLoading = false }: QuizConfigProps) {
+export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}, isHistoryCollapsed = false, onToggleHistoryCollapsed, isLoading = false, flaggedCount = 0, onReviewFlagged }: QuizConfigProps) {
   const [selectedType, setSelectedType] = useState<QuizType>("name-the-class");
   const [questionCount, setQuestionCount] = useState<number>(10);
   const [timedMode, setTimedMode] = useState(false);
@@ -169,6 +171,28 @@ export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}
           "Start Quiz"
         )}
       </button>
+
+      {flaggedCount > 0 && onReviewFlagged && (
+        <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm transition-colors duration-150">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className="h-5 w-5 text-amber-500" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Flagged Questions</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{flaggedCount} question{flaggedCount !== 1 ? "s" : ""} saved for review</p>
+              </div>
+            </div>
+            <button
+              onClick={onReviewFlagged}
+              className="rounded-lg border-2 border-amber-400 dark:border-amber-500 px-4 py-2 text-sm font-medium text-amber-600 dark:text-amber-400 transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20"
+            >
+              Review Flagged
+            </button>
+          </div>
+        </div>
+      )}
 
       <SessionHistory
         sessions={sessions}
