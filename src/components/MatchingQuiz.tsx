@@ -49,7 +49,11 @@ export function MatchingQuiz({
   }
 
   function handleRightClick(item: string) {
-    if (submitted || !selectedLeft) return;
+    if (submitted) return;
+
+    // If no left item selected, select this right item's paired left item for undo,
+    // or ignore the click
+    if (!selectedLeft) return;
 
     if (pairedRightItems.has(item)) {
       // Undo existing pair using this right item
@@ -110,10 +114,16 @@ export function MatchingQuiz({
       return `${base} border-brand dark:border-brand bg-blue-50 dark:bg-blue-900/30 ring-2 ring-brand-muted dark:ring-brand-muted`;
     }
 
+    // Right items show a subtle highlight when a left item is selected (clickable hint)
+    if (side === "right" && selectedLeft && !pairedRightItems.has(item)) {
+      return `${base} border-gray-300 dark:border-gray-600 hover:border-brand dark:hover:border-brand hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-sm cursor-pointer`;
+    }
+
     return `${base} border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm`;
   }
 
   const allPaired = Object.keys(pairs).length === question.leftItems.length;
+  const pairCount = Object.keys(pairs).length;
 
   return (
     <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm space-y-6 transition-colors duration-150">
@@ -129,9 +139,25 @@ export function MatchingQuiz({
         </div>
       </div>
 
-      <p className="text-center text-sm font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-        Match each item on the left with its pair on the right
-      </p>
+      {!submitted && (
+        <p className="text-center text-sm text-gray-400 dark:text-gray-500">
+          {selectedLeft ? (
+            <span className="text-brand dark:text-brand-light font-medium">
+              Now tap a match on the right →
+            </span>
+          ) : pairCount > 0 && !allPaired ? (
+            <span>
+              {pairCount} of {question.leftItems.length} matched — tap left to continue
+            </span>
+          ) : allPaired ? (
+            <span className="text-green-600 dark:text-green-400 font-medium">
+              All matched! Check your answers below
+            </span>
+          ) : (
+            <span>Tap an item on the left, then tap its match on the right</span>
+          )}
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -162,7 +188,7 @@ export function MatchingQuiz({
               <button
                 key={item}
                 onClick={() => handleRightClick(item)}
-                disabled={submitted || !selectedLeft}
+                disabled={submitted}
                 title={item}
                 className={`${getItemStyle(item, "right")} min-h-[3.5rem]`}
               >
