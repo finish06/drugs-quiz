@@ -6,23 +6,14 @@ export interface JwtPayload {
   name: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRY_DAYS = 30;
 
-let secretKey: Uint8Array | null = null;
-
 function getSecretKey(): Uint8Array {
-  if (secretKey) return secretKey;
-  if (!JWT_SECRET) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
     throw new Error("Missing required env var: JWT_SECRET");
   }
-  secretKey = new TextEncoder().encode(JWT_SECRET);
-  return secretKey;
-}
-
-/** Override the secret key (for testing) */
-export function setSecretKeyForTest(secret: string): void {
-  secretKey = new TextEncoder().encode(secret);
+  return new TextEncoder().encode(secret);
 }
 
 /** Sign a JWT with user claims, 30-day expiry */
@@ -40,7 +31,9 @@ export async function verifyJwt(
   token: string
 ): Promise<JwtPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecretKey());
+    const { payload } = await jwtVerify(token, getSecretKey(), {
+      algorithms: ["HS256"],
+    });
     if (!payload.sub || !payload.email) return null;
     return {
       sub: payload.sub,

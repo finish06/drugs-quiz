@@ -1,12 +1,21 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Hono } from "hono";
-import { signJwt, setSecretKeyForTest } from "./jwt.js";
+import { signJwt } from "./jwt.js";
 import { authMiddleware } from "./middleware.js";
 
 const TEST_SECRET = "test-secret-key-that-is-at-least-32-chars-long";
+const originalSecret = process.env.JWT_SECRET;
 
 beforeAll(() => {
-  setSecretKeyForTest(TEST_SECRET);
+  process.env.JWT_SECRET = TEST_SECRET;
+});
+
+afterAll(() => {
+  if (originalSecret !== undefined) {
+    process.env.JWT_SECRET = originalSecret;
+  } else {
+    delete process.env.JWT_SECRET;
+  }
 });
 
 function createTestApp() {
@@ -58,13 +67,13 @@ describe("AC-011: JWT auth middleware", () => {
       name: "Test User",
     });
     // Change the secret so verification fails
-    setSecretKeyForTest("wrong-secret-key-that-is-also-32-chars-!!!");
+    process.env.JWT_SECRET = "wrong-secret-key-that-is-also-32-chars-!!!";
     const app = createTestApp();
     const res = await app.request("/protected", {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(401);
     // Restore
-    setSecretKeyForTest(TEST_SECRET);
+    process.env.JWT_SECRET = TEST_SECRET;
   });
 });

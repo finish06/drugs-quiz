@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
 import { serve } from "@hono/node-server";
 import { runMigrations } from "./db/migrate.js";
 import { createAuthRouter } from "./auth/google.js";
@@ -20,8 +21,11 @@ if (!DRUG_GATE_URL || !DRUG_GATE_API_KEY) {
   process.exit(1);
 }
 
+// Security headers
+app.use("/*", secureHeaders());
+
 if (CORS_ORIGIN) {
-  app.use("/*", cors({ origin: CORS_ORIGIN }));
+  app.use("/*", cors({ origin: CORS_ORIGIN, credentials: true }));
 }
 
 app.get("/health", (c) => c.json({ status: "ok" }));
@@ -31,10 +35,21 @@ app.get("/api/health", (c) => c.json({ status: "ok" }));
 const authRouter = createAuthRouter();
 app.route("/api/auth", authRouter);
 
+const UPSTREAM_TIMEOUT_MS = 10_000;
+
 app.get("/api/v1/*", async (c) => {
-  const upstreamPath = c.req.path.replace(/^\/api/, "");
-  const query = c.req.url.includes("?") ? "?" + c.req.url.split("?")[1] : "";
-  const upstreamUrl = `${DRUG_GATE_URL}${upstreamPath}${query}`;
+  const url = new URL(c.req.url);
+  const upstreamPath = decodeURIComponent(url.pathname).replace(/^\/api/, "");
+
+  // Block path traversal — only allow /v1/* paths
+  if (!upstreamPath.startsWith("/v1/") && upstreamPath !== "/v1") {
+    return c.json({ error: "not_found", message: "Invalid API path" }, 404);
+  }
+
+  const upstreamUrl = `${DRUG_GATE_URL}${upstreamPath}${url.search}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
   try {
     const response = await fetch(upstreamUrl, {
@@ -42,6 +57,7 @@ app.get("/api/v1/*", async (c) => {
         "X-API-Key": DRUG_GATE_API_KEY!,
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     });
 
     const body = await response.text();
@@ -53,8 +69,13 @@ app.get("/api/v1/*", async (c) => {
       },
     });
   } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      return c.json({ error: "proxy_timeout", message: "Upstream API timed out" }, 504);
+    }
     console.error("Proxy error:", err);
     return c.json({ error: "proxy_error", message: "Failed to reach upstream API" }, 502);
+  } finally {
+    clearTimeout(timeout);
   }
 });
 

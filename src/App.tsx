@@ -21,6 +21,7 @@ function App() {
     useSessionHistory();
   const { recordResult, getWeakDrugs } = useDrugPerformance();
   const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const savedSessionRef = useRef(false);
   useEffect(() => {
@@ -213,8 +214,8 @@ function App() {
   }
 
   return (
-    <ErrorBoundary>
     <AuthProvider>
+    <ErrorBoundary>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-150">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors duration-150">
         <div className="mx-auto max-w-2xl px-4 py-5">
@@ -247,13 +248,11 @@ function App() {
                   </svg>
                 )}
               </button>
-              {session && (
+              {session && !showExitConfirm && (
                 <button
                   onClick={() => {
                     if (session.status === "in-progress") {
-                      if (window.confirm("Are you sure? Your progress will be lost.")) {
-                        resetQuiz();
-                      }
+                      setShowExitConfirm(true);
                     } else {
                       resetQuiz();
                     }
@@ -263,14 +262,31 @@ function App() {
                   Exit
                 </button>
               )}
+              {showExitConfirm && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Quit?</span>
+                  <button
+                    onClick={() => { setShowExitConfirm(false); resetQuiz(); }}
+                    className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setShowExitConfirm(false)}
+                    className="text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
       <main className="mx-auto max-w-2xl px-4 py-8">{renderContent()}</main>
     </div>
-    </AuthProvider>
     </ErrorBoundary>
+    </AuthProvider>
   );
 }
 

@@ -364,14 +364,11 @@ test.describe("Exit Mid-Quiz with Confirmation", () => {
     await options.first().waitFor({ timeout: 5000 });
     await options.first().click();
 
-    // Set up dialog handler to accept the confirmation
-    page.on("dialog", async (dialog) => {
-      expect(dialog.message()).toContain("Are you sure");
-      await dialog.accept();
-    });
-
-    // Click Exit
+    // Click Exit — shows inline confirmation
     await page.getByRole("button", { name: "Exit" }).click();
+
+    // Confirm exit by clicking "Yes"
+    await page.getByRole("button", { name: "Yes" }).click();
 
     // Should return to config screen
     await expect(page.getByRole("button", { name: "Start Quiz" })).toBeVisible({ timeout: 5000 });

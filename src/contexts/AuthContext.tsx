@@ -1,28 +1,15 @@
-import { createContext, useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { ReactNode } from "react";
+import { AuthContext } from "./auth-context.js";
+import type { AuthUser } from "./auth-context.js";
 
-interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  avatarUrl: string | null;
-}
-
-export interface AuthContextValue {
-  user: AuthUser | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: () => void;
-  logout: () => Promise<void>;
-}
-
-export const AuthContext = createContext<AuthContextValue | null>(null);
+export { AuthContext } from "./auth-context.js";
+export type { AuthContextValue, AuthUser } from "./auth-context.js";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check auth state on mount by calling /api/auth/me
   useEffect(() => {
     let cancelled = false;
 

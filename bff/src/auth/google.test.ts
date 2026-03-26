@@ -1,11 +1,20 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Hono } from "hono";
-import { signJwt, setSecretKeyForTest } from "./jwt.js";
+import { signJwt } from "./jwt.js";
 
 const TEST_SECRET = "test-secret-key-that-is-at-least-32-chars-long";
+const originalSecret = process.env.JWT_SECRET;
 
 beforeAll(() => {
-  setSecretKeyForTest(TEST_SECRET);
+  process.env.JWT_SECRET = TEST_SECRET;
+});
+
+afterAll(() => {
+  if (originalSecret !== undefined) {
+    process.env.JWT_SECRET = originalSecret;
+  } else {
+    delete process.env.JWT_SECRET;
+  }
 });
 
 describe("AC-007: POST /api/auth/logout", () => {

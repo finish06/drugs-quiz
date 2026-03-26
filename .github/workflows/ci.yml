@@ -28,12 +28,21 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      - name: Test
+      - name: Test (frontend)
         run: npx vitest run
 
-      - name: Coverage (advisory)
-        run: npx vitest run --coverage || true
-        continue-on-error: true
+      - name: Install BFF dependencies
+        run: npm ci
+        working-directory: bff
+
+      - name: Test (BFF)
+        run: npx vitest run
+        working-directory: bff
+        env:
+          JWT_SECRET: ci-test-secret-key-that-is-at-least-32-chars
+
+      - name: Coverage
+        run: npx vitest run --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
@@ -118,7 +127,12 @@ jobs:
       - name: Trigger staging deploy
         if: success()
         run: |
-          BODY='{"app":"drugs-quiz","ref":"${{ github.ref }}","sha":"${{ github.sha }}","tag":"${{ env.BETA_TAG }}"}'
+          BODY=$(jq -n \
+            --arg app "drugs-quiz" \
+            --arg ref "${{ github.ref }}" \
+            --arg sha "${{ github.sha }}" \
+            --arg tag "${{ env.BETA_TAG }}" \
+            '{app: $app, ref: $ref, sha: $sha, tag: $tag}')
           SIGNATURE="sha256=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | awk '{print $NF}')"
           echo "Triggering staging deploy..."
           HTTP_CODE=$(curl -s -o /tmp/deploy-response.json -w "%{http_code}" \

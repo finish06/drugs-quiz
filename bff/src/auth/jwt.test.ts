@@ -1,11 +1,20 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import { signJwt, verifyJwt, setSecretKeyForTest } from "./jwt.js";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { signJwt, verifyJwt } from "./jwt.js";
 import type { JwtPayload } from "./jwt.js";
 
 const TEST_SECRET = "test-secret-key-that-is-at-least-32-chars-long";
+const originalSecret = process.env.JWT_SECRET;
 
 beforeAll(() => {
-  setSecretKeyForTest(TEST_SECRET);
+  process.env.JWT_SECRET = TEST_SECRET;
+});
+
+afterAll(() => {
+  if (originalSecret !== undefined) {
+    process.env.JWT_SECRET = originalSecret;
+  } else {
+    delete process.env.JWT_SECRET;
+  }
 });
 
 describe("AC-004: JWT sign and verify", () => {
@@ -37,11 +46,11 @@ describe("AC-004: JWT sign and verify", () => {
 
   it("should return null for a token signed with a different secret", async () => {
     const token = await signJwt(payload);
-    setSecretKeyForTest("different-secret-key-that-is-also-32-chars");
+    process.env.JWT_SECRET = "different-secret-key-that-is-also-32-chars";
     const result = await verifyJwt(token);
     expect(result).toBeNull();
-    // Restore original secret
-    setSecretKeyForTest(TEST_SECRET);
+    // Restore original test secret
+    process.env.JWT_SECRET = TEST_SECRET;
   });
 
   it("should return null for an empty token", async () => {

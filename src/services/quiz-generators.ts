@@ -271,26 +271,3 @@ export async function generateSingleQuestion(
   return generator(classPool, usedDrugs);
 }
 
-/**
- * Generate multiple questions of a given type.
- * Fetches a class pool once, then passes a shared usedDrugs set
- * to each generator to prevent repeating drugs across questions.
- */
-export async function generateQuestions(
-  type: QuizType,
-  count: number,
-  onProgress?: (completed: number, total: number) => void,
-): Promise<(MultipleChoiceQuestion | MatchingQuestion)[]> {
-  const classPool = await fetchEpcClassPool();
-  const usedDrugs = new Set<string>();
-
-  const questions: (MultipleChoiceQuestion | MatchingQuestion)[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const question = await generateSingleQuestion(type, classPool, usedDrugs);
-    questions.push(question);
-    onProgress?.(i + 1, count);
-  }
-
-  return questions;
-}

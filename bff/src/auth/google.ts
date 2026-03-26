@@ -90,39 +90,36 @@ export function createAuthRouter(): Hono {
         picture: string;
       };
 
-      // Create or update user in database
-      const existingUsers = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, profile.email))
-        .limit(1);
-
-      let userId: string;
-
-      if (existingUsers.length > 0) {
-        // Update existing user's profile info
-        userId = existingUsers[0].id;
-        await db
-          .update(users)
-          .set({
-            name: profile.name,
-            avatarUrl: profile.picture,
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, userId));
-      } else {
-        // Create new user
-        const inserted = await db
-          .insert(users)
-          .values({
-            email: profile.email,
-            name: profile.name,
-            avatarUrl: profile.picture,
-            oauthProvider: "google",
-          })
-          .returning({ id: users.id });
-        userId = inserted[0].id;
+      // Validate profile data before writing to DB
+      if (!profile.email || typeof profile.email !== "string") {
+        return c.redirect(`${APP_URL}?auth_error=invalid_profile`);
       }
+      const sanitizedName = typeof profile.name === "string"
+        ? profile.name.slice(0, 255)
+        : "";
+      const sanitizedAvatar = typeof profile.picture === "string" && profile.picture.startsWith("https://")
+        ? profile.picture
+        : null;
+
+      // Atomic upsert — avoids TOCTOU race on concurrent callbacks
+      const upserted = await db
+        .insert(users)
+        .values({
+          email: profile.email,
+          name: sanitizedName,
+          avatarUrl: sanitizedAvatar,
+          oauthProvider: "google",
+        })
+        .onConflictDoUpdate({
+          target: users.email,
+          set: {
+            name: sanitizedName,
+            avatarUrl: sanitizedAvatar,
+            updatedAt: new Date(),
+          },
+        })
+        .returning({ id: users.id });
+      const userId = upserted[0].id;
 
       // Issue JWT
       const token = await signJwt({

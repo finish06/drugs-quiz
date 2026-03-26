@@ -22,18 +22,18 @@
       }
     ],
     "backend": {
-      "framework": null,
-      "version": null,
-      "runtime": null
+      "framework": "Hono",
+      "version": "latest",
+      "runtime": "node"
     },
     "frontend": {
       "framework": "React",
-      "version": "18",
+      "version": "19",
       "bundler": "vite"
     },
     "database": {
-      "type": null,
-      "version": null
+      "type": "postgresql",
+      "version": "16"
     },
     "containerized": true,
     "container_strategy": "docker-compose",

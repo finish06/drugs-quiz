@@ -147,7 +147,12 @@ export function useQuizSession(): UseQuizSessionReturn {
       if (!prev || prev.status !== "in-progress") return prev;
 
       const nextIndex = prev.currentIndex + 1;
-      if (nextIndex >= prev.config.questionCount) {
+      // Use actual questions length (not config.questionCount) to avoid
+      // blank screen when background generation produced fewer questions
+      const effectiveCount = prev.generationComplete
+        ? prev.questions.length
+        : prev.config.questionCount;
+      if (nextIndex >= effectiveCount) {
         return { ...prev, status: "complete" };
       }
 
@@ -157,6 +162,7 @@ export function useQuizSession(): UseQuizSessionReturn {
 
   const resetQuiz = useCallback(() => {
     cancelledRef.current = true;
+    usedDrugsRef.current = new Set();
     setSession(null);
     setError(null);
   }, []);
@@ -164,11 +170,13 @@ export function useQuizSession(): UseQuizSessionReturn {
   const results: QuizResults | null =
     session?.status === "complete"
       ? {
-          totalQuestions: session.config.questionCount,
+          totalQuestions: session.answers.length,
           correctAnswers: session.answers.filter((a) => a.correct).length,
-          percentage: Math.round(
-            (session.answers.filter((a) => a.correct).length / session.config.questionCount) * 100,
-          ),
+          percentage: session.answers.length > 0
+            ? Math.round(
+                (session.answers.filter((a) => a.correct).length / session.answers.length) * 100,
+              )
+            : 0,
           answers: session.answers,
         }
       : null;

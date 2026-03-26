@@ -32,6 +32,7 @@ CONFIG_PATH = os.environ.get("CONFIG_PATH", "/etc/deploy-hook/apps.yaml")
 
 # Per-app deploy locks to prevent concurrent deploys to the same app
 _deploy_locks: dict[str, threading.Lock] = {}
+_deploy_locks_guard = threading.Lock()
 
 if not WEBHOOK_SECRET:
     logger.error("WEBHOOK_SECRET not set — webhook will reject all requests")
@@ -114,10 +115,11 @@ def run_smoke_tests(health_checks: list[dict]) -> dict:
 
 
 def get_deploy_lock(app_name: str) -> threading.Lock:
-    """Get or create a per-app deploy lock."""
-    if app_name not in _deploy_locks:
-        _deploy_locks[app_name] = threading.Lock()
-    return _deploy_locks[app_name]
+    """Get or create a per-app deploy lock (thread-safe)."""
+    with _deploy_locks_guard:
+        if app_name not in _deploy_locks:
+            _deploy_locks[app_name] = threading.Lock()
+        return _deploy_locks[app_name]
 
 
 @app.get("/health")
