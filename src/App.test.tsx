@@ -210,6 +210,75 @@ describe("App", () => {
     expect(screen.getByText("Start Quiz")).toBeInTheDocument();
   });
 
+  it("shows inline exit confirmation during in-progress quiz", async () => {
+    const user = userEvent.setup();
+    setupMocks();
+
+    render(<App />);
+    await user.click(screen.getByText("Start Quiz"));
+    await screen.findByText("simvastatin");
+
+    // Click Exit during quiz — should show inline confirm
+    await user.click(screen.getByText("Exit"));
+    expect(screen.getByText("Quit?")).toBeInTheDocument();
+    expect(screen.getByText("Yes")).toBeInTheDocument();
+    expect(screen.getByText("No")).toBeInTheDocument();
+  });
+
+  it("cancels exit when clicking No", async () => {
+    const user = userEvent.setup();
+    setupMocks();
+
+    render(<App />);
+    await user.click(screen.getByText("Start Quiz"));
+    await screen.findByText("simvastatin");
+
+    await user.click(screen.getByText("Exit"));
+    await user.click(screen.getByText("No"));
+
+    // Should still be in quiz
+    expect(screen.getByText("simvastatin")).toBeInTheDocument();
+    expect(screen.getByText("Exit")).toBeInTheDocument();
+  });
+
+  it("exits quiz when clicking Yes on exit confirmation", async () => {
+    const user = userEvent.setup();
+    setupMocks();
+
+    render(<App />);
+    await user.click(screen.getByText("Start Quiz"));
+    await screen.findByText("simvastatin");
+
+    await user.click(screen.getByText("Exit"));
+    await user.click(screen.getByText("Yes"));
+
+    // Should return to config screen
+    expect(screen.getByText("Start Quiz")).toBeInTheDocument();
+  });
+
+  it("exits directly from results screen without confirmation", async () => {
+    const user = userEvent.setup();
+    setupMocks();
+
+    render(<App />);
+    await user.click(screen.getByText("5"));
+    await user.click(screen.getByText("Start Quiz"));
+
+    for (let i = 0; i < 4; i++) {
+      await screen.findByText("simvastatin");
+      await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+      await user.click(screen.getByText("Next Question"));
+    }
+    await screen.findByText("simvastatin");
+    await user.click(screen.getByText("HMG-CoA Reductase Inhibitor"));
+    await user.click(screen.getByText("See Results"));
+
+    await screen.findByText("100%");
+    // Exit from results — no confirmation needed
+    await user.click(screen.getByText("Exit"));
+    expect(screen.getByText("Start Quiz")).toBeInTheDocument();
+  });
+
   it("shows inline loading when user is ahead of background generation", async () => {
     let callCount = 0;
     mockedGenerators.generateSingleQuestion.mockImplementation(() => {

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
+  fetchEpcClassPool,
   generateNameTheClassQuestion,
   generateMatchDrugToClassQuestion,
   generateBrandGenericMatchQuestion,
@@ -309,6 +310,55 @@ describe("generateBrandGenericMatchQuestion", () => {
 
     const question = await generateBrandGenericMatchQuestion(pool, new Set());
     expect(question.leftItems).toHaveLength(4);
+  });
+});
+
+describe("fetchEpcClassPool", () => {
+  it("returns initial data when only one page exists", async () => {
+    const classes = makeClassPool(["A", "B"]);
+    mockedApi.getDrugClasses.mockResolvedValueOnce({
+      data: classes,
+      pagination: { page: 1, limit: 100, total: 2, total_pages: 1 },
+    });
+
+    const result = await fetchEpcClassPool();
+    expect(result).toEqual(classes);
+    expect(mockedApi.getDrugClasses).toHaveBeenCalledTimes(1);
+  });
+
+  it("fetches multiple pages when total_pages > 1", async () => {
+    const page1Classes = makeClassPool(["Page1-A", "Page1-B"]);
+    const page2Classes = makeClassPool(["Page2-A", "Page2-B"]);
+
+    mockedApi.getDrugClasses
+      .mockResolvedValueOnce({
+        data: page1Classes,
+        pagination: { page: 1, limit: 100, total: 200, total_pages: 3 },
+      })
+      .mockResolvedValue({
+        data: page2Classes,
+        pagination: { page: 2, limit: 100, total: 200, total_pages: 3 },
+      });
+
+    const result = await fetchEpcClassPool();
+    // Should combine classes from multiple pages
+    expect(result.length).toBeGreaterThan(page1Classes.length);
+    expect(mockedApi.getDrugClasses.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("falls back to initial data when parallel fetch fails", async () => {
+    const page1Classes = makeClassPool(["Fallback-A", "Fallback-B"]);
+
+    mockedApi.getDrugClasses
+      .mockResolvedValueOnce({
+        data: page1Classes,
+        pagination: { page: 1, limit: 100, total: 200, total_pages: 3 },
+      })
+      .mockRejectedValue(new Error("Network error"));
+
+    const result = await fetchEpcClassPool();
+    // Should still return at least the initial data
+    expect(result.length).toBeGreaterThanOrEqual(page1Classes.length);
   });
 });
 
