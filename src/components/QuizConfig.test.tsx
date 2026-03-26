@@ -90,4 +90,81 @@ describe("QuizConfig", () => {
       questionCount: 5,
     });
   });
+
+  it("renders timed mode toggle", () => {
+    render(<QuizConfig onStart={vi.fn()} />);
+    expect(screen.getByLabelText("Toggle timed mode")).toBeInTheDocument();
+  });
+
+  it("enables timed mode and shows time limit options", async () => {
+    const user = userEvent.setup();
+    render(<QuizConfig onStart={vi.fn()} />);
+
+    await user.click(screen.getByLabelText("Toggle timed mode"));
+
+    expect(screen.getByText("30s")).toBeInTheDocument();
+    expect(screen.getByText("60s")).toBeInTheDocument();
+    expect(screen.getByText("90s")).toBeInTheDocument();
+  });
+
+  it("includes timed config in onStart when timed mode is enabled", async () => {
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    render(<QuizConfig onStart={onStart} />);
+
+    await user.click(screen.getByLabelText("Toggle timed mode"));
+    await user.click(screen.getByText("30s"));
+    await user.click(screen.getByText("Start Quiz"));
+
+    expect(onStart).toHaveBeenCalledWith({
+      type: "name-the-class",
+      questionCount: 10,
+      timedMode: true,
+      timeLimitSeconds: 30,
+    });
+  });
+
+  it("passes timed config to Quick 5 when timed mode is on", async () => {
+    const user = userEvent.setup();
+    const onQuick5 = vi.fn();
+    render(<QuizConfig onStart={vi.fn()} onQuick5={onQuick5} />);
+
+    await user.click(screen.getByLabelText("Toggle timed mode"));
+    await user.click(screen.getByText(/Quick 5/));
+
+    expect(onQuick5).toHaveBeenCalledWith({ timedMode: true, timeLimitSeconds: 60 });
+  });
+
+  it("passes undefined timed config to Quick 5 when timed mode is off", async () => {
+    const user = userEvent.setup();
+    const onQuick5 = vi.fn();
+    render(<QuizConfig onStart={vi.fn()} onQuick5={onQuick5} />);
+
+    await user.click(screen.getByText(/Quick 5/));
+
+    expect(onQuick5).toHaveBeenCalledWith(undefined);
+  });
+
+  it("shows flagged questions section when count > 0", () => {
+    const onReviewFlagged = vi.fn();
+    render(<QuizConfig onStart={vi.fn()} flaggedCount={3} onReviewFlagged={onReviewFlagged} />);
+
+    expect(screen.getByText("Flagged Questions")).toBeInTheDocument();
+    expect(screen.getByText(/3 questions saved/)).toBeInTheDocument();
+    expect(screen.getByText("Review Flagged")).toBeInTheDocument();
+  });
+
+  it("does not show flagged section when count is 0", () => {
+    render(<QuizConfig onStart={vi.fn()} flaggedCount={0} onReviewFlagged={vi.fn()} />);
+    expect(screen.queryByText("Flagged Questions")).not.toBeInTheDocument();
+  });
+
+  it("calls onReviewFlagged when Review Flagged is clicked", async () => {
+    const user = userEvent.setup();
+    const onReviewFlagged = vi.fn();
+    render(<QuizConfig onStart={vi.fn()} flaggedCount={5} onReviewFlagged={onReviewFlagged} />);
+
+    await user.click(screen.getByText("Review Flagged"));
+    expect(onReviewFlagged).toHaveBeenCalledTimes(1);
+  });
 });

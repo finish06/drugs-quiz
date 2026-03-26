@@ -167,4 +167,121 @@ describe("QuizResults", () => {
     await user.click(screen.getByText(/Study Weak Drugs/));
     expect(onStudy).toHaveBeenCalledOnce();
   });
+
+  it("shows Share Results button", () => {
+    render(
+      <QuizResults
+        results={makeResults(8, 10)}
+        onNewQuiz={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("Share quiz results")).toBeInTheDocument();
+    expect(screen.getByText("Share Results")).toBeInTheDocument();
+  });
+
+  it("copies share text to clipboard on click", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      writable: true,
+      configurable: true,
+    });
+
+    render(
+      <QuizResults
+        results={makeResults(8, 10)}
+        quizTypeLabel="Name the Class"
+        onNewQuiz={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByLabelText("Share quiz results"));
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining("80%"),
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining("Name the Class"),
+    );
+  });
+
+  it("shows Copied! feedback after sharing", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      writable: true,
+      configurable: true,
+    });
+
+    render(
+      <QuizResults
+        results={makeResults(8, 10)}
+        onNewQuiz={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByLabelText("Share quiz results"));
+    expect(await screen.findByText("Copied!")).toBeInTheDocument();
+  });
+
+  it("shows average time when results include timing data", () => {
+    const timedResults = {
+      ...makeResults(8, 10),
+      averageTimeSeconds: 12,
+    };
+    render(
+      <QuizResults results={timedResults} onNewQuiz={vi.fn()} onRetry={vi.fn()} />,
+    );
+
+    expect(screen.getByText("12s")).toBeInTheDocument();
+    expect(screen.getByText("Avg Time")).toBeInTheDocument();
+  });
+
+  it("shows timed out count when results include timeouts", () => {
+    const timedResults = {
+      ...makeResults(6, 10),
+      timedOutCount: 2,
+    };
+    render(
+      <QuizResults results={timedResults} onNewQuiz={vi.fn()} onRetry={vi.fn()} />,
+    );
+
+    expect(screen.getByText("Timed Out")).toBeInTheDocument();
+    // The count "2" appears multiple times (breakdown dots), so check it exists near "Timed Out"
+    const timedOutLabel = screen.getByText("Timed Out");
+    const timedOutSection = timedOutLabel.closest("div")!;
+    expect(timedOutSection.textContent).toContain("2");
+  });
+
+  it("marks timed-out questions with clock icon in breakdown", () => {
+    const results = makeResults(4, 5);
+    results.answers[4]!.timedOut = true;
+    render(
+      <QuizResults results={results} onNewQuiz={vi.fn()} onRetry={vi.fn()} />,
+    );
+
+    expect(screen.getByTitle("Question 5: Timed out")).toBeInTheDocument();
+  });
+
+  it("shows different grade messages", () => {
+    const { rerender } = render(
+      <QuizResults results={makeResults(8, 10)} onNewQuiz={vi.fn()} onRetry={vi.fn()} />,
+    );
+    expect(screen.getByText("Great job!")).toBeInTheDocument();
+
+    rerender(
+      <QuizResults results={makeResults(7, 10)} onNewQuiz={vi.fn()} onRetry={vi.fn()} />,
+    );
+    expect(screen.getByText("Good work!")).toBeInTheDocument();
+
+    rerender(
+      <QuizResults results={makeResults(6, 10)} onNewQuiz={vi.fn()} onRetry={vi.fn()} />,
+    );
+    expect(screen.getByText("Not bad!")).toBeInTheDocument();
+  });
 });
