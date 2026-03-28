@@ -32,6 +32,7 @@ function App() {
     sessions: sessionHistory, personalBest, isCollapsed: isHistoryCollapsed,
     saveSession, toggleCollapsed: toggleHistoryCollapsed,
     hasLocalSessions, localSessionCount, clearLocalSessions,
+    lastSavedSessionId,
   } = useSessionHistory();
   const { recordResult, getWeakDrugs } = useDrugPerformance();
   const { flaggedCount, flaggedQuestions, isFlagged, toggleFlag } = useFlaggedQuestions();
@@ -226,6 +227,7 @@ function App() {
           onRetry={handleRetry}
           weakDrugCount={weakDrugs.length}
           onStudyWeakDrugs={weakDrugs.length > 0 ? () => setShowFlashcards(true) : undefined}
+          sessionId={lastSavedSessionId ?? undefined}
         />
       );
     }

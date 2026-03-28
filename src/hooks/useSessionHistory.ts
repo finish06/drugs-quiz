@@ -51,6 +51,8 @@ export interface UseSessionHistoryReturn {
   localSessionCount: number;
   /** Clear localStorage session data after successful migration */
   clearLocalSessions: () => void;
+  /** Server-side session ID from the most recent save (for share link) */
+  lastSavedSessionId: string | null;
 }
 
 export function useSessionHistory(): UseSessionHistoryReturn {
@@ -60,6 +62,7 @@ export function useSessionHistory(): UseSessionHistoryReturn {
   );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(readCollapsed);
   const [localSessions] = useState<SessionRecord[]>(readLocalSessions);
+  const [lastSavedSessionId, setLastSavedSessionId] = useState<string | null>(null);
 
   // Fetch sessions from API when authenticated
   useEffect(() => {
@@ -114,9 +117,14 @@ export function useSessionHistory(): UseSessionHistoryReturn {
             completedAt: record.completedAt,
             answersJson: [],
           }),
-        }).catch(() => {
-          // Best effort — session is already in local state
-        });
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data?.id) setLastSavedSessionId(data.id);
+          })
+          .catch(() => {
+            // Best effort — session is already in local state
+          });
       }
     },
     [isAuthenticated],
@@ -153,5 +161,6 @@ export function useSessionHistory(): UseSessionHistoryReturn {
     hasLocalSessions: localSessions.length > 0,
     localSessionCount: localSessions.length,
     clearLocalSessions,
+    lastSavedSessionId,
   };
 }

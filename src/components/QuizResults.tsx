@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import type { QuizResults as QuizResultsType } from "@/types/quiz";
 import { AnswerReviewSection } from "./AnswerReviewSection";
 
@@ -9,11 +10,15 @@ interface QuizResultsProps {
   onRetry: () => void;
   weakDrugCount?: number;
   onStudyWeakDrugs?: () => void;
+  sessionId?: string;
 }
 
-export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDrugCount, onStudyWeakDrugs }: QuizResultsProps) {
+export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDrugCount, onStudyWeakDrugs, sessionId }: QuizResultsProps) {
   const { totalQuestions, correctAnswers, percentage } = results;
+  const { isAuthenticated } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [linkLoading, setLinkLoading] = useState(false);
 
   function getGradeColor(): string {
     if (percentage >= 80) return "text-green-600 dark:text-green-400";
@@ -56,6 +61,40 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
       } catch {
         // Clipboard failed silently
       }
+    }
+  }
+
+  async function handleShareLink() {
+    if (!sessionId || linkLoading) return;
+    setLinkLoading(true);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/share`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to generate share link");
+      const data = await res.json();
+      const fullUrl = `${window.location.origin}${data.shareUrl}`;
+
+      if (typeof navigator.share === "function") {
+        try {
+          await navigator.share({ url: fullUrl });
+          return;
+        } catch {
+          // Fall through to clipboard
+        }
+      }
+
+      if (typeof navigator.clipboard?.writeText === "function") {
+        await navigator.clipboard.writeText(fullUrl);
+      }
+
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // Silently fail
+    } finally {
+      setLinkLoading(false);
     }
   }
 
@@ -161,6 +200,22 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
             </svg>
             {copied ? "Copied!" : "Share Results"}
+          </span>
+        </button>
+      )}
+
+      {isAuthenticated && sessionId && (
+        <button
+          onClick={handleShareLink}
+          disabled={linkLoading}
+          aria-label="Share link"
+          className="w-full rounded-xl border-2 border-brand py-3 font-semibold text-brand transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span className="inline-flex items-center gap-2">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+            </svg>
+            {linkCopied ? "Link Copied!" : linkLoading ? "Generating..." : "Share Link"}
           </span>
         </button>
       )}
