@@ -1,11 +1,12 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useAuth } from "./useAuth";
 import type { SessionRecord, SessionQuizType } from "@/types/quiz";
 
 const HISTORY_KEY = "dq-session-history";
 const COLLAPSED_KEY = "dq-history-collapsed";
 const MAX_SESSIONS = 10;
 
-function readSessions(): SessionRecord[] {
+function readLocalSessions(): SessionRecord[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     if (!raw) return [];
@@ -15,7 +16,7 @@ function readSessions(): SessionRecord[] {
   }
 }
 
-function writeSessions(sessions: SessionRecord[]): void {
+function writeLocalSessions(sessions: SessionRecord[]): void {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(sessions));
   } catch {
@@ -44,21 +45,82 @@ export interface UseSessionHistoryReturn {
   isCollapsed: boolean;
   saveSession: (record: SessionRecord) => void;
   toggleCollapsed: () => void;
+  /** Whether localStorage has session data (for migration prompt) */
+  hasLocalSessions: boolean;
+  /** Number of sessions in localStorage */
+  localSessionCount: number;
+  /** Clear localStorage session data after successful migration */
+  clearLocalSessions: () => void;
 }
 
 export function useSessionHistory(): UseSessionHistoryReturn {
-  const [sessions, setSessions] = useState<SessionRecord[]>(readSessions);
+  const { isAuthenticated } = useAuth();
+  const [sessions, setSessions] = useState<SessionRecord[]>(() =>
+    isAuthenticated ? [] : readLocalSessions(),
+  );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(readCollapsed);
+  const [localSessions] = useState<SessionRecord[]>(readLocalSessions);
 
-  const saveSession = useCallback((record: SessionRecord) => {
-    if (record.questionCount === 0) return;
+  // Fetch sessions from API when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
 
-    setSessions((prev) => {
-      const updated = [record, ...prev].slice(0, MAX_SESSIONS);
-      writeSessions(updated);
-      return updated;
-    });
-  }, []);
+    let cancelled = false;
+
+    async function fetchSessions() {
+      try {
+        const res = await fetch(`/api/sessions?limit=${MAX_SESSIONS}`, {
+          credentials: "include",
+        });
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setSessions(data.sessions ?? []);
+        }
+      } catch {
+        // Fall back to localStorage on network error
+        if (!cancelled) {
+          setSessions(readLocalSessions());
+        }
+      }
+    }
+
+    fetchSessions();
+    return () => { cancelled = true; };
+  }, [isAuthenticated]);
+
+  const saveSession = useCallback(
+    (record: SessionRecord) => {
+      if (record.questionCount === 0) return;
+
+      setSessions((prev) => {
+        const updated = [record, ...prev].slice(0, MAX_SESSIONS);
+        if (!isAuthenticated) {
+          writeLocalSessions(updated);
+        }
+        return updated;
+      });
+
+      // Also save to API if authenticated
+      if (isAuthenticated) {
+        fetch("/api/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            quizType: record.quizType,
+            questionCount: record.questionCount,
+            correctCount: record.correctCount,
+            percentage: record.percentage,
+            completedAt: record.completedAt,
+            answersJson: [],
+          }),
+        }).catch(() => {
+          // Best effort — session is already in local state
+        });
+      }
+    },
+    [isAuthenticated],
+  );
 
   const toggleCollapsed = useCallback(() => {
     setIsCollapsed((prev) => {
@@ -72,7 +134,24 @@ export function useSessionHistory(): UseSessionHistoryReturn {
     });
   }, []);
 
+  const clearLocalSessions = useCallback(() => {
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch {
+      // silently degrade
+    }
+  }, []);
+
   const personalBest = useMemo(() => computePersonalBest(sessions), [sessions]);
 
-  return { sessions, personalBest, isCollapsed, saveSession, toggleCollapsed };
+  return {
+    sessions,
+    personalBest,
+    isCollapsed,
+    saveSession,
+    toggleCollapsed,
+    hasLocalSessions: localSessions.length > 0,
+    localSessionCount: localSessions.length,
+    clearLocalSessions,
+  };
 }

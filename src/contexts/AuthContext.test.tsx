@@ -132,13 +132,10 @@ describe("AC-015: AuthContext", () => {
     expect(screen.getByTestId("user").textContent).toBe("null");
   });
 
-  it("should throw when useAuth is used outside AuthProvider", () => {
-    // Suppress console.error for expected error
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(() => render(<TestConsumer />)).toThrow(
-      "useAuth must be used within an AuthProvider"
-    );
-    spy.mockRestore();
+  it("should return safe defaults when useAuth is used outside AuthProvider", () => {
+    const { getByTestId } = render(<TestConsumer />);
+    expect(getByTestId("authenticated").textContent).toBe("false");
+    expect(getByTestId("user").textContent).toBe("null");
   });
 });
 

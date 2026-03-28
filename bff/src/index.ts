@@ -4,6 +4,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { serve } from "@hono/node-server";
 import { runMigrations } from "./db/migrate.js";
 import { createAuthRouter } from "./auth/google.js";
+import { createSessionsRouter } from "./routes/sessions.js";
 
 const app = new Hono();
 
@@ -34,6 +35,10 @@ app.get("/api/health", (c) => c.json({ status: "ok" }));
 // Auth routes: /api/auth/*
 const authRouter = createAuthRouter();
 app.route("/api/auth", authRouter);
+
+// Session routes: /api/sessions/*
+const sessionsRouter = createSessionsRouter();
+app.route("/api/sessions", sessionsRouter);
 
 const UPSTREAM_TIMEOUT_MS = 10_000;
 

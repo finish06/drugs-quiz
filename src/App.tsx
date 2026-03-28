@@ -6,7 +6,9 @@ import { QuizResults } from "@/components/QuizResults";
 import { FlashcardDrill } from "@/components/FlashcardDrill";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UserMenu } from "@/components/UserMenu";
+import { MigrationModal } from "@/components/MigrationModal";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
 import { useDrugPerformance } from "@/hooks/useDrugPerformance";
@@ -25,12 +27,53 @@ function App() {
   const { session, results, error, loadingProgress, startQuiz, submitAnswer, nextQuestion, resetQuiz } =
     useQuizSession();
   const { theme, toggleTheme } = useTheme();
-  const { sessions: sessionHistory, personalBest, isCollapsed: isHistoryCollapsed, saveSession, toggleCollapsed: toggleHistoryCollapsed } =
-    useSessionHistory();
+  const { isAuthenticated } = useAuth();
+  const {
+    sessions: sessionHistory, personalBest, isCollapsed: isHistoryCollapsed,
+    saveSession, toggleCollapsed: toggleHistoryCollapsed,
+    hasLocalSessions, localSessionCount, clearLocalSessions,
+  } = useSessionHistory();
   const { recordResult, getWeakDrugs } = useDrugPerformance();
   const { flaggedCount, flaggedQuestions, isFlagged, toggleFlag } = useFlaggedQuestions();
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showMigration, setShowMigration] = useState(false);
+  const [migrationSkipped, setMigrationSkipped] = useState(false);
+
+  // Show migration modal after login when localStorage has sessions
+  useEffect(() => {
+    if (isAuthenticated && hasLocalSessions && !migrationSkipped) {
+      setShowMigration(true);
+    }
+  }, [isAuthenticated, hasLocalSessions, migrationSkipped]);
+
+  async function handleMigrationSync(): Promise<{ migrated: number; skipped: number }> {
+    const localData = JSON.parse(localStorage.getItem("dq-session-history") || "[]");
+    const sessions = localData.map((s: Record<string, unknown>) => ({
+      quizType: s.quizType,
+      questionCount: s.questionCount,
+      correctCount: s.correctCount,
+      percentage: s.percentage,
+      completedAt: s.completedAt,
+    }));
+
+    const res = await fetch("/api/sessions/migrate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ sessions }),
+    });
+
+    if (!res.ok) throw new Error("Migration failed");
+
+    const result = await res.json();
+    clearLocalSessions();
+
+    // Auto-dismiss after 2 seconds
+    setTimeout(() => setShowMigration(false), 2000);
+
+    return result;
+  }
 
   const savedSessionRef = useRef(false);
   useEffect(() => {
@@ -316,6 +359,16 @@ function App() {
         </div>
       </header>
       <main className="mx-auto max-w-2xl px-4 py-8">{renderContent()}</main>
+      {showMigration && (
+        <MigrationModal
+          sessionCount={localSessionCount}
+          onSync={handleMigrationSync}
+          onSkip={() => {
+            setShowMigration(false);
+            setMigrationSkipped(true);
+          }}
+        />
+      )}
     </div>
     </ErrorBoundary>
     </AuthProvider>

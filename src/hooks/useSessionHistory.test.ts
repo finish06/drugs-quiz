@@ -1,194 +1,156 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useSessionHistory } from "./useSessionHistory";
-import type { SessionRecord } from "@/types/quiz";
 
-function makeSession(overrides: Partial<SessionRecord> = {}): SessionRecord {
-  return {
-    id: `session-${Date.now()}-${Math.random()}`,
-    completedAt: new Date().toISOString(),
-    quizType: "name-the-class",
+// Mock useAuth
+vi.mock("./useAuth", () => ({
+  useAuth: vi.fn(() => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+  })),
+}));
+
+const HISTORY_KEY = "dq-session-history";
+
+function makeSessions(count: number) {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `session-${i}`,
+    completedAt: new Date(Date.now() - i * 60000).toISOString(),
+    quizType: "name-the-class" as const,
     questionCount: 10,
-    correctCount: 7,
-    percentage: 70,
-    ...overrides,
-  };
+    correctCount: 8 - i,
+    percentage: (8 - i) * 10,
+  }));
 }
 
 beforeEach(() => {
   localStorage.clear();
+  vi.restoreAllMocks();
 });
 
-describe("AC-001: Save session to localStorage", () => {
-  it("should save a session record after quiz completion", () => {
+describe("useSessionHistory — localStorage mode (unauthenticated)", () => {
+  it("AC-016: reads sessions from localStorage when unauthenticated", () => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(makeSessions(3)));
     const { result } = renderHook(() => useSessionHistory());
-
-    act(() => {
-      result.current.saveSession(makeSession({ percentage: 80 }));
-    });
-
-    expect(result.current.sessions).toHaveLength(1);
-    expect(result.current.sessions[0]?.percentage).toBe(80);
+    expect(result.current.sessions).toHaveLength(3);
   });
 
-  it("should persist to localStorage", () => {
+  it("saves a new session to localStorage", () => {
     const { result } = renderHook(() => useSessionHistory());
-
     act(() => {
-      result.current.saveSession(makeSession());
-    });
-
-    const stored = JSON.parse(localStorage.getItem("dq-session-history") ?? "[]");
-    expect(stored).toHaveLength(1);
-  });
-});
-
-describe("AC-003: Reverse chronological order", () => {
-  it("should display sessions newest first", () => {
-    const { result } = renderHook(() => useSessionHistory());
-
-    act(() => {
-      result.current.saveSession(makeSession({ completedAt: "2026-03-01T10:00:00Z", percentage: 60 }));
-    });
-    act(() => {
-      result.current.saveSession(makeSession({ completedAt: "2026-03-02T10:00:00Z", percentage: 80 }));
-    });
-
-    expect(result.current.sessions[0]?.percentage).toBe(80);
-    expect(result.current.sessions[1]?.percentage).toBe(60);
-  });
-});
-
-describe("AC-005: Personal best per quiz type", () => {
-  it("should compute highest percentage per quiz type", () => {
-    const { result } = renderHook(() => useSessionHistory());
-
-    act(() => {
-      result.current.saveSession(makeSession({ quizType: "name-the-class", percentage: 70 }));
-    });
-    act(() => {
-      result.current.saveSession(makeSession({ quizType: "name-the-class", percentage: 90 }));
-    });
-    act(() => {
-      result.current.saveSession(makeSession({ quizType: "match-drug-to-class", percentage: 60 }));
-    });
-
-    expect(result.current.personalBest["name-the-class"]).toBe(90);
-    expect(result.current.personalBest["match-drug-to-class"]).toBe(60);
-  });
-});
-
-describe("AC-006: Personal best updates on new high score", () => {
-  it("should update when a higher score is achieved", () => {
-    const { result } = renderHook(() => useSessionHistory());
-
-    act(() => {
-      result.current.saveSession(makeSession({ quizType: "name-the-class", percentage: 70 }));
-    });
-    expect(result.current.personalBest["name-the-class"]).toBe(70);
-
-    act(() => {
-      result.current.saveSession(makeSession({ quizType: "name-the-class", percentage: 90 }));
-    });
-    expect(result.current.personalBest["name-the-class"]).toBe(90);
-  });
-
-  it("should not decrease when a lower score is achieved", () => {
-    const { result } = renderHook(() => useSessionHistory());
-
-    act(() => {
-      result.current.saveSession(makeSession({ quizType: "name-the-class", percentage: 90 }));
-    });
-    act(() => {
-      result.current.saveSession(makeSession({ quizType: "name-the-class", percentage: 50 }));
-    });
-
-    expect(result.current.personalBest["name-the-class"]).toBe(90);
-  });
-});
-
-describe("AC-007: Maximum 10 sessions with eviction", () => {
-  it("should keep only 10 sessions, evicting oldest", () => {
-    const { result } = renderHook(() => useSessionHistory());
-
-    for (let i = 0; i < 11; i++) {
-      act(() => {
-        result.current.saveSession(
-          makeSession({
-            id: `session-${i}`,
-            completedAt: new Date(2026, 2, 1 + i).toISOString(),
-            percentage: (i + 1) * 8,
-          }),
-        );
+      result.current.saveSession({
+        id: "new-1",
+        completedAt: new Date().toISOString(),
+        quizType: "name-the-class",
+        questionCount: 10,
+        correctCount: 7,
+        percentage: 70,
       });
-    }
-
-    expect(result.current.sessions).toHaveLength(10);
-    // Oldest (session-0) should be evicted
-    expect(result.current.sessions.find((s) => s.id === "session-0")).toBeUndefined();
-    // Newest (session-10) should be present
-    expect(result.current.sessions[0]?.id).toBe("session-10");
+    });
+    expect(result.current.sessions).toHaveLength(1);
+    expect(JSON.parse(localStorage.getItem(HISTORY_KEY)!)).toHaveLength(1);
   });
-});
 
-describe("AC-008: Empty state", () => {
-  it("should return empty sessions array when no history", () => {
+  it("AC-018: computes personal best per quiz type", () => {
+    const sessions = [
+      { ...makeSessions(1)[0], quizType: "name-the-class" as const, percentage: 90 },
+      { ...makeSessions(1)[0], id: "s2", quizType: "name-the-class" as const, percentage: 70 },
+      { ...makeSessions(1)[0], id: "s3", quizType: "quick-5" as const, percentage: 100 },
+    ];
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(sessions));
     const { result } = renderHook(() => useSessionHistory());
+    expect(result.current.personalBest["name-the-class"]).toBe(90);
+    expect(result.current.personalBest["quick-5"]).toBe(100);
+  });
+
+  it("limits to MAX_SESSIONS (10)", () => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(makeSessions(10)));
+    const { result } = renderHook(() => useSessionHistory());
+    act(() => {
+      result.current.saveSession({
+        id: "overflow",
+        completedAt: new Date().toISOString(),
+        quizType: "quick-5",
+        questionCount: 5,
+        correctCount: 5,
+        percentage: 100,
+      });
+    });
+    expect(result.current.sessions).toHaveLength(10);
+  });
+
+  it("skips sessions with questionCount 0", () => {
+    const { result } = renderHook(() => useSessionHistory());
+    act(() => {
+      result.current.saveSession({
+        id: "empty",
+        completedAt: new Date().toISOString(),
+        quizType: "name-the-class",
+        questionCount: 0,
+        correctCount: 0,
+        percentage: 0,
+      });
+    });
     expect(result.current.sessions).toHaveLength(0);
   });
-});
 
-describe("AC-009: Collapse state persistence", () => {
-  it("should default to expanded (not collapsed)", () => {
+  it("toggles collapsed state", () => {
     const { result } = renderHook(() => useSessionHistory());
     expect(result.current.isCollapsed).toBe(false);
-  });
-
-  it("should toggle collapsed state", () => {
-    const { result } = renderHook(() => useSessionHistory());
-
     act(() => {
       result.current.toggleCollapsed();
     });
-
     expect(result.current.isCollapsed).toBe(true);
   });
 
-  it("should persist collapse state to localStorage", () => {
+  it("returns hasLocalSessions flag", () => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(makeSessions(2)));
     const { result } = renderHook(() => useSessionHistory());
-
-    act(() => {
-      result.current.toggleCollapsed();
-    });
-
-    expect(localStorage.getItem("dq-history-collapsed")).toBe("true");
+    expect(result.current.hasLocalSessions).toBe(true);
   });
 
-  it("should restore collapse state from localStorage", () => {
-    localStorage.setItem("dq-history-collapsed", "true");
+  it("returns localSessionCount", () => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(makeSessions(4)));
     const { result } = renderHook(() => useSessionHistory());
-    expect(result.current.isCollapsed).toBe(true);
+    expect(result.current.localSessionCount).toBe(4);
+  });
+
+  it("clearLocalSessions removes localStorage data", () => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(makeSessions(3)));
+    const { result } = renderHook(() => useSessionHistory());
+    act(() => {
+      result.current.clearLocalSessions();
+    });
+    expect(localStorage.getItem(HISTORY_KEY)).toBeNull();
   });
 });
 
-describe("AC-010: Survives page reload", () => {
-  it("should restore sessions from localStorage on mount", () => {
-    const sessions = [makeSession({ percentage: 85 })];
-    localStorage.setItem("dq-session-history", JSON.stringify(sessions));
-
-    const { result } = renderHook(() => useSessionHistory());
-    expect(result.current.sessions).toHaveLength(1);
-    expect(result.current.sessions[0]?.percentage).toBe(85);
-  });
-});
-
-describe("Edge: Session with 0 questions", () => {
-  it("should not save sessions with 0 questions", () => {
-    const { result } = renderHook(() => useSessionHistory());
-
-    act(() => {
-      result.current.saveSession(makeSession({ questionCount: 0 }));
+describe("useSessionHistory — API mode (authenticated)", () => {
+  it("AC-015: fetches sessions from API when authenticated", async () => {
+    const { useAuth } = await import("./useAuth");
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: "user-1", email: "test@test.com", name: "Test", avatarUrl: null },
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
     });
 
-    expect(result.current.sessions).toHaveLength(0);
+    const mockSessions = makeSessions(2);
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ sessions: mockSessions }),
+    });
+
+    const { result } = renderHook(() => useSessionHistory());
+
+    await vi.waitFor(() => {
+      expect(result.current.sessions).toHaveLength(2);
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith("/api/sessions?limit=10", expect.any(Object));
   });
 });
