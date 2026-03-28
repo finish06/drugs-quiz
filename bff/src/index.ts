@@ -4,6 +4,8 @@ import { secureHeaders } from "hono/secure-headers";
 import { serve } from "@hono/node-server";
 import { runMigrations } from "./db/migrate.js";
 import { createAuthRouter } from "./auth/google.js";
+import { createSessionsRouter } from "./routes/sessions.js";
+import { createShareRouter, createPublicShareRouter } from "./routes/share.js";
 
 const app = new Hono();
 
@@ -34,6 +36,16 @@ app.get("/api/health", (c) => c.json({ status: "ok" }));
 // Auth routes: /api/auth/*
 const authRouter = createAuthRouter();
 app.route("/api/auth", authRouter);
+
+// Session routes: /api/sessions/*
+const sessionsRouter = createSessionsRouter();
+app.route("/api/sessions", sessionsRouter);
+
+// Share routes: /api/sessions/:id/share (authenticated) + /s/:token (public)
+const shareRouter = createShareRouter();
+app.route("/api/sessions", shareRouter);
+const publicShareRouter = createPublicShareRouter();
+app.route("/s", publicShareRouter);
 
 const UPSTREAM_TIMEOUT_MS = 10_000;
 

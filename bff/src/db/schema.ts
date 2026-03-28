@@ -45,6 +45,7 @@ export const quizSessions = pgTable("quiz_sessions", {
   percentage: real("percentage").notNull(),
   completedAt: timestamp("completed_at", { withTimezone: true }).notNull(),
   answersJson: jsonb("answers_json").notNull(),
+  shareToken: varchar("share_token", { length: 16 }).unique(),
 });
 
 /** Inferred TypeScript types from schema */
