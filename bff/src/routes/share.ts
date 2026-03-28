@@ -22,7 +22,7 @@ export function createShareRouter(): Hono {
 
   // POST /api/sessions/:id/share — generate or retrieve share token
   router.post("/:id/share", authMiddleware, async (c) => {
-    const sessionId = c.req.param("id");
+    const sessionId = c.req.param("id")!;
     const user = c.get("user");
 
     const rows = await db
