@@ -135,7 +135,6 @@ describe("GET /s/:token — AC-008, AC-009, AC-011, AC-016", () => {
     const { db } = await import("../db/index.js");
     const mockLimit = vi.fn().mockResolvedValue([]);
     const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
-    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
     const mockInnerJoin = vi.fn().mockReturnValue({ where: mockWhere });
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({ from: vi.fn().mockReturnValue({ innerJoin: mockInnerJoin }) });
 

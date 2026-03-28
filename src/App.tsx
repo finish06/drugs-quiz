@@ -38,15 +38,10 @@ function App() {
   const { flaggedCount, flaggedQuestions, isFlagged, toggleFlag } = useFlaggedQuestions();
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [showMigration, setShowMigration] = useState(false);
-  const [migrationSkipped, setMigrationSkipped] = useState(false);
+  const [migrationDismissed, setMigrationDismissed] = useState(false);
 
-  // Show migration modal after login when localStorage has sessions
-  useEffect(() => {
-    if (isAuthenticated && hasLocalSessions && !migrationSkipped) {
-      setShowMigration(true);
-    }
-  }, [isAuthenticated, hasLocalSessions, migrationSkipped]);
+  // Show migration modal when authenticated + localStorage has sessions + not dismissed
+  const showMigration = isAuthenticated && hasLocalSessions && !migrationDismissed;
 
   async function handleMigrationSync(): Promise<{ migrated: number; skipped: number }> {
     const localData = JSON.parse(localStorage.getItem("dq-session-history") || "[]");
@@ -71,7 +66,7 @@ function App() {
     clearLocalSessions();
 
     // Auto-dismiss after 2 seconds
-    setTimeout(() => setShowMigration(false), 2000);
+    setTimeout(() => setMigrationDismissed(true), 2000);
 
     return result;
   }
@@ -365,10 +360,7 @@ function App() {
         <MigrationModal
           sessionCount={localSessionCount}
           onSync={handleMigrationSync}
-          onSkip={() => {
-            setShowMigration(false);
-            setMigrationSkipped(true);
-          }}
+          onSkip={() => setMigrationDismissed(true)}
         />
       )}
     </div>
