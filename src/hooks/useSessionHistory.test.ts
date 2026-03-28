@@ -129,7 +129,7 @@ describe("useSessionHistory — localStorage mode (unauthenticated)", () => {
 });
 
 describe("useSessionHistory — API mode (authenticated)", () => {
-  it("AC-015: fetches sessions from API when authenticated", async () => {
+  async function setupAuth() {
     const { useAuth } = await import("./useAuth");
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: { id: "user-1", email: "test@test.com", name: "Test", avatarUrl: null },
@@ -138,6 +138,10 @@ describe("useSessionHistory — API mode (authenticated)", () => {
       login: vi.fn(),
       logout: vi.fn(),
     });
+  }
+
+  it("AC-015: fetches sessions from API when authenticated", async () => {
+    await setupAuth();
 
     const mockSessions = makeSessions(2);
     global.fetch = vi.fn().mockResolvedValue({
@@ -152,5 +156,85 @@ describe("useSessionHistory — API mode (authenticated)", () => {
     });
 
     expect(global.fetch).toHaveBeenCalledWith("/api/sessions?limit=10", expect.any(Object));
+  });
+
+  it("falls back to localStorage when API fetch fails", async () => {
+    await setupAuth();
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(makeSessions(3)));
+
+    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+
+    const { result } = renderHook(() => useSessionHistory());
+
+    await vi.waitFor(() => {
+      expect(result.current.sessions).toHaveLength(3);
+    });
+  });
+
+  it("saves session to API when authenticated", async () => {
+    await setupAuth();
+
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ sessions: [] }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ id: "server-1" }) });
+
+    const { result } = renderHook(() => useSessionHistory());
+
+    await vi.waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.saveSession({
+        id: "local-1",
+        completedAt: new Date().toISOString(),
+        quizType: "name-the-class",
+        questionCount: 10,
+        correctCount: 7,
+        percentage: 70,
+      });
+    });
+
+    await vi.waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    // Does NOT write to localStorage when authenticated
+    expect(localStorage.getItem(HISTORY_KEY)).toBeNull();
+  });
+
+  it("tracks lastSavedSessionId from API response", async () => {
+    await setupAuth();
+
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ sessions: [] }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ id: "server-session-abc" }) });
+
+    const { result } = renderHook(() => useSessionHistory());
+
+    await vi.waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.saveSession({
+        id: "local-1",
+        completedAt: new Date().toISOString(),
+        quizType: "quick-5",
+        questionCount: 5,
+        correctCount: 5,
+        percentage: 100,
+      });
+    });
+
+    await vi.waitFor(() => {
+      expect(result.current.lastSavedSessionId).toBe("server-session-abc");
+    });
+  });
+
+  it("returns hasLocalSessions=false when no localStorage data", () => {
+    const { result } = renderHook(() => useSessionHistory());
+    expect(result.current.hasLocalSessions).toBe(false);
+    expect(result.current.localSessionCount).toBe(0);
   });
 });
