@@ -1,8 +1,8 @@
-# Rx Quiz
+# Rx Drill
 
 A quiz app for pharmacy professionals to master drug names, brand/generic pairs, and pharmacological classes. Powered by real FDA/DailyMed data via the [drug-gate API](https://github.com/finish06/drug-gate).
 
-**Current version:** v0.5.0 | **Maturity:** Beta | **339 tests**
+**Current version:** v0.5.0 | **Maturity:** Beta | **339 tests** | **[rxdrill.com](https://rxdrill.com)**
 
 ## Features
 
@@ -26,6 +26,7 @@ A quiz app for pharmacy professionals to master drug names, brand/generic pairs,
 - **Keyboard Shortcuts** — Navigate quizzes with keyboard (1-4 for answers, Enter to continue)
 
 ### Platform
+- **What's New** — In-app changelog with notification dot for new updates
 - **Dark Mode** — Automatic OS preference detection with manual toggle
 - **Responsive** — Works on desktop and mobile browsers
 - **Automated Deploys** — CI/CD with staging webhook and smoke tests
@@ -60,17 +61,18 @@ Open http://localhost:8080
 
 ### Environment Variables
 
-See `.env.example` for all variables. Key ones:
+See `.env.example` for all variables. No URLs are hardcoded — all are config-driven.
 
-| Variable | Purpose |
-|----------|---------|
-| `DRUG_GATE_URL` | Upstream drug-gate API URL |
-| `DRUG_GATE_API_KEY` | API key for drug-gate |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `JWT_SECRET` | JWT signing secret (min 32 chars) |
-| `APP_URL` | Application URL for OAuth redirects |
+| Variable | Purpose | When |
+|----------|---------|------|
+| `VITE_APP_URL` | Public URL for SEO, share text, robots/sitemap | Build-time |
+| `APP_URL` | OAuth redirects and share page links | Runtime (BFF) |
+| `DRUG_GATE_URL` | Upstream drug-gate API URL | Runtime (BFF) |
+| `DRUG_GATE_API_KEY` | API key for drug-gate | Runtime (BFF) |
+| `DATABASE_URL` | PostgreSQL connection string | Runtime (BFF) |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | Runtime (BFF) |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | Runtime (BFF) |
+| `JWT_SECRET` | JWT signing secret (min 32 chars) | Runtime (BFF) |
 
 ## Tech Stack
 
@@ -102,12 +104,14 @@ Auth is **additive** — the app works fully without an account. Sign-in unlocks
 ## Scripts
 
 ```bash
-npm run dev          # Vite dev server
-npm run build        # Production build
-npm run test         # Unit tests (Vitest)
-npm run test:e2e     # E2E tests (Playwright)
-npm run lint         # ESLint
-npm run typecheck    # TypeScript check
+npm run dev              # Vite dev server
+npm run build            # Production build (generates changelog + SEO files, then tsc + vite)
+npm run generate:changelog  # Parse CHANGELOG.md → src/generated/changelog.ts
+npm run generate:seo     # Generate robots.txt + sitemap.xml from VITE_APP_URL
+npm run test             # Unit tests (Vitest)
+npm run test:e2e         # E2E tests (Playwright)
+npm run lint             # ESLint
+npm run typecheck        # TypeScript check
 ```
 
 ## Project Structure
@@ -119,6 +123,7 @@ src/                 # React frontend
   contexts/          #   React contexts (AuthContext)
   services/          #   API client, quiz generators
   types/             #   TypeScript type definitions
+scripts/             # Build-time generation (changelog parser, SEO files)
 bff/                 # Hono BFF proxy + auth + database
   src/auth/          #   Google OAuth, JWT, middleware
   src/routes/        #   Session CRUD, share page routes
@@ -126,7 +131,7 @@ bff/                 # Hono BFF proxy + auth + database
   drizzle/           #   Versioned SQL migration files
 deploy-hook/         # Staging deploy webhook (FastAPI)
 tests/e2e/           # Playwright E2E tests
-specs/               # Feature specifications (25 specs)
+specs/               # Feature specifications (26 specs)
 docs/                # PRD, plans, milestones, sequence diagrams
 ```
 
