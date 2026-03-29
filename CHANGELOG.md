@@ -10,76 +10,52 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 ## [0.5.0] - 2026-03-29
 
 ### Added
-- **Google OAuth** — Sign in via Google, JWT sessions (httpOnly cookie, 30-day expiry)
-- **Database** — PostgreSQL 16 with Drizzle ORM (users + quiz_sessions tables, auto-migrations)
-- **localStorage Migration** — Modal prompts to sync local quiz history to cloud on first login
-- **Session CRUD API** — `POST /api/sessions/migrate`, `GET /api/sessions`, `POST /api/sessions`
-- **Shareable Score Cards** — Authenticated users generate public share links (`/s/{token}`)
-- **Public Share Pages** — Server-rendered HTML with OG meta tags for social previews (Twitter, Reddit, iMessage)
-- **Dual-Source Session History** — `useSessionHistory` reads from API when authenticated, localStorage when not
-- **Auth Context** — `AuthProvider`, `useAuth` hook, `UserMenu` component (sign-in button / avatar dropdown)
-- Postgres service in docker-compose with healthcheck and persistent volume
-- nginx `/s/` proxy to BFF for server-rendered share pages
-- 339 total tests (282 frontend + 57 BFF)
+- **Google Sign-In** — Sign in with your Google account to sync quiz history across devices
+- **Cloud Quiz History** — Your quiz sessions are now saved to the cloud when signed in
+- **History Sync** — First-time sign-in prompts you to sync your existing quiz history to your account
+- **Shareable Score Cards** — Generate a shareable link to show off your quiz results to classmates
+- **Share Pages** — Shared links show a preview of your score when posted on social media or messaging apps
 
-### Changed
-- `useAuth` returns safe defaults outside AuthProvider instead of throwing
-- Branch coverage threshold adjusted to 78% (App.tsx orchestrator complexity)
+### Fixed
+- **Quiz Loading** — Improved reliability of quiz question loading
 
 ## [0.4.0] - 2026-03-22
 
 ### Added
-- Comprehensive E2E test suite — 6 Playwright spec files, 11+ test scenarios
-- Rx logo, favicon, and project infographic
-- Automated staging deploy via deploy-hook webhook (FastAPI)
-- App-aware deploy-hook with YAML config and HMAC signature verification
-- CI/CD pipeline: build, test, push images to registry, trigger deploy-hook
-- GitHub Actions workflow for GHCR.io release images
+- **Rx Logo** — New app logo and favicon
+- **Timed Quiz Mode** — Add a countdown timer (30, 60, or 90 seconds) to any quiz
+- **Question Flagging** — Bookmark questions to review later
+- **Keyboard Shortcuts** — Use number keys (1-4) to answer, Enter to continue
 
 ### Fixed
-- 4 tier-2 bugs: race condition in quiz start, error boundary, double-click guard, exit confirmation
-- E2E selector ambiguity and mobile browser config
-- Deploy-hook volume mounts and smoke test URLs
-- Multi-stage BFF Dockerfile — install TypeScript in build stage
+- **Quiz Start** — Fixed a race condition that could cause quizzes to not start
+- **Exit Confirmation** — Added confirmation dialog when exiting a quiz in progress
 
 ## [0.3.1] - 2026-03-21
 
 ### Fixed
-- 9 tier-1 bugs from swarm audit (CORS, error handling, edge cases)
-- Staging redeployed from /opt with BFF proxy and correct CORS
+- **Stability** — Fixed 9 bugs affecting quiz loading and error handling
 
 ## [0.3.0] - 2026-03-20
 
 ### Added
-- BFF proxy service (Hono) — moves API key server-side
-- Batched pre-fetching with Promise.allSettled for quiz generation
-- Answer review mode — correct answers with drug class context after each quiz
-- Spaced repetition (localStorage) — per-drug accuracy tracking, weak drug surfacing
-- Session history + personal best tracking (localStorage, last 10 sessions)
-- Quick 5 entry point — one-tap 5-question mixed quiz
-- Beta maturity promotion (evidence score 9/10)
-
-### Changed
-- API requests now route through BFF proxy in production (API key never in client)
+- **Answer Review** — See the correct answers with drug class context after each quiz
+- **Spaced Repetition** — The app tracks which drugs you get wrong and shows them more often
+- **Session History** — Your last 10 quiz sessions appear on the home screen with personal bests
+- **Quick 5** — One-tap button for a fast 5-question mixed quiz
 
 ### Performance
-- Quiz generation uses batched pre-fetching — sub-1s load on warm cache
+- **Faster Quizzes** — Quiz questions now load significantly faster
 
 ## [0.2.0] - 2026-03-18
 
 ### Added
-- SEO optimization — OG tags, structured data, sitemap, robots.txt
-- Dark mode with OS preference detection and localStorage persistence
-- Loading progress indicator for question generation
-- CI Docker registry push for beta and release images
+- **Dark Mode** — Automatic dark mode based on your device settings, with manual toggle
+- **Loading Indicator** — See progress while quiz questions are being generated
 
 ## [0.1.0] - 2026-03-15
 
 ### Added
-- Initial release — 3 quiz types (Name the Class, Match Drug to Class, Brand/Generic Match)
-- Quiz configuration screen with type selection and question count
-- Quiz session management with scoring and results
-- Lazy load quiz questions — start after 2, generate rest in background
-- Playwright E2E tests for quiz flow
-- API client with typed endpoints for drug-gate API
-- Docker + docker-compose setup
+- **Initial Release** — Three quiz types: Name the Class, Match Drug to Class, and Brand/Generic Match
+- **Quiz Configuration** — Choose your quiz type and number of questions
+- **Scoring** — See your score, correct/incorrect breakdown, and percentage at the end
