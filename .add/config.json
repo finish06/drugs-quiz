@@ -72,7 +72,7 @@
     "production": {
       "deploy_trigger": "merge to main",
       "verify": ["smoke_tests"],
-      "url": "https://drug-quiz.calebdunn.tech",
+      "url": "https://rxdrill.com",
       "requires_approval": true
     }
   },

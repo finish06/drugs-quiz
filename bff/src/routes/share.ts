@@ -109,7 +109,7 @@ export function createPublicShareRouter(): Hono {
 
     const ogTitle = `${name} scored ${Math.round(data.percentage)}% on ${quizLabel}`;
     const ogDescription = `${data.correctCount}/${data.questionCount} correct on Rx Quiz — ${quizLabel}`;
-    const appUrl = process.env.APP_URL || "https://drug-quiz.calebdunn.tech";
+    const appUrl = process.env.APP_URL || "";
     const shareUrl = `${appUrl}/s/${token}`;
 
     return c.html(renderSharePage({
@@ -242,7 +242,7 @@ function renderSharePage(d: SharePageData): string {
 }
 
 function render404Page(): string {
-  const appUrl = process.env.APP_URL || "https://drug-quiz.calebdunn.tech";
+  const appUrl = process.env.APP_URL || "";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

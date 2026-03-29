@@ -36,7 +36,8 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
 
   function getShareText(): string {
     const label = quizTypeLabel || "Quiz";
-    return `🎯 Rx Quiz: Scored ${percentage}% on ${label} (${correctAnswers}/${totalQuestions}) — drug-quiz.calebdunn.tech`;
+    const domain = (import.meta.env.VITE_APP_URL || "").replace(/^https?:\/\//, "");
+    return `🎯 Rx Drill: Scored ${percentage}% on ${label} (${correctAnswers}/${totalQuestions})${domain ? ` — ${domain}` : ""}`;
   }
 
   async function handleShare() {

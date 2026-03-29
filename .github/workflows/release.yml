@@ -21,6 +21,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate changelog module
+        run: npx tsx scripts/generate-changelog.ts
+
+      - name: Generate SEO files
+        run: npx tsx scripts/generate-seo.ts
+        env:
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}
+
       - name: Lint
         run: npx eslint .
 
@@ -32,6 +40,8 @@ jobs:
 
       - name: Build
         run: npx vite build
+        env:
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}
 
   docker-personal:
     name: Push to Personal Registry
@@ -52,7 +62,7 @@ jobs:
 
       - name: Build and push to personal registry
         run: |
-          docker build \
+          docker build --build-arg VITE_APP_URL="${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}" \
             -t "dockerhub.calebdunn.tech/drugs-quiz:$VERSION" \
             -t "dockerhub.calebdunn.tech/drugs-quiz:latest" \
             .
@@ -83,7 +93,7 @@ jobs:
       - name: Build and push to ghcr.io
         run: |
           IMAGE="ghcr.io/${{ github.repository_owner }}/drugs-quiz"
-          docker build \
+          docker build --build-arg VITE_APP_URL="${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}" \
             -t "$IMAGE:$VERSION" \
             -t "$IMAGE:latest" \
             .

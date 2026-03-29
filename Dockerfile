@@ -1,5 +1,8 @@
 FROM node:22-alpine AS build
 
+ARG VITE_APP_URL=http://localhost:8080
+ENV VITE_APP_URL=$VITE_APP_URL
+
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci

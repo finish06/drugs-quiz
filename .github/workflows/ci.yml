@@ -25,6 +25,11 @@ jobs:
       - name: Generate changelog module
         run: npx tsx scripts/generate-changelog.ts
 
+      - name: Generate SEO files
+        run: npx tsx scripts/generate-seo.ts
+        env:
+          VITE_APP_URL: https://rxdrill.com
+
       - name: Lint
         run: npx eslint .
 
@@ -72,7 +77,8 @@ jobs:
 
       - name: Build and push frontend beta image
         run: |
-          docker build -t "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG" \
+          docker build --build-arg VITE_APP_URL="${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}" \
+                       -t "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG" \
                        -t "dockerhub.calebdunn.tech/drugs-quiz:beta" .
           docker push "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG"
           docker push "dockerhub.calebdunn.tech/drugs-quiz:beta"
