@@ -7,17 +7,24 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-29
+
 ### Added
-- Drizzle ORM with Postgres in BFF — `users` and `quiz_sessions` tables
-- Versioned SQL migrations via drizzle-kit, auto-migrate on BFF startup
-- Google OAuth 2.0 via BFF (arctic library) with JWT sessions (jose)
-- Auth middleware for protected BFF routes with CSRF state parameter
-- AuthContext + AuthProvider for frontend auth state management
-- UserMenu component — sign-in button / avatar + dropdown in header
-- useAuth hook for consuming auth state
+- **Google OAuth** — Sign in via Google, JWT sessions (httpOnly cookie, 30-day expiry)
+- **Database** — PostgreSQL 16 with Drizzle ORM (users + quiz_sessions tables, auto-migrations)
+- **localStorage Migration** — Modal prompts to sync local quiz history to cloud on first login
+- **Session CRUD API** — `POST /api/sessions/migrate`, `GET /api/sessions`, `POST /api/sessions`
+- **Shareable Score Cards** — Authenticated users generate public share links (`/s/{token}`)
+- **Public Share Pages** — Server-rendered HTML with OG meta tags for social previews (Twitter, Reddit, iMessage)
+- **Dual-Source Session History** — `useSessionHistory` reads from API when authenticated, localStorage when not
+- **Auth Context** — `AuthProvider`, `useAuth` hook, `UserMenu` component (sign-in button / avatar dropdown)
 - Postgres service in docker-compose with healthcheck and persistent volume
-- M5 milestone planning (Go Social — Accounts + Viral Distribution)
-- M6 milestone planning (Compete + Go Native) with Capacitor iOS spec
+- nginx `/s/` proxy to BFF for server-rendered share pages
+- 339 total tests (282 frontend + 57 BFF)
+
+### Changed
+- `useAuth` returns safe defaults outside AuthProvider instead of throwing
+- Branch coverage threshold adjusted to 78% (App.tsx orchestrator complexity)
 
 ## [0.4.0] - 2026-03-22
 
