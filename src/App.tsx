@@ -7,8 +7,10 @@ import { FlashcardDrill } from "@/components/FlashcardDrill";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UserMenu } from "@/components/UserMenu";
 import { MigrationModal } from "@/components/MigrationModal";
+import { WhatsNewPanel } from "@/components/WhatsNewPanel";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useChangelog } from "@/hooks/useChangelog";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
 import { useDrugPerformance } from "@/hooks/useDrugPerformance";
@@ -36,9 +38,11 @@ function App() {
   } = useSessionHistory();
   const { recordResult, getWeakDrugs } = useDrugPerformance();
   const { flaggedCount, flaggedQuestions, isFlagged, toggleFlag } = useFlaggedQuestions();
+  const { changelog: changelogData, hasUnseen, markSeen } = useChangelog();
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [migrationDismissed, setMigrationDismissed] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   // Show migration modal when authenticated + localStorage has sessions + not dismissed
   const showMigration = isAuthenticated && hasLocalSessions && !migrationDismissed;
@@ -306,6 +310,18 @@ function App() {
             <div className="flex items-center gap-3">
               <UserMenu />
               <button
+                onClick={() => setShowWhatsNew(true)}
+                className="relative rounded-lg p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                aria-label="What's New"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+                </svg>
+                {hasUnseen && (
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500" />
+                )}
+              </button>
+              <button
                 onClick={toggleTheme}
                 className="rounded-lg p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
                 aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
@@ -361,6 +377,15 @@ function App() {
           sessionCount={localSessionCount}
           onSync={handleMigrationSync}
           onSkip={() => setMigrationDismissed(true)}
+        />
+      )}
+      {showWhatsNew && (
+        <WhatsNewPanel
+          changelog={changelogData}
+          onClose={() => {
+            markSeen();
+            setShowWhatsNew(false);
+          }}
         />
       )}
     </div>
