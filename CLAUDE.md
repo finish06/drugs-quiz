@@ -224,7 +224,13 @@ Services in `docker-compose.yml`: `app` (nginx frontend), `bff` (Hono proxy + au
 
 - **Local:** Docker Compose (build from source), http://localhost:8080
 - **Staging:** Dedicated VM on homelab, deployed via deploy-hook webhook, images from private registry
-- **Production:** rxdrill.com — AWS EC2 instance
+- **Production:** rxdrill.com — GCP Compute Engine (e2-micro), deployed via SSH on version tags
+
+### Docker Compose Files
+
+- **`docker-compose.yml`** — Local development (builds from source, includes Postgres)
+- **`docker-compose.staging.yml`** — Staging (pulls beta images from registry, external Postgres)
+- **`docker-compose.prod.yml`** — Production (pulls latest/versioned images, includes Postgres)
 
 ### Environment Variables
 

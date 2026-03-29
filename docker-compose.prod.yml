@@ -1,0 +1,52 @@
+# Production deployment — GCP Compute Engine
+# Pulls versioned images from registry, runs Postgres locally (cheapest option)
+# TLS handled externally (Cloudflare proxy or Caddy reverse proxy)
+
+services:
+  app:
+    image: dockerhub.calebdunn.tech/drugs-quiz:latest
+    container_name: drugs-quiz
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx-prod.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      bff:
+        condition: service_started
+    restart: unless-stopped
+
+  bff:
+    image: dockerhub.calebdunn.tech/drugs-quiz-bff:latest
+    container_name: drugs-quiz-bff
+    env_file:
+      - .env
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgres://drugs_quiz:${POSTGRES_PASSWORD}@postgres:5432/drugs_quiz
+    expose:
+      - "3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: drugs-quiz-postgres
+    environment:
+      POSTGRES_DB: drugs_quiz
+      POSTGRES_USER: drugs_quiz
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drugs_quiz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
