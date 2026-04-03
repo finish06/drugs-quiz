@@ -1,36 +1,34 @@
 # Session Handoff
-**Written:** 2026-03-29
+**Written:** 2026-04-03
 
 ## In Progress
-- Nothing actively in progress. Cycle 11 complete and deployed to staging.
+- Nothing actively in progress. Production is live.
 
 ## Completed This Session
-- **Spec written** — `specs/changelog-notification.md` (23 ACs, 8 TCs)
-- **Plan written** — `docs/plans/changelog-notification-plan.md`
-- **Cycle 11 executed** — changelog notification feature fully implemented
-- **Build-time parser** — `scripts/parse-changelog.ts` parses CHANGELOG.md, filters technical entries, outputs typed module
-- **Vite plugin** — generates `src/generated/changelog.ts` at build time
-- **useChangelog hook** — version comparison, localStorage tracking, `hasUnseen` flag
-- **WhatsNewPanel** — two-panel modal (sidebar + categorized entries), responsive mobile layout
-- **Header icon** — sparkle icon with blue notification dot for unseen updates
-- **PR #10** — https://github.com/finish06/drugs-quiz/pull/10 (merged)
-- **CI fixes** — added changelog generation step, tsx dependency, tsconfig.node.json include
-- **Deployed to staging** — verified changelog data in production bundle
-- **v0.5.0 tagged** — M5 milestone formally complete
-- **README, PRD, CHANGELOG updated** — all docs current for v0.5.0
+- **Production deployed** — rxdrill.com is live on GCP Compute Engine (e2-micro)
+- **GCP instance created** — `rxdrill-prod` in us-central1-a, firewall rules for HTTP/HTTPS
+- **Production configs** — docker-compose.prod.yml, nginx-prod.conf, .env on instance
+- **Changelog notification** — What's New panel with build-time CHANGELOG.md parser (cycle 11)
+- **Hardcoded URLs removed** — all URLs config-driven via VITE_APP_URL / APP_URL
+- **CHANGELOG.md rewritten** — customer-facing language for all entries
+- **14 specs marked Complete** — all shipped features updated
+- **Release workflow updated** — SSH deploy to production on version tags, BFF image push added
+- **nginx-staging.conf** — committed to repo (was only on VM)
 
 ## Decisions Made
-- Changelog parsed at build time from CHANGELOG.md (not from API)
-- Technical entries filtered via regex patterns (CI, Docker, ORM, etc.)
-- CHANGELOG.md stays developer-facing; parser transforms to customer language
-- Version comparison via semver for notification dot
-- Two-panel layout with CSS-based responsive collapse (no JS media queries)
+- Production on GCP e2-micro (free tier eligible, cheapest option)
+- Postgres in docker-compose stack (no Cloud SQL — cost savings)
+- TLS via external proxy (Cloudflare or similar)
+- docker-compose.prod.yml ports updated to 80:80 and 443:443
+- Production domain: rxdrill.com
 
 ## Blockers
-- Production env still not configured (Google Cloud OAuth)
+- None — production is running
 
 ## Next Steps
-1. **Manual QA** — test What's New panel on staging (dot, sidebar, badges, mobile)
-2. **Plan M6** — specs needed for pwa-offline, exam-countdown, school-leaderboards
-3. **Configure production** — Google Cloud OAuth credentials + env vars
-4. **Close M5 formally** — update config to point current_milestone to M6
+1. **GitHub secrets** — add PROD_HOST, PROD_USER, PROD_SSH_KEY for automated deploys
+2. **GitHub environment** — create "production" environment with required reviewers
+3. **DNS verification** — confirm rxdrill.com resolves correctly
+4. **Manual QA on production** — test OAuth login, quiz flow, share links, What's New panel
+5. **Tag v0.5.1** — first production release tag to test the release workflow
+6. **Plan M6** — remaining specs for pwa-offline, exam-countdown, school-leaderboards
