@@ -1,9 +1,10 @@
-# drugs-quiz — Product Requirements Document
+# Rx Drill — Product Requirements Document
 
-**Version:** 0.3.0
+**Version:** 0.4.0
 **Created:** 2026-03-15
 **Author:** Caleb Dunn
 **Status:** Active
+**Production:** https://rxdrill.com
 
 ## 1. Problem Statement
 
@@ -50,11 +51,15 @@ Pharmacy students, technicians, and professionals studying for licensing exams n
 
 | Layer | Technology | Version | Notes |
 |-------|-----------|---------|-------|
-| Language | TypeScript | 5.x | Frontend only |
+| Language | TypeScript | 5.x | Frontend + BFF |
 | Frontend | React | 19 | SPA with Vite bundler |
+| BFF Proxy | Hono | latest | API key injection, auth, session routes, share pages |
+| ORM | Drizzle ORM | latest | PostgreSQL schema, migrations |
+| Database | PostgreSQL | 16 | Users, quiz sessions, share tokens |
+| Auth | Google OAuth 2.0 (arctic) + JWT (jose) | latest | httpOnly cookies, 30-day expiry |
 | Native (future) | Capacitor | — | iOS wrap when ready |
 | Styling | Tailwind CSS | 4.x | Utility-first CSS |
-| Testing | Vitest + RTL | — | Unit and component tests |
+| Testing | Vitest + RTL | — | Unit and component tests (339 tests) |
 | E2E Testing | Playwright | — | End-to-end browser tests |
 | API | drug-gate | v0.4.0 | External REST API (see frontend-api-contract.md) |
 
@@ -63,10 +68,12 @@ Pharmacy students, technicians, and professionals studying for licensing exams n
 | Component | Choice | Notes |
 |-----------|--------|-------|
 | Git Host | GitHub | — |
-| Cloud Provider | AWS | EC2 for production |
-| CI/CD | GitHub Actions | Lint, test, build, deploy |
+| Cloud Provider | GCP | Compute Engine e2-micro (free tier) |
+| CI/CD | GitHub Actions | Lint, test, build, push images, deploy via IAP tunnel |
 | Containers | Docker + docker-compose | All environments |
-| IaC | None | Manual provisioning for now |
+| TLS | Cloudflare | Free proxy for HTTPS |
+| Deploy (staging) | deploy-hook webhook | HMAC-signed, smoke tests |
+| Deploy (production) | gcloud SSH via IAP | Triggered on version tags, approval gate |
 
 ### Environment Strategy
 
@@ -78,7 +85,7 @@ Pharmacy students, technicians, and professionals studying for licensing exams n
 
 **Environment Tier:** 3 (full pipeline: dev → staging → production)
 
-SSH key for staging access will be generated in the project directory for direct deployment and testing.
+SSH access: staging via direct SSH, production via GCP IAP tunnel. No URLs are hardcoded — all are config-driven via `VITE_APP_URL` (build-time) and `APP_URL` (runtime).
 
 ## 6. Milestones & Roadmap
 
@@ -146,13 +153,13 @@ SSH key for staging access will be generated in the project directory for direct
 - **"Quick 5" Entry Point** — One-tap 5-question mix. Lowers activation energy for short sessions.
 
 **Success criteria:**
-- [ ] Answer review shows correct answers with drug class context after each quiz
-- [ ] Spaced repetition surfaces weak drugs more frequently
-- [ ] Session history displays last 10 sessions on home screen
-- [ ] Personal best tracking motivates improvement
-- [ ] Quick 5 launches a 5-question mixed quiz in one tap
-- [ ] All data persists in localStorage (no backend required)
-- [ ] 30%+ 7-day return rate
+- [x] Answer review shows correct answers with drug class context after each quiz
+- [x] Spaced repetition surfaces weak drugs more frequently
+- [x] Session history displays last 10 sessions on home screen
+- [x] Personal best tracking motivates improvement
+- [x] Quick 5 launches a 5-question mixed quiz in one tap
+- [x] All data persists in localStorage (no backend required)
+- [ ] 30%+ 7-day return rate (measuring)
 
 #### M4: Infrastructure + Quality Hardening [DONE]
 **Goal:** Build the technical foundation for user accounts and social features. Make the existing product bulletproof.
@@ -168,10 +175,10 @@ SSH key for staging access will be generated in the project directory for direct
 - **Performance: Batched Pre-fetching** — Batch API calls with `Promise.allSettled`. Cut quiz generation from O(n sequential) to O(1 batch).
 
 **Success criteria:**
-- [ ] BFF proxy handles all API calls, API key never exposed to client
-- [ ] Staging deploys automatically on merge with smoke tests
-- [ ] Full E2E coverage for all quiz flows and error states
-- [ ] Quiz generation uses batched pre-fetching, sub-1s load on warm cache
+- [x] BFF proxy handles all API calls, API key never exposed to client
+- [x] Staging deploys automatically on merge with smoke tests
+- [x] Full E2E coverage for all quiz flows and error states
+- [x] Quiz generation uses batched pre-fetching, sub-1s load on warm cache
 
 #### M5: Go Social — Accounts + Viral Distribution [DONE]
 **Goal:** Add Google OAuth accounts, shareable results, and the viral distribution loop. Convert localStorage users to cloud-synced accounts.
@@ -263,12 +270,24 @@ Manages quiz flow: question generation, answer tracking, scoring (correct/incorr
 ### Feature 5: Quiz Configuration
 Home screen where users select quiz type, number of questions, and start a session.
 
+### Feature 6: Timed Quiz Mode
+Optional countdown timer (30/60/90 seconds) per question across all quiz types.
+
+### Feature 7: Google Sign-In + Cloud Sync
+Optional Google OAuth account. Quiz sessions sync to cloud. localStorage migration on first login.
+
+### Feature 8: Shareable Score Cards
+Authenticated users generate public share links with OG meta tags for social previews.
+
+### Feature 9: What's New Panel
+In-app changelog notification with version tracking. Build-time CHANGELOG.md parser generates customer-facing entries.
+
 ## 8. Non-Functional Requirements
 
 - **Performance:** Quiz questions should load within 1 second. API responses are cached server-side (60-min TTL), so most requests will be fast (~5-20ms).
-- **Security:** API key stored as environment variable, never exposed to client. Use a backend proxy or build-time injection pattern if needed.
-- **Accessibility:** WCAG 2.1 AA compliance — keyboard navigable, screen reader friendly, sufficient color contrast.
-- **Offline:** PWA service worker for basic offline support (cached quiz data).
+- **Security:** API key never exposed to client (BFF proxy). OAuth via PKCE + CSRF. JWT in httpOnly cookies. No hardcoded secrets or URLs in source.
+- **Accessibility:** WCAG 2.1 AA compliance — keyboard navigable (1-4 shortcuts), screen reader friendly, sufficient color contrast.
+- **Offline:** PWA service worker for basic offline support (cached quiz data) — M6.
 
 ### Deliberate Cuts
 
@@ -283,8 +302,10 @@ Home screen where users select quiz type, number of questions, and start a sessi
 ## 9. Open Questions
 
 - ~~How should the API key be handled for the frontend?~~ **Resolved:** Build-time env var for now; BFF proxy in M4.
-- ~~What domain/URL for staging and production?~~ **Resolved:** staging: drug-quiz.staging.calebdunn.tech, prod: drug-quiz.calebdunn.tech
+- ~~What domain/URL for staging and production?~~ **Resolved:** staging: drug-quiz.staging.calebdunn.tech, prod: rxdrill.com
 - ~~Should quiz sessions persist across page refreshes?~~ **Resolved:** Yes, localStorage-first strategy (M3). Cloud sync on account creation (M5).
+- ~~Where to host production?~~ **Resolved:** GCP Compute Engine e2-micro (free tier), deploy via IAP tunnel on version tags.
+- ~~How to handle URLs across environments?~~ **Resolved:** Config-driven via `VITE_APP_URL` (build-time) and `APP_URL` (runtime). No hardcoded URLs.
 
 ## 10. Revision History
 
@@ -293,3 +314,4 @@ Home screen where users select quiz type, number of questions, and start a sessi
 | 2026-03-15 | 0.1.0 | Caleb Dunn | Initial draft from /add:init interview |
 | 2026-03-20 | 0.2.0 | Caleb Dunn | Updated roadmap from final-roadmap.md — M1/M2 marked DONE, expanded M3-M6 detail, added strategic sequencing, resolved open questions, added deliberate cuts |
 | 2026-03-29 | 0.3.0 | Caleb Dunn | M5 marked DONE (v0.5.0 tagged), M6 promoted to NOW, updated M5 success criteria and feature status |
+| 2026-04-03 | 0.4.0 | Caleb Dunn | Rebrand to Rx Drill, production at rxdrill.com, GCP infrastructure (e2-micro + IAP), updated tech stack (Hono BFF, Drizzle ORM, Postgres, Google OAuth), config-driven URLs, all M3/M4 criteria checked, resolved hosting and URL questions |
