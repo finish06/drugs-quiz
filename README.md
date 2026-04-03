@@ -2,7 +2,7 @@
 
 A quiz app for pharmacy professionals to master drug names, brand/generic pairs, and pharmacological classes. Powered by real FDA/DailyMed data via the [drug-gate API](https://github.com/finish06/drug-gate).
 
-**Current version:** v0.5.0 | **Maturity:** Beta | **339 tests** | **[rxdrill.com](https://rxdrill.com)**
+**Current version:** v0.5.1 | **Maturity:** Beta | **339 tests** | **[rxdrill.com](https://rxdrill.com)**
 
 ## Features
 
@@ -85,21 +85,31 @@ See `.env.example` for all variables. No URLs are hardcoded — all are config-d
 | Auth | Google OAuth 2.0 (arctic) + JWT (jose) |
 | Testing | Vitest + React Testing Library + Playwright |
 | Containers | Docker + docker-compose |
+| Hosting | GCP Compute Engine (e2-micro) |
+| CI/CD | GitHub Actions → staging (webhook) + production (IAP tunnel) |
 
 ## Architecture
 
 ```
-Browser (React SPA)
-  → nginx (:8080, serves static + proxies /api/ and /s/)
-    → Hono BFF (:3001)
-      ├─ /api/v1/*    → drug-gate API (with X-API-Key injection)
-      ├─ /api/auth/*  → Google OAuth + JWT sessions
-      ├─ /api/sessions/* → Session CRUD + migration
-      └─ /s/:token    → Server-rendered public share pages (OG meta tags)
-    → PostgreSQL (users, quiz_sessions)
+Browser → Cloudflare (TLS) → nginx (:80)
+  ├─ Static assets (React SPA)
+  ├─ /api/* → Hono BFF (:3001)
+  │    ├─ /api/v1/*       → drug-gate API (X-API-Key injection)
+  │    ├─ /api/auth/*     → Google OAuth + JWT sessions
+  │    └─ /api/sessions/* → Session CRUD + migration
+  ├─ /s/:token → Hono BFF (server-rendered share pages with OG tags)
+  └─ PostgreSQL (users, quiz_sessions)
 ```
 
 Auth is **additive** — the app works fully without an account. Sign-in unlocks cloud session sync and shareable score links.
+
+### Deployment
+
+| Environment | URL | Deploy Trigger | Infrastructure |
+|-------------|-----|----------------|----------------|
+| Local | http://localhost:5173 | Manual | Vite dev server |
+| Staging | drug-quiz.staging.calebdunn.tech | Push to main | Homelab VM via deploy-hook webhook |
+| Production | rxdrill.com | Version tag (v*) | GCP e2-micro via IAP tunnel |
 
 ## Scripts
 
@@ -144,6 +154,7 @@ docs/                # PRD, plans, milestones, sequence diagrams
 | M3: Learning Loop — answer review, spaced repetition, history, Quick 5 | Done | v0.3.0 |
 | M4: Infrastructure — BFF proxy, automated staging, E2E, batched prefetch | Done | v0.4.0 |
 | M5: Go Social — Google OAuth, cloud sync, shareable scores | Done | v0.5.0 |
+| Production Launch — GCP deploy, config-driven URLs, What's New panel | Done | v0.5.1 |
 | M6: Compete + Go Native — exam countdown, leaderboards, PWA, iOS app | Next | — |
 
 ## License

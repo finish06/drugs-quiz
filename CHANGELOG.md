@@ -7,6 +7,15 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-04-03
+
+### Added
+- **What's New** — See what's changed with each update right inside the app
+- **Production Launch** — Rx Drill is now live at rxdrill.com
+
+### Changed
+- **Config-Driven URLs** — All URLs are now set at deployment time, no hardcoded domains
+
 ## [0.5.0] - 2026-03-29
 
 ### Added

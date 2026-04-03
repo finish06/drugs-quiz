@@ -74,7 +74,7 @@ Pharmacy students, technicians, and professionals studying for licensing exams n
 |-------------|---------|-----|----------------|----------------|
 | Local | Development & unit tests | http://localhost:5173 | Manual | Docker Compose on dev machine |
 | Staging | Integration testing | https://drug-quiz.staging.calebdunn.tech | Push to staging branch | Dedicated VM on homelab |
-| Production | Live users | https://rxdrill.com | Version tag (v*) | GCP Compute Engine (e2-micro) |
+| Production | Live users | https://rxdrill.com | Version tag (v*) | GCP Compute Engine (e2-micro), deploy via IAP tunnel |
 
 **Environment Tier:** 3 (full pipeline: dev → staging → production)
 
