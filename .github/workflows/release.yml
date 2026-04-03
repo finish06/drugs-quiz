@@ -116,23 +116,32 @@ jobs:
     environment: production
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
         with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          script: |
-            cd /opt/drugs-quiz
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
-            sleep 5
-            # Smoke test
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/health)
-            if [ "$HTTP_CODE" -ne 200 ]; then
-              echo "Smoke test failed (HTTP $HTTP_CODE) — rolling back"
-              docker compose -f docker-compose.prod.yml down
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy via IAP tunnel
+        run: |
+          gcloud compute ssh rxdrill-prod \
+            --zone=us-central1-a \
+            --project=rx-quiz-app \
+            --tunnel-through-iap \
+            --command="
+              cd /opt/drugs-quiz
+              docker compose -f docker-compose.prod.yml pull
               docker compose -f docker-compose.prod.yml up -d
-              exit 1
-            fi
-            echo "Production deploy successful (HTTP $HTTP_CODE)"
+              sleep 5
+              HTTP_CODE=\$(curl -s -o /dev/null -w '%{http_code}' http://localhost:80/api/health)
+              echo \"Health check: HTTP \$HTTP_CODE\"
+              if [ \"\$HTTP_CODE\" != '200' ]; then
+                echo 'Smoke test failed — rolling back'
+                docker compose -f docker-compose.prod.yml down
+                docker compose -f docker-compose.prod.yml up -d
+                exit 1
+              fi
+              echo 'Production deploy successful'
+            "
