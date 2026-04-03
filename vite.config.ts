@@ -53,7 +53,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         "/api": {
-          target: env.DRUG_GATE_URL || "http://192.168.1.86:8085",
+          target: env.DRUG_GATE_URL || "http://localhost:8085",
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/api/, ""),
           headers: {
