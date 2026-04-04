@@ -63,6 +63,7 @@ jobs:
       - name: Build and push frontend to personal registry
         run: |
           docker build --build-arg VITE_APP_URL="${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}" \
+            --build-arg VITE_UMAMI_WEBSITE_ID="${{ secrets.VITE_UMAMI_WEBSITE_ID || 'cc17e5e2-cfdb-4026-81d5-8f8306a673b6' }}" \
             -t "dockerhub.calebdunn.tech/drugs-quiz:$VERSION" \
             -t "dockerhub.calebdunn.tech/drugs-quiz:latest" \
             .
@@ -102,6 +103,7 @@ jobs:
         run: |
           IMAGE="ghcr.io/${{ github.repository_owner }}/drugs-quiz"
           docker build --build-arg VITE_APP_URL="${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}" \
+            --build-arg VITE_UMAMI_WEBSITE_ID="${{ secrets.VITE_UMAMI_WEBSITE_ID || 'cc17e5e2-cfdb-4026-81d5-8f8306a673b6' }}" \
             -t "$IMAGE:$VERSION" \
             -t "$IMAGE:latest" \
             .

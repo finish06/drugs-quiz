@@ -77,7 +77,8 @@ jobs:
 
       - name: Build and push frontend beta image
         run: |
-          docker build --build-arg VITE_APP_URL="${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}" \
+          docker build --build-arg VITE_APP_URL="https://drug-quiz.staging.calebdunn.tech" \
+                       --build-arg VITE_UMAMI_WEBSITE_ID="d2665c3e-00c5-4c12-a20a-6af4590a900e" \
                        -t "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG" \
                        -t "dockerhub.calebdunn.tech/drugs-quiz:beta" .
           docker push "dockerhub.calebdunn.tech/drugs-quiz:$BETA_TAG"
