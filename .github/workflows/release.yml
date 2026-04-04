@@ -148,15 +148,15 @@ jobs:
               sudo cp /tmp/docker-compose.prod.yml /tmp/nginx-prod.conf /opt/drugs-quiz/
               sudo chown calebdunn:calebdunn /opt/drugs-quiz/docker-compose.prod.yml /opt/drugs-quiz/nginx-prod.conf
               cd /opt/drugs-quiz
-              docker compose -f docker-compose.prod.yml pull
-              docker compose -f docker-compose.prod.yml up -d
+              sudo docker compose -f docker-compose.prod.yml pull
+              sudo docker compose -f docker-compose.prod.yml up -d
               sleep 5
               HTTP_CODE=\$(curl -s -o /dev/null -w '%{http_code}' http://localhost:80/api/health)
               echo \"Health check: HTTP \$HTTP_CODE\"
               if [ \"\$HTTP_CODE\" != '200' ]; then
                 echo 'Smoke test failed — rolling back'
-                docker compose -f docker-compose.prod.yml down
-                docker compose -f docker-compose.prod.yml up -d
+                sudo docker compose -f docker-compose.prod.yml down
+                sudo docker compose -f docker-compose.prod.yml up -d
                 exit 1
               fi
               echo 'Production deploy successful'
