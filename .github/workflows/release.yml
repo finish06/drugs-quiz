@@ -133,7 +133,7 @@ jobs:
           gcloud compute scp \
             docker-compose.prod.yml \
             nginx-prod.conf \
-            rxdrill-prod:/opt/drugs-quiz/ \
+            rxdrill-prod:/tmp/ \
             --zone=us-central1-a \
             --project=rx-quiz-app \
             --tunnel-through-iap
@@ -145,6 +145,8 @@ jobs:
             --project=rx-quiz-app \
             --tunnel-through-iap \
             --command="
+              sudo cp /tmp/docker-compose.prod.yml /tmp/nginx-prod.conf /opt/drugs-quiz/
+              sudo chown calebdunn:calebdunn /opt/drugs-quiz/docker-compose.prod.yml /opt/drugs-quiz/nginx-prod.conf
               cd /opt/drugs-quiz
               docker compose -f docker-compose.prod.yml pull
               docker compose -f docker-compose.prod.yml up -d
