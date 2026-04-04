@@ -7,6 +7,15 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.5.8] - 2026-04-04
+
+### Changed
+- **Automated Deployments** — Production deploys are now fully automated via version tags with approval gate
+
+### Fixed
+- **Analytics** — Fixed analytics tracking for both production and staging environments
+- **Security Headers** — Updated content security policy to work with Cloudflare and analytics
+
 ## [0.5.1] - 2026-04-03
 
 ### Added
