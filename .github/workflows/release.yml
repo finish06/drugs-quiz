@@ -148,6 +148,7 @@ jobs:
               sudo cp /tmp/docker-compose.prod.yml /tmp/nginx-prod.conf /opt/drugs-quiz/
               sudo chown calebdunn:calebdunn /opt/drugs-quiz/docker-compose.prod.yml /opt/drugs-quiz/nginx-prod.conf
               cd /opt/drugs-quiz
+              sudo cp -n /home/calebdunn/.docker/config.json /root/.docker/config.json 2>/dev/null || true
               sudo docker compose -f docker-compose.prod.yml pull
               sudo docker compose -f docker-compose.prod.yml up -d
               sudo docker compose -f docker-compose.prod.yml restart app
