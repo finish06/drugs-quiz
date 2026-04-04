@@ -118,6 +118,8 @@ jobs:
     environment: production
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
@@ -125,6 +127,16 @@ jobs:
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
+
+      - name: Copy config files to production
+        run: |
+          gcloud compute scp \
+            docker-compose.prod.yml \
+            nginx-prod.conf \
+            rxdrill-prod:/opt/drugs-quiz/ \
+            --zone=us-central1-a \
+            --project=rx-quiz-app \
+            --tunnel-through-iap
 
       - name: Deploy via IAP tunnel
         run: |
