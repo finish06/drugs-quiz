@@ -35,4 +35,11 @@ const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 
 fs.writeFileSync(path.join(publicDir, "robots.txt"), robotsTxt);
 fs.writeFileSync(path.join(publicDir, "sitemap.xml"), sitemapXml);
-console.log(`Generated robots.txt and sitemap.xml for ${url}`);
+
+// Generate health.json
+const pkgPath = path.join(__dirname, "..", "package.json");
+const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+const healthJson = JSON.stringify({ status: "healthy", version: pkg.version }, null, 2) + "\n";
+fs.writeFileSync(path.join(publicDir, "health.json"), healthJson);
+
+console.log(`Generated robots.txt, sitemap.xml, and health.json for ${url} (v${pkg.version})`);

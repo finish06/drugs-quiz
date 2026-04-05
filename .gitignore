@@ -10,8 +10,10 @@ build/
 vite.config.js
 vite.config.d.ts
 src/generated/
+bff/src/build-info.ts
 public/robots.txt
 public/sitemap.xml
+public/health.json
 
 # Environment
 .env

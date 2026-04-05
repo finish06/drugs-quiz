@@ -6,6 +6,7 @@ import { runMigrations } from "./db/migrate.js";
 import { createAuthRouter } from "./auth/google.js";
 import { createSessionsRouter } from "./routes/sessions.js";
 import { createShareRouter, createPublicShareRouter } from "./routes/share.js";
+import { buildInfo } from "./build-info.js";
 
 const app = new Hono();
 
@@ -30,8 +31,16 @@ if (CORS_ORIGIN) {
   app.use("/*", cors({ origin: CORS_ORIGIN, credentials: true }));
 }
 
-app.get("/health", (c) => c.json({ status: "ok" }));
-app.get("/api/health", (c) => c.json({ status: "ok" }));
+const healthResponse = {
+  status: "healthy",
+  ...buildInfo,
+  node_version: process.version,
+  os: process.platform,
+  arch: process.arch,
+};
+
+app.get("/health", (c) => c.json(healthResponse));
+app.get("/api/health", (c) => c.json(healthResponse));
 
 // Auth routes: /api/auth/*
 const authRouter = createAuthRouter();
