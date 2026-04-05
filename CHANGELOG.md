@@ -7,6 +7,9 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+### Added
+- **Health Check** — Added `/health` and `/api/health` endpoints for monitoring with version and build info
+
 ## [0.5.8] - 2026-04-04
 
 ### Changed

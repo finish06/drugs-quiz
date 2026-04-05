@@ -142,8 +142,8 @@
     "lastDetected": "2026-03-22"
   },
   "changelog": {
-    "lastProcessedCommit": "554bddda886e4cbb31a68ab84c0358137cc77cec",
-    "lastVersionTag": "v0.5.8"
+    "lastProcessedCommit": "87ddb7da2f025ae34487a0e96e46eacd2c646180",
+    "lastVersionTag": "v0.5.9"
   },
   "planning": {
     "current_milestone": "M5-Go-Social",
