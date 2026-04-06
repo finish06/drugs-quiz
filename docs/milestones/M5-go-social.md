@@ -3,17 +3,17 @@
 **Goal:** Add Google OAuth accounts and shareable score cards. Convert localStorage users to cloud-synced accounts. Every completed quiz becomes a distribution event.
 **Appetite:** 2 weeks
 **Target Maturity:** Beta
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Started:** 2026-03-23
-**Completed:** TBD
+**Completed:** 2026-03-29
 
 ## Hill Chart
 
 ```
 db-schema-orm        ████████████████████████████████████  DONE ✅ — PR #8 merged
 google-oauth         ████████████████████████████████████  DONE ✅ — PR #8 merged
-localstorage-migrate ████████████████████████████████████  VERIFIED — PR #9, 31 tests, deployed to staging
-shareable-scores     ████████████████████████████████████  VERIFIED — PR #9, share pages + OG tags, deployed to staging
+localstorage-migrate ████████████████████████████████████  DONE ✅ — PR #9 merged, deployed to production
+shareable-scores     ████████████████████████████████████  DONE ✅ — PR #9 merged, deployed to production
 ```
 
 ## Feature Details
@@ -22,8 +22,8 @@ shareable-scores     ███████████████████�
 |---------|------|----------|-------|
 | db-schema-orm | specs/db-schema-orm.md | DONE | Drizzle ORM, Postgres in docker-compose, auto-migrate, 19 tests |
 | google-oauth | specs/google-oauth.md | DONE | OAuth via BFF (arctic), JWT (jose), AuthContext, UserMenu, 31 tests |
-| localstorage-migrate | specs/localstorage-migrate.md | VERIFIED | Migration modal, BFF session CRUD, dual-source hook, 31 new tests |
-| shareable-scores | specs/shareable-scores.md | VERIFIED | Share token, public pages with OG tags, 404 page, 11 new tests |
+| localstorage-migrate | specs/localstorage-migrate.md | DONE | Migration modal, BFF session CRUD, dual-source hook, 31 new tests |
+| shareable-scores | specs/shareable-scores.md | DONE | Share token, public pages with OG tags, 404 page, 11 new tests |
 
 ## Success Criteria
 
@@ -32,7 +32,7 @@ shareable-scores     ███████████████████�
 - [x] localStorage session history migrates to cloud on first login
 - [x] Shareable score cards: OG meta tags for social previews + live public page
 - [x] Sharing requires authentication
-- [ ] v0.5.0 tagged and released
+- [x] v0.5.0 tagged and released (2026-03-29)
 - [x] No regression — 279 frontend + 57 BFF = 336 total tests passing
 - [x] Coverage: 88% statements, 79% branches (threshold adjusted to 78%)
 
