@@ -6,6 +6,8 @@ export function Quick5Button({ onStart }: Quick5ButtonProps) {
   return (
     <button
       onClick={onStart}
+      data-umami-event="quiz-start"
+      data-umami-event-type="quick-5"
       className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand py-4 text-lg font-bold text-white shadow-md transition-all duration-200 hover:bg-brand-dark dark:hover:bg-brand-light hover:shadow-lg active:scale-[0.98]"
       aria-label="Quick 5 — Start a 5-question mixed quiz"
     >

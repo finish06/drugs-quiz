@@ -38,3 +38,12 @@ describe("AC-010: Accessibility", () => {
     expect(button).toBeInTheDocument();
   });
 });
+
+describe("AC-002 (analytics-events): Quick 5 umami event attributes", () => {
+  it("should have quiz-start umami event with type quick-5", () => {
+    render(<Quick5Button onStart={() => {}} />);
+    const button = screen.getByRole("button", { name: /quick 5/i });
+    expect(button).toHaveAttribute("data-umami-event", "quiz-start");
+    expect(button).toHaveAttribute("data-umami-event-type", "quick-5");
+  });
+});

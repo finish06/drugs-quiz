@@ -167,4 +167,53 @@ describe("QuizConfig", () => {
     await user.click(screen.getByText("Review Flagged"));
     expect(onReviewFlagged).toHaveBeenCalledTimes(1);
   });
+
+  describe("Analytics: Umami event attributes (specs/analytics-events.md)", () => {
+    it("AC-001: Start Quiz button has quiz-start umami event with default props", () => {
+      render(<QuizConfig onStart={vi.fn()} />);
+      const button = screen.getByText("Start Quiz");
+      expect(button).toHaveAttribute("data-umami-event", "quiz-start");
+      expect(button).toHaveAttribute("data-umami-event-type", "name-the-class");
+      expect(button).toHaveAttribute("data-umami-event-questions", "10");
+      expect(button).toHaveAttribute("data-umami-event-timed", "off");
+    });
+
+    it("AC-003: type attribute reflects selected quiz type", async () => {
+      const user = userEvent.setup();
+      render(<QuizConfig onStart={vi.fn()} />);
+      const button = screen.getByText("Start Quiz");
+
+      await user.click(screen.getByText("Match Drug to Class"));
+      expect(button).toHaveAttribute("data-umami-event-type", "match-drug-to-class");
+
+      await user.click(screen.getByText("Brand/Generic Match"));
+      expect(button).toHaveAttribute("data-umami-event-type", "brand-generic-match");
+    });
+
+    it("AC-004: questions attribute reflects selected count", async () => {
+      const user = userEvent.setup();
+      render(<QuizConfig onStart={vi.fn()} />);
+      const button = screen.getByText("Start Quiz");
+
+      await user.click(screen.getByText("20"));
+      expect(button).toHaveAttribute("data-umami-event-questions", "20");
+
+      await user.click(screen.getByText("5"));
+      expect(button).toHaveAttribute("data-umami-event-questions", "5");
+    });
+
+    it("AC-005: timed attribute shows 'off' when disabled, '{N}s' when enabled", async () => {
+      const user = userEvent.setup();
+      render(<QuizConfig onStart={vi.fn()} />);
+      const button = screen.getByText("Start Quiz");
+
+      expect(button).toHaveAttribute("data-umami-event-timed", "off");
+
+      await user.click(screen.getByLabelText("Toggle timed mode"));
+      expect(button).toHaveAttribute("data-umami-event-timed", "60s");
+
+      await user.click(screen.getByText("30s"));
+      expect(button).toHaveAttribute("data-umami-event-timed", "30s");
+    });
+  });
 });

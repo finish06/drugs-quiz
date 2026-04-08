@@ -153,6 +153,10 @@ export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}
       <button
         onClick={handleStart}
         disabled={isLoading}
+        data-umami-event="quiz-start"
+        data-umami-event-type={selectedType}
+        data-umami-event-questions={questionCount}
+        data-umami-event-timed={timedMode ? timeLimitSeconds + "s" : "off"}
         className={`w-full rounded-xl py-3.5 text-lg font-semibold text-white shadow-sm transition-all duration-200 ${
           isLoading
             ? "bg-brand/60 cursor-not-allowed"
