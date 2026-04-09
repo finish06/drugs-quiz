@@ -121,11 +121,11 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
             <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-600">{correctAnswers}</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{correctAnswers}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Correct</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-red-600">
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
               {totalQuestions - correctAnswers}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Incorrect</p>

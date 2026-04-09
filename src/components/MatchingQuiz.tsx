@@ -122,38 +122,46 @@ export function MatchingQuiz({
     return -1;
   }
 
+  type ItemState = "correct" | "incorrect" | "submitted-unpaired" | "paired" | "selected" | "hoverable" | "default";
+
+  function getItemState(item: string, side: "left" | "right"): ItemState {
+    if (submitted) {
+      const isPaired = side === "left" ? pairedLeftItems.has(item) : pairedRightItems.has(item);
+      if (!isPaired) return "submitted-unpaired";
+      return isCorrectPair(item, side) ? "correct" : "incorrect";
+    }
+    if (getPairIndex(item, side) >= 0) return "paired";
+    if (side === "left" && selectedLeft === item) return "selected";
+    if (side === "right" && selectedLeft && !pairedRightItems.has(item)) return "hoverable";
+    return "default";
+  }
+
+  function isCorrectPair(item: string, side: "left" | "right"): boolean {
+    if (side === "left") return question.correctPairs[item] === pairs[item];
+    const leftKey = Object.entries(pairs).find(([, v]) => v === item)?.[0];
+    return leftKey ? question.correctPairs[leftKey] === item : false;
+  }
+
+  const ITEM_STATE_STYLES: Record<ItemState, string> = {
+    correct: "border-green-500 bg-green-50 dark:bg-green-900/30 shadow-sm",
+    incorrect: "border-red-500 bg-red-50 dark:bg-red-900/30",
+    "submitted-unpaired": "border-gray-200 dark:border-gray-700 opacity-50",
+    paired: "", // handled separately — needs color index
+    selected: "border-brand dark:border-brand bg-blue-50 dark:bg-blue-900/30 ring-2 ring-brand-muted dark:ring-brand-muted",
+    hoverable: "border-gray-300 dark:border-gray-600 hover:border-brand dark:hover:border-brand hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-sm cursor-pointer",
+    default: "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm",
+  };
+
   function getItemStyle(item: string, side: "left" | "right"): string {
     const base = "w-full text-left rounded-lg border-2 p-3 transition-all duration-200 text-sm";
-    const pairIdx = getPairIndex(item, side);
+    const state = getItemState(item, side);
 
-    if (submitted) {
-      if (side === "left" && pairedLeftItems.has(item)) {
-        const isCorrect = question.correctPairs[item] === pairs[item];
-        return `${base} ${isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/30 shadow-sm" : "border-red-500 bg-red-50 dark:bg-red-900/30"}`;
-      }
-      if (side === "right" && pairedRightItems.has(item)) {
-        const leftKey = Object.entries(pairs).find(([, v]) => v === item)?.[0];
-        const isCorrect = leftKey ? question.correctPairs[leftKey] === item : false;
-        return `${base} ${isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/30 shadow-sm" : "border-red-500 bg-red-50 dark:bg-red-900/30"}`;
-      }
-      return `${base} border-gray-200 dark:border-gray-700 opacity-50`;
-    }
-
-    if (pairIdx >= 0) {
-      const color = PAIR_COLORS[pairIdx % PAIR_COLORS.length]!;
+    if (state === "paired") {
+      const color = PAIR_COLORS[getPairIndex(item, side) % PAIR_COLORS.length]!;
       return `${base} ${color.border} ${color.bg} ${color.text} shadow-sm`;
     }
 
-    if (side === "left" && selectedLeft === item) {
-      return `${base} border-brand dark:border-brand bg-blue-50 dark:bg-blue-900/30 ring-2 ring-brand-muted dark:ring-brand-muted`;
-    }
-
-    // Right items show a subtle highlight when a left item is selected (clickable hint)
-    if (side === "right" && selectedLeft && !pairedRightItems.has(item)) {
-      return `${base} border-gray-300 dark:border-gray-600 hover:border-brand dark:hover:border-brand hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-sm cursor-pointer`;
-    }
-
-    return `${base} border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm`;
+    return `${base} ${ITEM_STATE_STYLES[state]}`;
   }
 
   const allPaired = Object.keys(pairs).length === question.leftItems.length;
