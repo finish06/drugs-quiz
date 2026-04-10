@@ -143,13 +143,13 @@ export function MatchingQuiz({
   }
 
   const ITEM_STATE_STYLES: Record<ItemState, string> = {
-    correct: "border-green-500 bg-green-50 dark:bg-green-900/30 shadow-sm",
-    incorrect: "border-red-500 bg-red-50 dark:bg-red-900/30",
-    "submitted-unpaired": "border-gray-200 dark:border-gray-700 opacity-50",
+    correct: "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-900 dark:text-green-300 shadow-sm",
+    incorrect: "border-red-500 bg-red-50 dark:bg-red-900/30 text-red-900 dark:text-red-300",
+    "submitted-unpaired": "border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-400 opacity-50",
     paired: "", // handled separately — needs color index
-    selected: "border-brand dark:border-brand bg-blue-50 dark:bg-blue-900/30 ring-2 ring-brand-muted dark:ring-brand-muted",
-    hoverable: "border-gray-300 dark:border-gray-600 hover:border-brand dark:hover:border-brand hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-sm cursor-pointer",
-    default: "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm",
+    selected: "border-brand dark:border-brand bg-blue-50 dark:bg-blue-900/30 text-gray-900 dark:text-gray-100 ring-2 ring-brand-muted dark:ring-brand-muted",
+    hoverable: "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 hover:border-brand dark:hover:border-brand hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-sm cursor-pointer",
+    default: "border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm",
   };
 
   function getItemStyle(item: string, side: "left" | "right"): string {

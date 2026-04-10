@@ -104,7 +104,7 @@ export function MultipleChoice({
     const base = "w-full text-left rounded-lg border-2 p-4 transition-all duration-200";
 
     if (!answered) {
-      return `${base} border-gray-200 dark:border-gray-700 hover:border-brand-muted dark:hover:border-brand-muted hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-sm`;
+      return `${base} border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-brand-muted dark:hover:border-brand-muted hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-sm`;
     }
 
     if (option === question.correctAnswer) {
@@ -115,7 +115,7 @@ export function MultipleChoice({
       return `${base} border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/30 text-red-900 dark:text-red-300`;
     }
 
-    return `${base} border-gray-200 dark:border-gray-700 opacity-50`;
+    return `${base} border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-400 opacity-50`;
   }
 
   return (
