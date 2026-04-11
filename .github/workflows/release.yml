@@ -42,6 +42,7 @@ jobs:
         run: npx vite build
         env:
           VITE_APP_URL: ${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}
+          VITE_UMAMI_WEBSITE_ID: ${{ secrets.VITE_UMAMI_WEBSITE_ID || 'cc17e5e2-cfdb-4026-81d5-8f8306a673b6' }}
 
   docker-personal:
     name: Push to Personal Registry
