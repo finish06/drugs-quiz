@@ -2,7 +2,7 @@
 
 A quiz app for pharmacy professionals to master drug names, brand/generic pairs, and pharmacological classes. Powered by real FDA/DailyMed data via the [drug-gate API](https://github.com/finish06/drug-gate).
 
-**Current version:** v0.5.11 | **Maturity:** Beta | **362 tests** | **[rxdrill.com](https://rxdrill.com)**
+**Current version:** v0.5.12 | **Maturity:** Beta | **362 tests** | **[rxdrill.com](https://rxdrill.com)**
 
 ## Features
 
