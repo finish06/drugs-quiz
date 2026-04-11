@@ -7,6 +7,11 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.5.12] - 2026-04-11
+
+### Fixed
+- **Build Pipeline** — Quality build step now receives correct URL and analytics env vars, eliminating Vite warnings
+
 ## [0.5.11] - 2026-04-11
 
 ### Changed
