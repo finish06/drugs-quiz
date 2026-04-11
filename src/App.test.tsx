@@ -38,7 +38,7 @@ function setupMocks(question: Question = mockQuestion) {
 describe("App", () => {
   it("renders the app header", () => {
     render(<App />);
-    expect(screen.getByText("drugs-quiz")).toBeInTheDocument();
+    expect(screen.getByText("Rx Drill")).toBeInTheDocument();
   });
 
   it("shows quiz config screen by default", () => {

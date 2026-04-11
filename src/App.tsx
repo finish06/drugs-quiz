@@ -299,11 +299,11 @@ function App() {
             <div className="flex items-center gap-3">
               <img
                 src={theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
-                alt="drugs-quiz logo"
+                alt="Rx Drill logo"
                 className="h-8 w-8 rounded"
               />
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">drugs-quiz</h1>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Rx Drill</h1>
                 <p className="text-xs text-gray-400 dark:text-gray-500">Pharmacy exam prep</p>
               </div>
             </div>

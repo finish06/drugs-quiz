@@ -172,7 +172,7 @@ describe("GET /s/:token — AC-008, AC-009, AC-011, AC-016", () => {
     expect(html).toContain('og:description');
     expect(html).toContain("8/10 correct");
     // Check page content
-    expect(html).toContain("Try Rx Quiz");
+    expect(html).toContain("Try Rx Drill");
     expect(html).toContain("Name the Class");
   });
 });

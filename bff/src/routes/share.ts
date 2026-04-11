@@ -108,7 +108,7 @@ export function createPublicShareRouter(): Hono {
     });
 
     const ogTitle = `${name} scored ${Math.round(data.percentage)}% on ${quizLabel}`;
-    const ogDescription = `${data.correctCount}/${data.questionCount} correct on Rx Quiz — ${quizLabel}`;
+    const ogDescription = `${data.correctCount}/${data.questionCount} correct on Rx Drill — ${quizLabel}`;
     const appUrl = process.env.APP_URL || "";
     const shareUrl = `${appUrl}/s/${token}`;
 
@@ -148,11 +148,11 @@ function renderSharePage(d: SharePageData): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(d.ogTitle)} — Rx Quiz</title>
+  <title>${escapeHtml(d.ogTitle)} — Rx Drill</title>
   <meta property="og:title" content="${escapeHtml(d.ogTitle)}" />
   <meta property="og:description" content="${escapeHtml(d.ogDescription)}" />
   <meta property="og:url" content="${escapeHtml(d.shareUrl)}" />
-  <meta property="og:site_name" content="Rx Quiz" />
+  <meta property="og:site_name" content="Rx Drill" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${escapeHtml(d.ogTitle)}" />
@@ -223,7 +223,7 @@ function renderSharePage(d: SharePageData): string {
 <body>
   <div class="card">
     <div class="header">
-      <div class="logo">💊 Rx Quiz</div>
+      <div class="logo">💊 Rx Drill</div>
     </div>
     <div class="body">
       <div class="name">${escapeHtml(d.name)} scored ${d.percentage}%</div>
@@ -233,7 +233,7 @@ function renderSharePage(d: SharePageData): string {
         <span class="stat-label">correct</span>
       </div>
       <div class="date">Completed ${escapeHtml(d.dateStr)}</div>
-      <a href="${escapeHtml(d.appUrl)}" class="cta">Try Rx Quiz →</a>
+      <a href="${escapeHtml(d.appUrl)}" class="cta">Try Rx Drill →</a>
     </div>
     <div class="footer">A free study tool for pharmacy professionals</div>
   </div>
@@ -248,7 +248,7 @@ function render404Page(): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Quiz result not found — Rx Quiz</title>
+  <title>Quiz result not found — Rx Drill</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -291,10 +291,10 @@ function render404Page(): string {
 </head>
 <body>
   <div class="card">
-    <div class="logo">💊 Rx Quiz</div>
+    <div class="logo">💊 Rx Drill</div>
     <h1>Quiz result not found</h1>
     <p>This result doesn't exist or has been removed.</p>
-    <a href="${escapeHtml(appUrl)}" class="cta">Go to Rx Quiz →</a>
+    <a href="${escapeHtml(appUrl)}" class="cta">Go to Rx Drill →</a>
   </div>
 </body>
 </html>`;
