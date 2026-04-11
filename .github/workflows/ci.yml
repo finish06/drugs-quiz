@@ -60,6 +60,9 @@ jobs:
 
       - name: Build
         run: npx vite build
+        env:
+          VITE_APP_URL: https://drug-quiz.staging.calebdunn.tech
+          VITE_UMAMI_WEBSITE_ID: d2665c3e-00c5-4c12-a20a-6af4590a900e
 
   docker-beta:
     name: Push Beta Image
