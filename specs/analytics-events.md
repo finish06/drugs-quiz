@@ -1,59 +1,125 @@
-# Feature Spec: Analytics Event Tracking
+# Spec: Analytics Event Tracking
 
-**Status:** Complete
-**Milestone:** M6 — Observability
+**Version:** 0.1.0
+**Created:** 2026-04-12
 **PRD Reference:** docs/prd.md
+**Milestone:** M7 — Study Experience
+**Status:** Implementing
 
-## Description
+## 1. Overview
 
-Instrument quiz-start interactions with Umami analytics event tracking via HTML `data-umami-event` attributes. This enables product analytics to understand which quiz types users choose, how many questions they select, and whether they use timed mode — without any JavaScript tracking code.
+Track key user interactions via Umami analytics using `data-umami-event` attributes for automatic event capture. Events cover quiz starts, authentication, and feature engagement to measure product usage without any external SDK — Umami reads the data attributes natively.
 
-## User Story
+### User Story
 
-As a product owner, I want to see which quiz types users start so that I can prioritize content and features for the most popular modes.
+As the product owner, I want to see which quiz types are most popular, how many users sign in, and which features are used so that I can prioritize improvements based on real usage data.
 
-## Acceptance Criteria
+## 2. Acceptance Criteria
 
-1. **AC-001:** The "Start Quiz" button emits a `quiz-start` Umami event on click with properties: `type` (quiz type), `questions` (count), `timed` (time limit or "off").
-2. **AC-002:** The "Quick 5" button emits a `quiz-start` Umami event on click with property `type` set to `"quick-5"`.
-3. **AC-003:** The `type` property on the "Start Quiz" button reflects the currently selected quiz type (`name-the-class`, `match-drug-to-class`, or `brand-generic-match`).
-4. **AC-004:** The `questions` property on the "Start Quiz" button reflects the currently selected question count.
-5. **AC-005:** The `timed` property reads `"off"` when timed mode is disabled, and `"{N}s"` (e.g. `"30s"`) when enabled.
-6. **AC-006:** Tracking is implemented via `data-umami-event` HTML attributes only — no JavaScript `umami.track()` calls required.
+| ID | Criterion | Priority |
+|----|-----------|----------|
+| AC-001 | The "Start Quiz" button fires a `quiz-start` event with quiz type, question count, and timed mode | Must |
+| AC-002 | The "Quick 5" button fires a `quiz-start` event with type `quick-5` | Must |
+| AC-003 | The "Sign in" / "Sign in with Google" button fires a `sign-in-click` event | Must |
+| AC-004 | The "My Progress" button fires a `view-progress` event | Must |
+| AC-005 | All events use `data-umami-event` attributes (no JavaScript tracking calls) | Must |
+| AC-006 | Events include relevant properties via `data-umami-event-*` attributes | Should |
+| AC-007 | Events fire in both light and dark mode | Must |
+| AC-008 | Events fire for both authenticated and unauthenticated users | Must |
+| AC-009 | No events fire in local development if Umami script is not loaded | Must |
 
-## User Test Cases
+## 3. Event Catalog
 
-1. **TC-001:** Load the quiz config screen. Inspect the "Start Quiz" button — it has `data-umami-event="quiz-start"`, `data-umami-event-type="name-the-class"`, `data-umami-event-questions="10"`, `data-umami-event-timed="off"`.
-2. **TC-002:** Select "Brand/Generic Match" and 20 questions. The button attributes update to `type="brand-generic-match"` and `questions="20"`.
-3. **TC-003:** Enable timed mode, select 30s. The `timed` attribute updates to `"30s"`.
-4. **TC-004:** Click "Quick 5". Inspect button — it has `data-umami-event="quiz-start"` and `data-umami-event-type="quick-5"`.
+| Event Name | Trigger | Properties | Component |
+|------------|---------|------------|-----------|
+| `quiz-start` | Click "Start Quiz" | `type`: quiz type, `questions`: count, `timed`: duration or "off" | QuizConfig.tsx |
+| `quiz-start` | Click "Quick 5" | `type`: "quick-5" | Quick5Button.tsx |
+| `sign-in-click` | Click "Sign in" button | — | UserMenu.tsx |
+| `sign-in-click` | Click "Sign in with Google" on progress CTA | `source`: "progress-dashboard" | ProgressDashboard.tsx |
+| `view-progress` | Click "My Progress" | — | QuizConfig.tsx |
 
-## Data Model
+## 4. User Test Cases
 
-No persistent data model. Umami's tracker script reads `data-umami-event*` attributes from clicked elements and sends them to the Umami server as event payloads.
+### TC-001: Quiz start events tracked
 
-```typescript
-// Umami event payload (sent automatically by tracker script)
-interface UmamiEvent {
-  name: "quiz-start";
-  data: {
-    type: "name-the-class" | "match-drug-to-class" | "brand-generic-match" | "quick-5";
-    questions?: string;  // "5" | "10" | "15" | "20"
-    timed?: string;      // "off" | "30s" | "60s" | "90s"
-  };
-}
+**Precondition:** App is loaded with Umami script
+**Steps:**
+1. Select "Name the Class", 10 questions, timed 30s
+2. Click "Start Quiz"
+**Expected Result:** Umami records event `quiz-start` with properties `type=name-the-class`, `questions=10`, `timed=30s`
+**Maps to:** TBD
+
+### TC-002: Quick 5 event tracked
+
+**Precondition:** App is loaded
+**Steps:**
+1. Click "Quick 5"
+**Expected Result:** Umami records event `quiz-start` with property `type=quick-5`
+**Maps to:** TBD
+
+### TC-003: Sign-in click tracked
+
+**Precondition:** User is not signed in
+**Steps:**
+1. Click "Sign in" in the header
+**Expected Result:** Umami records event `sign-in-click`
+**Maps to:** TBD
+
+### TC-004: My Progress click tracked
+
+**Precondition:** App is loaded
+**Steps:**
+1. Click "My Progress"
+**Expected Result:** Umami records event `view-progress`
+**Maps to:** TBD
+
+### TC-005: Sign-in from progress dashboard tracked
+
+**Precondition:** User is not signed in, on progress dashboard
+**Steps:**
+1. Click "Sign in with Google" CTA on progress dashboard
+**Expected Result:** Umami records event `sign-in-click` with property `source=progress-dashboard`
+**Maps to:** TBD
+
+## 5. Implementation Notes
+
+Umami auto-tracks events via HTML data attributes — no JavaScript API calls needed:
+
+```html
+<button
+  data-umami-event="quiz-start"
+  data-umami-event-type="name-the-class"
+  data-umami-event-questions="10"
+  data-umami-event-timed="30s"
+>
+  Start Quiz
+</button>
 ```
 
-## API Contract
+### Already Implemented
+- AC-001: `QuizConfig.tsx` — Start Quiz button
+- AC-002: `Quick5Button.tsx` — Quick 5 button
 
-None — tracking is client-side only via Umami's hosted script.
+### Needs Implementation
+- AC-003: `UserMenu.tsx` — Sign in button
+- AC-003: `ProgressDashboard.tsx` — Sign in with Google CTA
+- AC-004: `QuizConfig.tsx` — My Progress button
 
-## Edge Cases
+## 6. Dependencies
 
-- If Umami script fails to load (ad blocker, network error), the attributes are inert — no errors, no impact on quiz functionality.
-- Attributes are static HTML; they do not depend on any runtime analytics library being present.
+- Umami script loaded in `index.html` (already configured)
+- `VITE_UMAMI_WEBSITE_ID` env var (already configured)
+- No backend changes needed
 
-## Screenshot Checkpoints
+## 7. Out of Scope
 
-1. Browser DevTools showing `data-umami-event` attributes on the Start Quiz button.
-2. Umami dashboard showing `quiz-start` events broken down by `type`.
+- Server-side event tracking
+- Custom Umami API calls
+- Quiz completion events (would require JS tracking, not just data attributes)
+- Funnel analysis setup in Umami dashboard
+
+## 8. Revision History
+
+| Date | Version | Author | Changes |
+|------|---------|--------|---------|
+| 2026-04-12 | 0.1.0 | Caleb Dunn | Initial spec — retroactive for existing events + new sign-in and progress tracking |

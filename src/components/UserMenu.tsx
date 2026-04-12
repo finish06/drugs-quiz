@@ -29,6 +29,7 @@ export function UserMenu() {
     return (
       <button
         onClick={login}
+        data-umami-event="sign-in-click"
         className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">

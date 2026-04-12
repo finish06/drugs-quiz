@@ -202,6 +202,7 @@ export function QuizConfig({ onStart, onQuick5, sessions = [], personalBest = {}
       {onViewProgress && (
         <button
           onClick={onViewProgress}
+          data-umami-event="view-progress"
           className="w-full rounded-xl border-2 border-gray-300 dark:border-gray-600 py-3 font-semibold text-gray-600 dark:text-gray-300 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700/50"
         >
           <span className="inline-flex items-center gap-2">
