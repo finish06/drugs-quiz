@@ -1,6 +1,6 @@
 # Rx Drill — Product Requirements Document
 
-**Version:** 0.4.0
+**Version:** 0.5.0
 **Created:** 2026-03-15
 **Author:** Caleb Dunn
 **Status:** Active
@@ -100,7 +100,8 @@ SSH access: staging via direct SSH, production via GCP IAP tunnel. No URLs are h
 | M3: Close the Learning Loop | Transform quiz into a study tool — answer review, spaced repetition, session history, Quick 5 | Alpha | DONE | Daily active usage, 30%+ 7-day return rate, users learn from mistakes |
 | M4: Infrastructure + Quality Hardening | BFF proxy, automated staging deploy, full E2E, batched pre-fetching | Beta | DONE | Automated staging deploys, full E2E coverage, sub-1s quiz load on warm cache |
 | M5: Go Social — Accounts + Viral Distribution | Google OAuth, shareable score cards, v0.5.0 | Beta | DONE | 20%+ account signup rate, 1K organic MAU within 60 days |
-| M6: Compete + Go Native | Exam countdown, school leaderboards, PWA + offline, Capacitor iOS, v1.0.0 | Beta | NOW | App Store listing, school leaderboard adoption, PWA installs, exam mode completion >60% |
+| M6: Compete + Go Native | Exam countdown, school leaderboards, PWA + offline, Capacitor iOS, v1.0.0 | Beta | NEXT | App Store listing, school leaderboard adoption, PWA installs, exam mode completion >60% |
+| M7: Study Experience | Progress dashboard, badges, custom quiz, NAPLEX mode, polish | Beta | NOW | Daily active users, study session depth, exam mode adoption |
 | Backlog: Monetization | Pro tier, advanced analytics, referral program | — | LATER | Free-first strategy — revisit when MAU justifies it |
 
 ### Milestone Detail
@@ -207,7 +208,32 @@ SSH access: staging via direct SSH, production via GCP IAP tunnel. No URLs are h
 - [ ] 20%+ account signup rate (measuring)
 - [ ] 1,000 organic MAU within 60 days (measuring)
 
-#### M6: Compete + Go Native [NOW]
+#### M7: Study Experience [NOW]
+**Goal:** Turn Rx Drill from a quiz app into a focused study tool. Help users see progress, celebrate wins, and control what they study.
+
+**Appetite:** 2 weeks
+
+**Target maturity:** Beta
+
+**Features:**
+- **Progress Dashboard** — Personal analytics: accuracy trends, weak drug classes, time-per-question, streak count
+- **Achievement Badges** — First 100%, 7-day streak, class mastery, 100 questions answered
+- **Custom Quiz** — Pick specific drug classes to study (multi-select UI)
+- **NAPLEX/PTCE Mode** — Quiz generator weighted by exam blueprint percentages
+- **Confetti + Polish** — Celebration animation, keyboard hint overlay, share page dark mode verify
+- **Ops** — `workflow_dispatch` for manual releases, scheduled E2E smoke tests against production
+
+**Cycle plan:** 4 cycles (12-15). See `docs/milestones/M7-study-experience.md`.
+
+**Success criteria:**
+- [ ] Progress dashboard shows accuracy trends and weak areas
+- [ ] At least 5 achievement badges implemented
+- [ ] Custom quiz lets users select specific drug classes
+- [ ] NAPLEX mode weighted by exam blueprint
+- [ ] Daily E2E smoke tests running against production
+- [ ] Test coverage remains ≥ 78% branches
+
+#### M6: Compete + Go Native [NEXT]
 **Goal:** Add the competitive layer and native iOS experience that makes drugs-quiz the default pharmacy study tool. Ship v1.0.0 to the App Store.
 
 **Appetite:** 3-4 weeks
@@ -315,3 +341,4 @@ In-app changelog notification with version tracking. Build-time CHANGELOG.md par
 | 2026-03-20 | 0.2.0 | Caleb Dunn | Updated roadmap from final-roadmap.md — M1/M2 marked DONE, expanded M3-M6 detail, added strategic sequencing, resolved open questions, added deliberate cuts |
 | 2026-03-29 | 0.3.0 | Caleb Dunn | M5 marked DONE (v0.5.0 tagged), M6 promoted to NOW, updated M5 success criteria and feature status |
 | 2026-04-03 | 0.4.0 | Caleb Dunn | Rebrand to Rx Drill, production at rxdrill.com, GCP infrastructure (e2-micro + IAP), updated tech stack (Hono BFF, Drizzle ORM, Postgres, Google OAuth), config-driven URLs, all M3/M4 criteria checked, resolved hosting and URL questions |
+| 2026-04-11 | 0.5.0 | Caleb Dunn | Added M7 Study Experience milestone (progress dashboard, badges, custom quiz, NAPLEX mode, polish, ops). M6 moved to NEXT, M7 promoted to NOW |
