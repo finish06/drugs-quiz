@@ -8,9 +8,11 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UserMenu } from "@/components/UserMenu";
 import { MigrationModal } from "@/components/MigrationModal";
 import { WhatsNewPanel } from "@/components/WhatsNewPanel";
+import { KeyboardHintsOverlay } from "@/components/KeyboardHintsOverlay";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useChangelog } from "@/hooks/useChangelog";
+import { useKeyboardHintsSeen } from "@/hooks/useKeyboardHintsSeen";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
 import { useDrugPerformance } from "@/hooks/useDrugPerformance";
@@ -39,10 +41,17 @@ function App() {
   const { recordResult, getWeakDrugs } = useDrugPerformance();
   const { flaggedCount, flaggedQuestions, isFlagged, toggleFlag } = useFlaggedQuestions();
   const { changelog: changelogData, hasUnseen, markSeen } = useChangelog();
+  const { hasSeen: hasSeenKbdHints, markSeen: markKbdHintsSeen } = useKeyboardHintsSeen();
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [migrationDismissed, setMigrationDismissed] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+
+  // Show keyboard hints overlay on first quiz start (never seen + in a quiz)
+  const showKeyboardHints =
+    !hasSeenKbdHints &&
+    session !== null &&
+    session.status === "in-progress";
 
   // Show migration modal when authenticated + localStorage has sessions + not dismissed
   const showMigration = isAuthenticated && hasLocalSessions && !migrationDismissed;
@@ -387,6 +396,9 @@ function App() {
             setShowWhatsNew(false);
           }}
         />
+      )}
+      {showKeyboardHints && (
+        <KeyboardHintsOverlay onDismiss={markKbdHintsSeen} />
       )}
     </div>
     </ErrorBoundary>

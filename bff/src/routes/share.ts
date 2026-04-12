@@ -172,7 +172,11 @@ function renderSharePage(d: SharePageData): string {
     @media (prefers-color-scheme: dark) {
       body { background: #111827; color: #f3f4f6; }
       .card { background: #1f2937; border-color: #374151; }
+      .header { border-color: #374151 !important; }
       .stat-box { background: #111827; border-color: #374151; }
+      .stat-label { color: #9ca3af; }
+      .quiz-type { color: #9ca3af; }
+      .date { color: #6b7280; }
       .cta { background: #3b82f6; }
       .cta:hover { background: #2563eb; }
       .footer { color: #9ca3af; }
@@ -264,6 +268,7 @@ function render404Page(): string {
     @media (prefers-color-scheme: dark) {
       body { background: #111827; color: #f3f4f6; }
       .card { background: #1f2937; border-color: #374151; }
+      p { color: #9ca3af; }
       .cta { background: #3b82f6; }
     }
     .card {

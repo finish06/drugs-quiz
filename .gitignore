@@ -44,6 +44,18 @@ android/
 # SSH keys
 staging-key
 staging-key.pub
+prod-key
+prod-key.pub
+
+# Generated reports
+reports/
+
+# JS/types compiled from TS scripts (tsx caching artifacts)
+scripts/*.js
+scripts/*.d.ts
+
+# Setup scripts (local only)
+scripts/setup-prod.sh
 
 # ADD — ephemeral artifacts (don't commit)
 .add/away-logs/

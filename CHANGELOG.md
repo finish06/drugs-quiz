@@ -7,6 +7,17 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.5.13] - 2026-04-11
+
+### Added
+- **Keyboard Shortcut Hints** — First-time quiz takers see a helpful shortcut overlay
+- **Perfect Score Confetti** — Celebrate 100% quiz scores with a confetti animation
+- **Production Smoke Tests** — Daily automated health checks against production
+- **Manual Release Trigger** — Workflow dispatch for hotfix redeploys
+
+### Fixed
+- **Share Page Dark Mode** — Improved dark mode styling on public share pages
+
 ## [0.5.12] - 2026-04-11
 
 ### Fixed
