@@ -9,7 +9,7 @@ const NON_PHARMA_INDICATORS =
 
 /** Allergen and biological extract indicators */
 const ALLERGEN_INDICATORS =
-  /pollen|allergen|antigen|dander|mite|dust|venom|feather|mold mix|grass mix|tree mix|weed mix|allergenic extract|fungal|non-standardized|standardized extract|scratch test|skin test/i;
+  /pollen|allergen|antigen|dander|mite|dust|venom|feather|mold mix|grass mix|tree mix|weed mix|allergenic extract|fungal|non-standardized|standardized extract|scratch test|skin test|fire ant|wasp|bee |hornet|cockroach|insect|cat hair|dog hair|horse hair|animal hair/i;
 
 /** Vaccine and biological products — not pharmacological drugs */
 const VACCINE_BIOLOGICAL =
