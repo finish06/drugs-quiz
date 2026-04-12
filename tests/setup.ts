@@ -1,4 +1,10 @@
 import "@testing-library/jest-dom/vitest";
+import { vi } from "vitest";
+
+// Mock canvas-confetti (no real canvas in jsdom)
+vi.mock("canvas-confetti", () => ({
+  default: vi.fn(),
+}));
 
 // Mock matchMedia for all tests (jsdom doesn't support it)
 Object.defineProperty(window, "matchMedia", {
