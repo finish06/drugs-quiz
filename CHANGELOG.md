@@ -7,10 +7,14 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.5.14] - 2026-04-12
+
 ### Added
 - **Analytics Tracking** — Quiz start events now tracked via Umami for usage insights
 
 ### Fixed
+- **Quiz Question Quality** — Filtered allergens, homeopathic remedies, vaccines, and insect extracts from quizzes (fire ant, pollen, nosodes, etc.)
+- **Perfect Score Confetti** — Fixed confetti animation not firing on 100% scores
 - **Dark Mode Quiz Answers** — Improved answer button styling in dark mode
 - **Matching Quiz Dark Mode** — Fixed result color contrast in dark mode
 
