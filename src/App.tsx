@@ -9,10 +9,12 @@ import { UserMenu } from "@/components/UserMenu";
 import { MigrationModal } from "@/components/MigrationModal";
 import { WhatsNewPanel } from "@/components/WhatsNewPanel";
 import { KeyboardHintsOverlay } from "@/components/KeyboardHintsOverlay";
+import { ProgressDashboard } from "@/components/ProgressDashboard";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useChangelog } from "@/hooks/useChangelog";
 import { useKeyboardHintsSeen } from "@/hooks/useKeyboardHintsSeen";
+import type { StatsData } from "@/types/stats";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
 import { useDrugPerformance } from "@/hooks/useDrugPerformance";
@@ -46,6 +48,64 @@ function App() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [migrationDismissed, setMigrationDismissed] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState<StatsData | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+
+  async function openDashboard(days?: number | null) {
+    setShowDashboard(true);
+    setDashboardLoading(true);
+    try {
+      if (isAuthenticated) {
+        const url = days ? `/api/stats?days=${days}` : "/api/stats";
+        const res = await fetch(url, { credentials: "include" });
+        if (res.ok) {
+          setDashboardStats(await res.json());
+        }
+      } else {
+        // Compute from localStorage (limited to 14 days)
+        setDashboardStats(computeLocalStats(sessionHistory));
+      }
+    } catch {
+      // Fail silently — show empty or stale data
+    } finally {
+      setDashboardLoading(false);
+    }
+  }
+
+  function computeLocalStats(sessions: typeof sessionHistory): StatsData {
+    const cutoff = Date.now() - 14 * 86400000;
+    const recent = sessions.filter((s) => new Date(s.completedAt).getTime() >= cutoff);
+    const totalQuizzes = recent.length;
+    const totalQuestions = recent.reduce((sum, s) => sum + s.questionCount, 0);
+    const totalCorrect = recent.reduce((sum, s) => sum + s.correctCount, 0);
+    const overallAccuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 1000) / 10 : 0;
+
+    const typeMap = new Map<string, { correct: number; total: number; count: number }>();
+    for (const s of recent) {
+      const e = typeMap.get(s.quizType) || { correct: 0, total: 0, count: 0 };
+      e.correct += s.correctCount;
+      e.total += s.questionCount;
+      e.count += 1;
+      typeMap.set(s.quizType, e);
+    }
+
+    return {
+      overallAccuracy,
+      totalQuizzes,
+      totalQuestions,
+      currentStreak: 0,
+      longestStreak: 0,
+      quizTypeBreakdown: Array.from(typeMap.entries()).map(([quizType, d]) => ({
+        quizType,
+        accuracy: d.total > 0 ? Math.round((d.correct / d.total) * 1000) / 10 : 0,
+        count: d.count,
+      })),
+      weakestClasses: [],
+      strongestClasses: [],
+      trendData: [],
+    };
+  }
 
   // Show keyboard hints overlay on first quiz start (never seen + in a quiz)
   const showKeyboardHints =
@@ -157,6 +217,27 @@ function App() {
   const weakDrugs = useMemo(() => getWeakDrugs(), [getWeakDrugs]);
 
   function renderContent() {
+    // Progress dashboard
+    if (showDashboard) {
+      if (dashboardLoading || !dashboardStats) {
+        return (
+          <div className="rounded-xl bg-white dark:bg-gray-800 p-12 shadow-sm text-center">
+            <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-brand border-r-transparent" />
+            <p className="mt-4 text-gray-500 dark:text-gray-400">Loading your stats...</p>
+          </div>
+        );
+      }
+      return (
+        <ProgressDashboard
+          stats={dashboardStats}
+          onBack={() => { setShowDashboard(false); setDashboardStats(null); }}
+          onRangeChange={(days) => openDashboard(days)}
+          showSignInCta={!isAuthenticated}
+          onSignIn={() => { window.location.href = "/api/auth/google"; }}
+        />
+      );
+    }
+
     // Error state (checked first — session may be null on error)
     if (error) {
       return (
@@ -190,6 +271,7 @@ function App() {
           onToggleHistoryCollapsed={toggleHistoryCollapsed}
           isLoading={false}
           flaggedCount={flaggedCount}
+          onViewProgress={() => openDashboard()}
           onReviewFlagged={() => {
             if (flaggedQuestions.length === 0) return;
             savedSessionRef.current = false;
