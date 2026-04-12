@@ -7,6 +7,15 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-12
+
+### Added
+- **Progress Dashboard** — New "My Progress" screen with accuracy trends, streak tracking, weakest/strongest classes, and quiz type breakdown
+- **Stats API** — `GET /api/stats` endpoint returns server-computed performance metrics
+- **Accuracy Trend Chart** — SVG line chart with selectable time ranges (7 days, 30 days, all time)
+- **Streak Tracking** — Consecutive day streak with milestone markers at 3, 7, 14, and 30 days
+- **Sign-in Upgrade Prompt** — Unauthenticated users see 14-day limited stats with sign-in CTA
+
 ## [0.5.15] - 2026-04-12
 
 ### Fixed
