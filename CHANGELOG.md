@@ -7,6 +7,11 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.5.15] - 2026-04-12
+
+### Fixed
+- **Version Sync** — Changelog and health endpoints now always match the deployed version
+
 ## [0.5.14] - 2026-04-12
 
 ### Added
