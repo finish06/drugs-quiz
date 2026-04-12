@@ -141,7 +141,7 @@ bff/                 # Hono BFF proxy + auth + database
   drizzle/           #   Versioned SQL migration files
 deploy-hook/         # Staging deploy webhook (FastAPI)
 tests/e2e/           # Playwright E2E tests
-specs/               # Feature specifications (26 specs)
+specs/               # Feature specifications (27 specs)
 docs/                # PRD, plans, milestones, sequence diagrams
 ```
 
@@ -154,8 +154,9 @@ docs/                # PRD, plans, milestones, sequence diagrams
 | M3: Learning Loop — answer review, spaced repetition, history, Quick 5 | Done | v0.3.0 |
 | M4: Infrastructure — BFF proxy, automated staging, E2E, batched prefetch | Done | v0.4.0 |
 | M5: Go Social — Google OAuth, cloud sync, shareable scores | Done | v0.5.0 |
-| Production Launch — GCP deploy, config-driven URLs, What's New panel | Done | v0.5.1 |
-| M6: Compete + Go Native — exam countdown, leaderboards, PWA, iOS app | Next | — |
+| Production Launch — GCP deploy, config-driven URLs, rebrand to Rx Drill | Done | v0.5.1–v0.5.12 |
+| M7: Study Experience — progress dashboard, badges, custom quiz, NAPLEX mode, polish | Now | — |
+| M6: Compete + Go Native — exam countdown, leaderboards, PWA, iOS app | Next | v1.0.0 |
 
 ## License
 
