@@ -2,7 +2,7 @@
 
 A React frontend app that quizzes pharmacy professionals (students, pharmacists, technicians) on drug names, brand/generic pairs, and pharmacological classes. Powered by the drug-gate API with real FDA/DailyMed data. Features Google OAuth accounts, cloud session sync, shareable score cards, a "What's New" changelog, spaced repetition with flashcard drills, session history with personal best tracking, timed quiz mode, and a Quick 5 mixed-quiz entry point.
 
-**Production domain:** rxdrill.com | **Version:** v0.5.12 | **Maturity:** Beta
+**Production domain:** rxdrill.com | **Version:** v0.5.13 | **Maturity:** Beta
 
 ## Methodology
 

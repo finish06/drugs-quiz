@@ -1,7 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import confetti from "canvas-confetti";
 import { useAuth } from "@/hooks/useAuth";
 import type { QuizResults as QuizResultsType } from "@/types/quiz";
 import { AnswerReviewSection } from "./AnswerReviewSection";
+
+function prefersReducedMotion(): boolean {
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+function fireConfetti() {
+  if (prefersReducedMotion()) return;
+  // Skip in test/SSR environments where canvas is unavailable
+  if (typeof document === "undefined") return;
+  try {
+    const canvas = document.createElement("canvas");
+    if (typeof canvas.getContext !== "function" || !canvas.getContext("2d")) return;
+  } catch {
+    return;
+  }
+
+  const duration = 1500;
+  const end = Date.now() + duration;
+  (function frame() {
+    try {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.7 },
+        colors: ["#3b82f6", "#22c55e", "#eab308", "#ec4899"],
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.7 },
+        colors: ["#3b82f6", "#22c55e", "#eab308", "#ec4899"],
+      });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    } catch {
+      // Silently degrade if canvas-confetti fails
+    }
+  })();
+}
 
 interface QuizResultsProps {
   results: QuizResultsType;
@@ -19,6 +64,13 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [linkLoading, setLinkLoading] = useState(false);
+
+  // Fire confetti on perfect scores
+  useEffect(() => {
+    if (percentage === 100) {
+      fireConfetti();
+    }
+  }, [percentage]);
 
   function getGradeColor(): string {
     if (percentage >= 80) return "text-green-600 dark:text-green-400";
