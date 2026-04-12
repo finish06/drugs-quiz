@@ -14,38 +14,31 @@ function prefersReducedMotion(): boolean {
 
 function fireConfetti() {
   if (prefersReducedMotion()) return;
-  // Skip in test/SSR environments where canvas is unavailable
-  if (typeof document === "undefined") return;
-  try {
-    const canvas = document.createElement("canvas");
-    if (typeof canvas.getContext !== "function" || !canvas.getContext("2d")) return;
-  } catch {
-    return;
-  }
+  if (typeof window === "undefined") return;
 
-  const duration = 1500;
-  const end = Date.now() + duration;
-  (function frame() {
-    try {
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.7 },
-        colors: ["#3b82f6", "#22c55e", "#eab308", "#ec4899"],
-      });
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.7 },
-        colors: ["#3b82f6", "#22c55e", "#eab308", "#ec4899"],
-      });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    } catch {
-      // Silently degrade if canvas-confetti fails
-    }
-  })();
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ["#3b82f6", "#22c55e", "#eab308", "#ec4899"],
+  });
+
+  setTimeout(() => {
+    confetti({
+      particleCount: 50,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.65 },
+      colors: ["#3b82f6", "#22c55e", "#eab308", "#ec4899"],
+    });
+    confetti({
+      particleCount: 50,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.65 },
+      colors: ["#3b82f6", "#22c55e", "#eab308", "#ec4899"],
+    });
+  }, 250);
 }
 
 interface QuizResultsProps {

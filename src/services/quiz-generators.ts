@@ -3,18 +3,39 @@ import type { DrugClass, DrugInClass } from "@/types/api";
 import type { MultipleChoiceQuestion, MatchingQuestion, QuizType, Question } from "@/types/quiz";
 import { toTitleCase } from "@/utils/text";
 
-const HOMEOPATHIC_INDICATORS = /nosode|suis|officinale/i;
+/** Homeopathic and non-pharmaceutical indicators */
+const NON_PHARMA_INDICATORS =
+  /nosode|suis|officinale|tincture|dilution|pellet|granule/i;
+
+/** Allergen and biological extract indicators */
+const ALLERGEN_INDICATORS =
+  /pollen|allergen|antigen|dander|mite|dust|venom|feather|mold mix|grass mix|tree mix|weed mix/i;
+
+/**
+ * Latin binomial species names (Genus species) — allergens, homeopathics, biologics
+ * Matches patterns like "Apis Mellifera", "Blatta Orientalis", "Acacia Longifolia"
+ * but not real drugs like "Acetaminophen" (single word) or "Sodium Chloride" (common chemical)
+ */
+const LATIN_BINOMIAL = /^[A-Z][a-z]+\s+[A-Z][a-z]+/;
+
+/** Common words that appear in real drug names — whitelist to avoid false positives on the binomial filter */
+const REAL_DRUG_WORDS =
+  /sodium|potassium|calcium|magnesium|chloride|sulfate|acetate|phosphate|oxide|hydroxide|carbonate|citrate|hydrochloride|tartrate|maleate|fumarate|succinate|besylate|mesylate/i;
 
 /**
  * Filter out obscure, non-exam-relevant drug names:
  * - Too long (> 60 chars)
  * - Multi-ingredient compounds (contain commas)
- * - Homeopathic preparations
+ * - Homeopathic preparations (nosode, officinale, tincture, etc.)
+ * - Allergen extracts (pollen, dander, mite, venom, etc.)
+ * - Latin binomial species names (Apis Mellifera, Blatta Orientalis, etc.)
  */
 export function isExamRelevantDrug(name: string): boolean {
   if (name.length > 60) return false;
   if (name.includes(",")) return false;
-  if (HOMEOPATHIC_INDICATORS.test(name)) return false;
+  if (NON_PHARMA_INDICATORS.test(name)) return false;
+  if (ALLERGEN_INDICATORS.test(name)) return false;
+  if (LATIN_BINOMIAL.test(name) && !REAL_DRUG_WORDS.test(name)) return false;
   return true;
 }
 
