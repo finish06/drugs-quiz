@@ -7,6 +7,13 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+### Added
+- **Analytics Tracking** — Quiz start events now tracked via Umami for usage insights
+
+### Fixed
+- **Dark Mode Quiz Answers** — Improved answer button styling in dark mode
+- **Matching Quiz Dark Mode** — Fixed result color contrast in dark mode
+
 ## [0.5.13] - 2026-04-11
 
 ### Added
