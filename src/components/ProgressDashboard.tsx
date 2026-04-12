@@ -132,6 +132,8 @@ export function ProgressDashboard({
           {onSignIn && (
             <button
               onClick={onSignIn}
+              data-umami-event="sign-in-click"
+              data-umami-event-source="progress-dashboard"
               className="rounded-lg bg-brand px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark transition-colors"
             >
               Sign in with Google
