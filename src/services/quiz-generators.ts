@@ -5,11 +5,15 @@ import { toTitleCase } from "@/utils/text";
 
 /** Homeopathic and non-pharmaceutical indicators */
 const NON_PHARMA_INDICATORS =
-  /nosode|suis|officinale|tincture|dilution|pellet|granule/i;
+  /nosode|suis|officinale|tincture|dilution|pellet|granule|variolinum|carcinosin|tuberculinum|medorrhinum|luesinum|psorinum|thuja|arnica|belladonna|bryonia|chamomilla|ignatia|lycopodium|nux vomica|pulsatilla|sepia|sulphur/i;
 
 /** Allergen and biological extract indicators */
 const ALLERGEN_INDICATORS =
-  /pollen|allergen|antigen|dander|mite|dust|venom|feather|mold mix|grass mix|tree mix|weed mix/i;
+  /pollen|allergen|antigen|dander|mite|dust|venom|feather|mold mix|grass mix|tree mix|weed mix|allergenic extract|fungal|non-standardized|standardized extract|scratch test|skin test/i;
+
+/** Vaccine and biological products — not pharmacological drugs */
+const VACCINE_BIOLOGICAL =
+  /vaccine|vaccinia|toxoid|immune globulin|antitoxin|antivenin|bacterin|human plasma/i;
 
 /**
  * Latin binomial species names (Genus species) — allergens, homeopathics, biologics
@@ -35,6 +39,7 @@ export function isExamRelevantDrug(name: string): boolean {
   if (name.includes(",")) return false;
   if (NON_PHARMA_INDICATORS.test(name)) return false;
   if (ALLERGEN_INDICATORS.test(name)) return false;
+  if (VACCINE_BIOLOGICAL.test(name)) return false;
   if (LATIN_BINOMIAL.test(name) && !REAL_DRUG_WORDS.test(name)) return false;
   return true;
 }
