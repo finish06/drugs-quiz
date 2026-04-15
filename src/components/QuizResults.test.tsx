@@ -327,3 +327,46 @@ describe("AC-007 + AC-012: QuizResults calls achievements check after session sa
     });
   });
 });
+
+describe("AC-017: QuizResults emits badge_unlocked analytics event for each new badge", () => {
+  it("should call window.umami.track with badge_unlocked for each newly unlocked badge", async () => {
+    const trackFn = vi.fn();
+    Object.defineProperty(window, "umami", { value: { track: trackFn }, writable: true, configurable: true });
+
+    const { useAuth } = await import("@/hooks/useAuth");
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: "user-1", email: "test@test.com", name: "Test", avatarUrl: null },
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    const newBadge = { badgeId: "first-quiz", earnedAt: "2026-04-14T10:00:00Z", context: null };
+    const { useAchievements } = await import("@/hooks/useAchievements");
+    (useAchievements as ReturnType<typeof vi.fn>).mockReturnValue({
+      earnedBadges: [],
+      isLoading: false,
+      checkAfterSession: vi.fn().mockResolvedValue([newBadge]),
+      saveGuestBadge: vi.fn(),
+      migrateGuestBadges: vi.fn(),
+      refresh: vi.fn(),
+    });
+
+    render(
+      <QuizResults
+        results={baseResults}
+        quizTypeLabel="Name the Class"
+        onNewQuiz={vi.fn()}
+        onRetry={vi.fn()}
+        sessionId="sess-analytics"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(trackFn).toHaveBeenCalledWith("badge_unlocked", { badgeId: "first-quiz" });
+    });
+
+    Object.defineProperty(window, "umami", { value: undefined, writable: true, configurable: true });
+  });
+});

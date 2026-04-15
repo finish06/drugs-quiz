@@ -6,6 +6,12 @@ import type { QuizResults as QuizResultsType } from "@/types/quiz";
 import { AnswerReviewSection } from "./AnswerReviewSection";
 import { BadgeUnlockToast } from "./BadgeUnlockToast";
 
+declare global {
+  interface Window {
+    umami?: { track: (event: string, data?: Record<string, unknown>) => void };
+  }
+}
+
 function prefersReducedMotion(): boolean {
   try {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -80,6 +86,10 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
     checkAfterSession(sessionId).then((unlocked) => {
       if (unlocked.length > 0) {
         setNewBadges(unlocked);
+        // AC-017: emit badge_unlocked analytics for each new badge
+        for (const badge of unlocked) {
+          window.umami?.track("badge_unlocked", { badgeId: badge.badgeId });
+        }
       }
     });
   }, [sessionId, isAuthenticated, checkAfterSession]);

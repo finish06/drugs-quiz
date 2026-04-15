@@ -128,6 +128,27 @@ describe("AC-013: BadgesPage populated state (earned-first ordering)", () => {
   });
 });
 
+describe("AC-017: BadgesPage emits badges_viewed analytics on mount", () => {
+  it("should call window.umami.track with badges_viewed on mount", () => {
+    const trackFn = vi.fn();
+    Object.defineProperty(window, "umami", { value: { track: trackFn }, writable: true, configurable: true });
+
+    (useAchievements as ReturnType<typeof vi.fn>).mockReturnValue({
+      earnedBadges: [],
+      isLoading: false,
+      checkAfterSession: vi.fn(),
+      saveGuestBadge: vi.fn(),
+      migrateGuestBadges: vi.fn(),
+      refresh: vi.fn(),
+    });
+
+    renderWithRouter(<BadgesPage />);
+    expect(trackFn).toHaveBeenCalledWith("badges_viewed");
+
+    Object.defineProperty(window, "umami", { value: undefined, writable: true, configurable: true });
+  });
+});
+
 describe("AC-010: BadgesPage guest sign-in banner", () => {
   it("should show sign-in banner for unauthenticated users", () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({

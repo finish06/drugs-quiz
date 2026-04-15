@@ -8,11 +8,18 @@
  * Locked: greyscale icon, muted bg, criteria text
  */
 
+import { useEffect } from "react";
 import { Trophy, Target, Award, Medal, Flame } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { BADGE_CATALOG } from "@/data/badges";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useAuth } from "@/hooks/useAuth";
+
+declare global {
+  interface Window {
+    umami?: { track: (event: string, data?: Record<string, unknown>) => void };
+  }
+}
 
 interface BadgesPageProps {
   onBack?: () => void;
@@ -41,6 +48,11 @@ function formatEarnDate(isoString: string): string {
 export function BadgesPage({ onBack }: BadgesPageProps) {
   const { earnedBadges, isLoading } = useAchievements();
   const { isAuthenticated, login } = useAuth();
+
+  // AC-017: emit badges_viewed analytics on page load
+  useEffect(() => {
+    window.umami?.track("badges_viewed");
+  }, []);
 
   const earnedIds = new Set(earnedBadges.map((b) => b.badgeId));
   const earnedBadgesList = BADGE_CATALOG.filter((b) => earnedIds.has(b.id));
