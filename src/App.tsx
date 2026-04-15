@@ -10,8 +10,10 @@ import { MigrationModal } from "@/components/MigrationModal";
 import { WhatsNewPanel } from "@/components/WhatsNewPanel";
 import { KeyboardHintsOverlay } from "@/components/KeyboardHintsOverlay";
 import { ProgressDashboard } from "@/components/ProgressDashboard";
+import { BadgesPage } from "@/pages/BadgesPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useAchievements } from "@/hooks/useAchievements";
 import { useChangelog } from "@/hooks/useChangelog";
 import { useKeyboardHintsSeen } from "@/hooks/useKeyboardHintsSeen";
 import type { StatsData } from "@/types/stats";
@@ -34,6 +36,7 @@ function App() {
     useQuizSession();
   const { theme, toggleTheme } = useTheme();
   const { isAuthenticated } = useAuth();
+  const { earnedBadges } = useAchievements();
   const {
     sessions: sessionHistory, personalBest, isCollapsed: isHistoryCollapsed,
     saveSession, toggleCollapsed: toggleHistoryCollapsed,
@@ -49,6 +52,7 @@ function App() {
   const [migrationDismissed, setMigrationDismissed] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showBadges, setShowBadges] = useState(false);
   const [dashboardStats, setDashboardStats] = useState<StatsData | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
 
@@ -217,6 +221,11 @@ function App() {
   const weakDrugs = useMemo(() => getWeakDrugs(), [getWeakDrugs]);
 
   function renderContent() {
+    // Badges page
+    if (showBadges) {
+      return <BadgesPage onBack={() => setShowBadges(false)} />;
+    }
+
     // Progress dashboard
     if (showDashboard) {
       if (dashboardLoading || !dashboardStats) {
@@ -234,6 +243,8 @@ function App() {
           onRangeChange={(days) => openDashboard(days)}
           showSignInCta={!isAuthenticated}
           onSignIn={() => { window.location.href = "/api/auth/google"; }}
+          badges={earnedBadges}
+          onViewBadges={() => { setShowDashboard(false); setDashboardStats(null); setShowBadges(true); }}
         />
       );
     }
@@ -399,7 +410,7 @@ function App() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <UserMenu />
+              <UserMenu onViewBadges={() => setShowBadges(true)} />
               <button
                 onClick={() => setShowWhatsNew(true)}
                 className="relative rounded-lg p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"

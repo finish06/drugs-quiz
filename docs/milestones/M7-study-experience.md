@@ -16,7 +16,7 @@ share-dark-mode-verify ██░░░░░░░░░░░░░░░░░
 keyboard-hints         ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  SHAPED — first-visit shortcut hint overlay
 quiz-confetti          ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  SHAPED — celebration animation for 100% scores
 progress-dashboard     ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  SHAPED — personal analytics
-achievements-badges    ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  SHAPED — streaks, mastery, first 100%
+achievements-badges    ████████████████████████████████████  VERIFIED — 5 badges, toasts, BadgesPage, dashboard widget
 custom-quiz            ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  SHAPED — pick specific drug classes
 naplex-ptce-mode       ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  SHAPED — exam blueprint weighting
 ```
@@ -31,14 +31,14 @@ naplex-ptce-mode       ██░░░░░░░░░░░░░░░░░
 | keyboard-hints | TBD | SHAPED | 12 | First-visit overlay showing 1-4 answer, Enter continue, Esc exit |
 | quiz-confetti | TBD | SHAPED | 12 | Canvas confetti animation on 100% quiz completion |
 | progress-dashboard | TBD | SHAPED | 13 | Accuracy trends over time, weak drug classes, time-per-question, streak count |
-| achievements-badges | TBD | SHAPED | 13 | Badges: first 100%, 7-day streak, class mastery (100% on all drugs in a class), 100 questions answered, etc. |
+| achievements-badges | specs/achievements-badges.md | VERIFIED | 13 | 5 badges implemented (first-quiz, perfect-score, class-master, centurion, streak-seeker). Toast, BadgesPage, dashboard widget, guest + server paths, migration on auth. AC-004 class-master uses 7-distinct-drugs-per-class heuristic (spec v0.1.2). AC-019 aligned to 75% project threshold. |
 | custom-quiz | TBD | SHAPED | 14 | Let users select specific drug classes to quiz on (multi-select UI, API param) |
 | naplex-ptce-mode | TBD | SHAPED | 15 | Quiz generator weighted by NAPLEX/PTCE exam blueprint percentages |
 
 ## Success Criteria
 
 - [ ] Progress dashboard shows accuracy trends and weak areas for authenticated users
-- [ ] At least 5 achievement badges implemented and earnable
+- [x] At least 5 achievement badges implemented and earnable
 - [ ] Users can create a custom quiz from any subset of drug classes
 - [ ] NAPLEX mode generates questions weighted by exam blueprint
 - [ ] Confetti animation delights users on 100% scores

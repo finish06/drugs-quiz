@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
-export function UserMenu() {
+interface UserMenuProps {
+  onViewBadges?: () => void;
+}
+
+export function UserMenu({ onViewBadges }: UserMenuProps = {}) {
   const { user, isAuthenticated, isLoading, login, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -88,6 +92,14 @@ export function UserMenu() {
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
           </div>
+          {onViewBadges && (
+            <button
+              onClick={() => { setIsOpen(false); onViewBadges(); }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              Badges
+            </button>
+          )}
           <button
             onClick={async () => {
               setIsOpen(false);

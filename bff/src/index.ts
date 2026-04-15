@@ -7,6 +7,7 @@ import { createAuthRouter } from "./auth/google.js";
 import { createSessionsRouter } from "./routes/sessions.js";
 import { createShareRouter, createPublicShareRouter } from "./routes/share.js";
 import { createStatsRouter } from "./routes/stats.js";
+import { createAchievementsRouter } from "./routes/achievements.js";
 import { buildInfo } from "./build-info.js";
 
 const app = new Hono();
@@ -54,6 +55,10 @@ app.route("/api/sessions", sessionsRouter);
 // Stats routes: /api/stats
 const statsRouter = createStatsRouter();
 app.route("/api/stats", statsRouter);
+
+// Achievements routes: /api/achievements
+const achievementsRouter = createAchievementsRouter();
+app.route("/api/achievements", achievementsRouter);
 
 // Share routes: /api/sessions/:id/share (authenticated) + /s/:token (public)
 const shareRouter = createShareRouter();

@@ -1,8 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 import { useAuth } from "@/hooks/useAuth";
+import { useAchievements } from "@/hooks/useAchievements";
 import type { QuizResults as QuizResultsType } from "@/types/quiz";
 import { AnswerReviewSection } from "./AnswerReviewSection";
+import { BadgeUnlockToast } from "./BadgeUnlockToast";
+
+declare global {
+  interface Window {
+    umami?: { track: (event: string, data?: Record<string, unknown>) => void };
+  }
+}
 
 function prefersReducedMotion(): boolean {
   try {
@@ -54,9 +62,12 @@ interface QuizResultsProps {
 export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDrugCount, onStudyWeakDrugs, sessionId }: QuizResultsProps) {
   const { totalQuestions, correctAnswers, percentage } = results;
   const { isAuthenticated } = useAuth();
+  const { checkAfterSession } = useAchievements();
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [linkLoading, setLinkLoading] = useState(false);
+  const [newBadges, setNewBadges] = useState<Array<{ badgeId: string; earnedAt: string; context: Record<string, unknown> | null }>>([]);
+  const checkedSessionRef = useRef<string | null>(null);
 
   // Fire confetti on perfect scores
   useEffect(() => {
@@ -64,6 +75,24 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
       fireConfetti();
     }
   }, [percentage]);
+
+  // Check for new badge unlocks after session save (AC-007, AC-012)
+  useEffect(() => {
+    if (!sessionId || !isAuthenticated) return;
+    // Guard against React StrictMode double-invoke
+    if (checkedSessionRef.current === sessionId) return;
+    checkedSessionRef.current = sessionId;
+
+    checkAfterSession(sessionId).then((unlocked) => {
+      if (unlocked.length > 0) {
+        setNewBadges(unlocked);
+        // AC-017: emit badge_unlocked analytics for each new badge
+        for (const badge of unlocked) {
+          window.umami?.track("badge_unlocked", { badgeId: badge.badgeId });
+        }
+      }
+    });
+  }, [sessionId, isAuthenticated, checkAfterSession]);
 
   function getGradeColor(): string {
     if (percentage >= 80) return "text-green-600 dark:text-green-400";
@@ -148,6 +177,10 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
     (typeof navigator.share === "function" || typeof navigator.clipboard?.writeText === "function");
 
   return (
+    <>
+    {newBadges.length > 0 && (
+      <BadgeUnlockToast badges={newBadges} onDismiss={() => setNewBadges([])} />
+    )}
     <div className="rounded-xl bg-white dark:bg-gray-800 p-8 shadow-sm space-y-8 text-center transition-colors duration-150">
       <div>
         <p className="text-sm font-medium text-gray-400 dark:text-gray-400 uppercase tracking-wide">
@@ -281,5 +314,6 @@ export function QuizResults({ results, quizTypeLabel, onNewQuiz, onRetry, weakDr
         </button>
       </div>
     </div>
+    </>
   );
 }
