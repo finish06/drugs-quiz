@@ -1,5 +1,12 @@
 import { useState } from "react";
 import type { StatsData } from "@/types/stats";
+import { RecentBadgesWidget } from "./RecentBadgesWidget";
+
+interface EarnedBadge {
+  badgeId: string;
+  earnedAt: string;
+  context: Record<string, unknown> | null;
+}
 
 const QUIZ_TYPE_LABELS: Record<string, string> = {
   "name-the-class": "Name the Class",
@@ -14,6 +21,8 @@ interface ProgressDashboardProps {
   onRangeChange?: (days: number | null) => void;
   showSignInCta?: boolean;
   onSignIn?: () => void;
+  badges?: EarnedBadge[];
+  onViewBadges?: () => void;
 }
 
 export function ProgressDashboard({
@@ -22,6 +31,8 @@ export function ProgressDashboard({
   onRangeChange,
   showSignInCta,
   onSignIn,
+  badges,
+  onViewBadges,
 }: ProgressDashboardProps) {
   const [activeRange, setActiveRange] = useState<number | null>(30);
 
@@ -122,6 +133,11 @@ export function ProgressDashboard({
           ))}
         </div>
       </div>
+
+      {/* Recent Badges widget (AC-014) */}
+      {badges !== undefined && onViewBadges && (
+        <RecentBadgesWidget badges={badges} onViewAll={onViewBadges} />
+      )}
 
       {/* Sign in CTA */}
       {showSignInCta && (

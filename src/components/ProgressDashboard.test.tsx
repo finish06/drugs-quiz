@@ -111,4 +111,18 @@ describe("ProgressDashboard — AC-002 through AC-013, AC-017, AC-020", () => {
     render(<ProgressDashboard stats={mockStats} onBack={vi.fn()} showSignInCta />);
     expect(screen.getByText(/sign in/i)).toBeInTheDocument();
   });
+
+  it("AC-014: shows RecentBadgesWidget when badges provided", () => {
+    const badges = [
+      { badgeId: "first-quiz", earnedAt: "2026-04-14T10:00:00Z", context: null },
+    ];
+    const onViewBadges = vi.fn();
+    render(<ProgressDashboard stats={mockStats} onBack={vi.fn()} badges={badges} onViewBadges={onViewBadges} />);
+    expect(screen.getByText(/Recent Badges/i)).toBeInTheDocument();
+  });
+
+  it("AC-014: hides RecentBadgesWidget when no badges", () => {
+    render(<ProgressDashboard stats={mockStats} onBack={vi.fn()} badges={[]} onViewBadges={vi.fn()} />);
+    expect(screen.queryByText(/Recent Badges/i)).not.toBeInTheDocument();
+  });
 });
