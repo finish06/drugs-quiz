@@ -1,34 +1,30 @@
 # Session Handoff
-**Written:** 2026-04-03
+**Written:** 2026-04-14 21:40
 
 ## In Progress
-- Nothing actively in progress. Production is live.
+- Nothing currently in-flight
 
-## Completed This Session
-- **Production deployed** — rxdrill.com is live on GCP Compute Engine (e2-micro)
-- **GCP instance created** — `rxdrill-prod` in us-central1-a, firewall rules for HTTP/HTTPS
-- **Production configs** — docker-compose.prod.yml, nginx-prod.conf, .env on instance
-- **Changelog notification** — What's New panel with build-time CHANGELOG.md parser (cycle 11)
-- **Hardcoded URLs removed** — all URLs config-driven via VITE_APP_URL / APP_URL
-- **CHANGELOG.md rewritten** — customer-facing language for all entries
-- **14 specs marked Complete** — all shipped features updated
-- **Release workflow updated** — SSH deploy to production on version tags, BFF image push added
-- **nginx-staging.conf** — committed to repo (was only on VM)
+## Completed This Session (achievements-badges TDD cycle)
+- T-40 RED + T-41 GREEN: Wired useAchievements into QuizResults.tsx — calls checkAfterSession on mount (sessionId + auth), renders BadgeUnlockToast, StrictMode guard via useRef (AC-007, AC-012)
+- T-42 GREEN: Umami analytics — badge_unlocked in QuizResults, badges_viewed in BadgesPage (AC-017)
+- AC-014 GREEN: RecentBadgesWidget wired into ProgressDashboard + App.tsx passes earnedBadges
+- Typecheck + lint clean (minus pre-existing @/generated/changelog error)
+- E2E stubs: tests/e2e/achievements.spec.ts (TC-001, TC-002, TC-005 — skipped)
+- M7 milestone: achievements-badges → VERIFIED
+- Commits: d33f3a6, 69130ad, 312dc73, d46aedf, c15947d
+- Previous session completed: DB schema, evaluator service, routes, useAchievements hook, guest evaluator, BadgeUnlockToast, BadgesPage, RecentBadgesWidget, AuthContext migration logic
 
 ## Decisions Made
-- Production on GCP e2-micro (free tier eligible, cheapest option)
-- Postgres in docker-compose stack (no Cloud SQL — cost savings)
-- TLS via external proxy (Cloudflare or similar)
-- docker-compose.prod.yml ports updated to 80:80 and 443:443
-- Production domain: rxdrill.com
+- vi.mock() hoisting requires top-level mock for ALL hooks a component imports
+- class-master badge AC-004 server-side evaluation deferred (needs JSONB query for per-class drug accuracy)
+- EarnedBadge interface defined locally in ProgressDashboard (not shared type — acceptable for now)
 
 ## Blockers
-- None — production is running
+- AC-004 (class-master server-side eval): Not implemented in bff/src/services/achievements/evaluator.ts
+- Coverage report generation fails with PARSE_ERROR in V8CoverageProvider — pre-existing issue, 361/361 tests pass
 
 ## Next Steps
-1. **GitHub secrets** — add PROD_HOST, PROD_USER, PROD_SSH_KEY for automated deploys
-2. **GitHub environment** — create "production" environment with required reviewers
-3. **DNS verification** — confirm rxdrill.com resolves correctly
-4. **Manual QA on production** — test OAuth login, quiz flow, share links, What's New panel
-5. **Tag v0.5.1** — first production release tag to test the release workflow
-6. **Plan M6** — remaining specs for pwa-offline, exam-countdown, school-leaderboards
+1. Human review: PR for feature/m7-achievements-badges → main
+2. TC-003 (Class Master) and TC-004 (Streak Seeker) manual smoke with fixture seeding
+3. Future: AC-004 server-side class-master implementation (JSONB query)
+4. Continue M7: next features are custom-quiz or progress-dashboard enhancements

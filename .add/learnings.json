@@ -144,15 +144,54 @@
     {
       "id": "L-010",
       "title": "Cycle 9 complete: db-schema-orm + google-oauth shipped in single away session",
-      "body": "Both features advanced SHAPED→VERIFIED in one session (~3 hours actual). 50 new tests added (212→262). Drizzle ORM schema tests work without a running DB (testing column metadata). Arctic + jose are lightweight OAuth/JWT choices — no native deps, fast install. Auth is additive pattern (AuthProvider defaults to unauthenticated) means zero changes to existing component tests.",
+      "body": "Both features advanced SHAPED\u2192VERIFIED in one session (~3 hours actual). 50 new tests added (212\u2192262). Drizzle ORM schema tests work without a running DB (testing column metadata). Arctic + jose are lightweight OAuth/JWT choices \u2014 no native deps, fast install. Auth is additive pattern (AuthProvider defaults to unauthenticated) means zero changes to existing component tests.",
       "scope": "project",
-      "stack": ["typescript", "react", "hono"],
+      "stack": [
+        "typescript",
+        "react",
+        "hono"
+      ],
       "category": "process",
       "severity": "medium",
       "source": "drugs-quiz",
       "date": "2026-03-23",
       "classified_by": "agent",
       "checkpoint_type": "retro"
+    },
+    {
+      "id": "L-011",
+      "title": "achievements-badges TDD cycle: 50+ tests, 6 phases, StrictMode guard pattern",
+      "body": "ACs covered: AC-001..018 (AC-004 class-master server eval deferred). RED: 50+ tests. GREEN: 8 implementation files + 2 SQL migrations + 4 route handlers. Key learnings: (1) vi.mock() hoisting breaks tests when nested inside describe blocks \u2014 always add top-level mock for any hook the component uses; (2) BFF worktree needs npm install before running \u2014 bff/node_modules was empty; (3) cross-package imports (bff\u2192src) fail at runtime \u2014 define VALID_BADGE_IDS inline in BFF; (4) useRef guard is essential for React StrictMode double-invoke of achievement check API calls. Spec quality: high \u2014 all ACs were testable.",
+      "scope": "project",
+      "stack": [
+        "typescript",
+        "react",
+        "hono",
+        "drizzle-orm"
+      ],
+      "category": "technical",
+      "severity": "medium",
+      "source": "drugs-quiz",
+      "date": "2026-04-14",
+      "classified_by": "agent",
+      "checkpoint_type": "post-tdd"
+    },
+    {
+      "id": "L-012",
+      "title": "vi.mock() hoisting: always add top-level mock for all hooks a component imports",
+      "body": "When a component imports a hook (e.g. useAchievements), tests fail with cryptic errors unless vi.mock() is declared at the module's top level, even if the hook seems irrelevant to most tests. Nested vi.mock() calls are hoisted and run before tests, overriding the top-level mock for the entire file. Fix: add a permissive default mock at the top of every test file for every hook the subject component imports.",
+      "scope": "workstation",
+      "stack": [
+        "typescript",
+        "vitest",
+        "react"
+      ],
+      "category": "anti-pattern",
+      "severity": "high",
+      "source": "drugs-quiz",
+      "date": "2026-04-14",
+      "classified_by": "agent",
+      "checkpoint_type": "verification-catch"
     }
   ]
 }
