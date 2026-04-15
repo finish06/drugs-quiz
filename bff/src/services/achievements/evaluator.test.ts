@@ -41,20 +41,6 @@ function makeSession(opts: {
   };
 }
 
-/** Build a DB mock chain: select → from → where → chain → resolves with data */
-function mockDbSelect(sessionRows: unknown[], achievementRows: unknown[] = []) {
-  let callCount = 0;
-  (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => {
-    callCount++;
-    // Alternate: odd calls = sessions, even calls = achievements
-    const data = callCount % 2 === 1 ? sessionRows : achievementRows;
-    const mockOrderBy = vi.fn().mockResolvedValue(data);
-    const mockWhere = vi.fn().mockReturnValue({ orderBy: mockOrderBy });
-    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
-    return { from: mockFrom };
-  });
-}
-
 /** Mock insert to succeed (for recording badge) */
 function mockDbInsert() {
   (db.insert as ReturnType<typeof vi.fn>).mockImplementation(() => {
