@@ -14,6 +14,19 @@ vi.mock("@/hooks/useAuth", () => ({
   })),
 }));
 
+// Mock useAchievements — default: no-op for all tests unless overridden
+vi.mock("@/hooks/useAchievements", () => ({
+  useAchievements: vi.fn(() => ({
+    earnedBadges: [],
+    isLoading: false,
+    checkAfterSession: vi.fn().mockResolvedValue([]),
+    saveGuestBadge: vi.fn(),
+    migrateGuestBadges: vi.fn(),
+    refresh: vi.fn(),
+  })),
+  ACHIEVEMENTS_STORAGE_KEY: "rxdrill:achievements:v1",
+}));
+
 const baseResults: QuizResultsType = {
   totalQuestions: 10,
   correctAnswers: 8,
@@ -269,6 +282,48 @@ describe("QuizResults — Share Link button (AC-001, AC-007, AC-021)", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/link copied/i)).toBeInTheDocument();
+    });
+  });
+});
+
+// ──────────────────────────────────────────────
+// AC-007, AC-012: QuizResults + achievements integration
+// ──────────────────────────────────────────────
+describe("AC-007 + AC-012: QuizResults calls achievements check after session save", () => {
+  it("should call checkAfterSession when sessionId provided and authenticated", async () => {
+    const { useAuth } = await import("@/hooks/useAuth");
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: "user-1", email: "test@test.com", name: "Test", avatarUrl: null },
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    const checkAfterSession = vi.fn().mockResolvedValue([]);
+    const { useAchievements } = await import("@/hooks/useAchievements");
+    (useAchievements as ReturnType<typeof vi.fn>).mockReturnValue({
+      earnedBadges: [],
+      isLoading: false,
+      checkAfterSession,
+      saveGuestBadge: vi.fn(),
+      migrateGuestBadges: vi.fn(),
+      refresh: vi.fn(),
+    });
+
+    render(
+      <QuizResults
+        results={baseResults}
+        quizTypeLabel="Name the Class"
+        onNewQuiz={vi.fn()}
+        onRetry={vi.fn()}
+        sessionId="sess-1"
+      />,
+    );
+
+    // After mount with sessionId, checkAfterSession should be called
+    await waitFor(() => {
+      expect(checkAfterSession).toHaveBeenCalledWith("sess-1");
     });
   });
 });
