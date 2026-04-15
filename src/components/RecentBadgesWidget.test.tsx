@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RecentBadgesWidget } from "./RecentBadgesWidget";
 
@@ -23,7 +23,7 @@ describe("AC-014: RecentBadgesWidget", () => {
 
   it("should NOT render when user has 0 earned badges (AC-014: hidden at 0)", () => {
     const onViewAll = vi.fn();
-    const { container } = render(<RecentBadgesWidget badges={[]} onViewAll={onViewAll} />);
+    render(<RecentBadgesWidget badges={[]} onViewAll={onViewAll} />);
     // Widget should not render
     expect(screen.queryByText(/Recent Badges/i)).not.toBeInTheDocument();
   });

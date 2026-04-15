@@ -96,7 +96,7 @@ describe("AC-009: authenticated badge fetching", () => {
       expect.objectContaining({ method: "POST" }),
     );
     expect(unlocked).toHaveLength(1);
-    expect(unlocked[0].badgeId).toBe("first-quiz");
+    expect(unlocked[0]?.badgeId).toBe("first-quiz");
   });
 });
 

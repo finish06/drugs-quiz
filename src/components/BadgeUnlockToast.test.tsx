@@ -66,7 +66,7 @@ describe("AC-012: BadgeUnlockToast rendering", () => {
 
   it("should NOT render when badges array is empty", () => {
     const onDismiss = vi.fn();
-    const { container } = render(<BadgeUnlockToast badges={[]} onDismiss={onDismiss} />);
+    render(<BadgeUnlockToast badges={[]} onDismiss={onDismiss} />);
     // Container should be empty or not show any badge content
     expect(screen.queryByText(/unlocked/i)).not.toBeInTheDocument();
   });
