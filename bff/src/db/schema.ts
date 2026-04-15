@@ -48,6 +48,20 @@ export const quizSessions = pgTable("quiz_sessions", {
   shareToken: varchar("share_token", { length: 16 }).unique(),
 });
 
+/** Achievements table — badge unlock records for authenticated users */
+export const achievements = pgTable(
+  "achievements",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    badgeId: varchar("badge_id", { length: 64 }).notNull(),
+    earnedAt: timestamp("earned_at", { withTimezone: true }).defaultNow().notNull(),
+    contextJson: jsonb("context_json"),
+  },
+);
+
 /** Inferred TypeScript types from schema */
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -58,3 +72,6 @@ export type QuizType =
   | "match-drug-to-class"
   | "brand-generic-match"
   | "quick-5";
+
+export type Achievement = typeof achievements.$inferSelect;
+export type NewAchievement = typeof achievements.$inferInsert;
