@@ -21,7 +21,7 @@ As a pharmacy student studying for NAPLEX/PTCE on Rx Drill, I want visible proof
 | AC-001 | Five launch badges exist in a static catalog: First Quiz, Perfect Score, Class Master, Centurion, Streak Seeker — each with id, name, description, unlock criteria, and icon | Must |
 | AC-002 | "First Quiz" unlocks on completion of any quiz session | Must |
 | AC-003 | "Perfect Score" unlocks on completion of a quiz with score 100% and at least 5 questions | Must |
-| AC-004 | "Class Master" unlocks when the user answers correctly for every drug in a single pharmacological class (across any sessions), context stores the class name | Must |
+| AC-004 | "Class Master" unlocks when the user has correctly named the class for **7 or more distinct drugs in the same pharmacological class** across any `name-the-class` sessions (including `name-the-class` questions within a `quick-5` session); context stores the class name. Revised from "every drug in class" to a pragmatic, API-free heuristic (see §10). | Must |
 | AC-005 | "Centurion" unlocks when cumulative answered-question count reaches 100 | Must |
 | AC-006 | "Streak Seeker" unlocks when the user has completed at least one quiz on 7 consecutive calendar days (using server timestamps, UTC) | Must |
 | AC-007 | Badge unlock evaluation runs server-side in `POST /api/achievements/check` after a session has been persisted; client does not decide unlocks for authenticated users | Must |
@@ -36,7 +36,7 @@ As a pharmacy student studying for NAPLEX/PTCE on Rx Drill, I want visible proof
 | AC-016 | Network failure during unlock does not block UX: client still toasts; the unlock is queued in localStorage and retried on the next successful API call | Should |
 | AC-017 | Umami analytics emit `badge_unlocked` (with badgeId) on unlock and `badges_viewed` on Badges page load | Should |
 | AC-018 | All badge icons and toasts expose accessible names (`aria-label`); toasts use `role="status"` and are keyboard-dismissable | Must |
-| AC-019 | Test coverage for branches remains ≥ 78% after this feature lands | Must |
+| AC-019 | Test coverage for branches remains ≥ 75% after this feature lands (matches `.add/config.json` project threshold set in `f0c76db`; 78% was a spec-drafting error — see §10) | Must |
 | AC-020 | No regression in the existing test suite | Must |
 
 ## 3. User Test Cases
@@ -329,3 +329,4 @@ Derived from existing `quiz_sessions.completed_at`. Query: count consecutive UTC
 |------|---------|--------|---------|
 | 2026-04-14 | 0.1.0 | Caleb Dunn | Initial spec from /add:spec interview (cycle 13) |
 | 2026-04-14 | 0.1.1 | Caleb Dunn | UX signed off — lucide-react chosen, 2/3-col responsive grid, toast position/duration fixed. See specs/ux/achievements-badges-ux.md |
+| 2026-04-14 | 0.1.2 | Caleb Dunn | AC-004 revised from "every drug in class" to "7 distinct drugs correctly named in one class" — avoids external drug-gate dependency at unlock-time. AC-019 corrected from 78% to 75% to match project config. |

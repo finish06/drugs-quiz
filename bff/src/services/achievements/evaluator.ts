@@ -22,15 +22,20 @@ export interface BadgeUnlock {
  * Inserts newly-earned rows with ON CONFLICT DO NOTHING for idempotency.
  * Returns only the newly-unlocked badges (existing ones excluded).
  */
+/** Threshold for Class Master: N distinct drugs correctly named in the same class. */
+export const CLASS_MASTER_DRUGS_REQUIRED = 7;
+
 export async function evaluateBadges(userId: string, sessionId: string): Promise<BadgeUnlock[]> {
   // Fetch all user sessions (ordered newest first for streak computation)
   const allSessions = await db
     .select({
       id: quizSessions.id,
+      quizType: quizSessions.quizType,
       questionCount: quizSessions.questionCount,
       correctCount: quizSessions.correctCount,
       percentage: quizSessions.percentage,
       completedAt: quizSessions.completedAt,
+      answersJson: quizSessions.answersJson,
     })
     .from(quizSessions)
     .where(eq(quizSessions.userId, userId))
@@ -67,6 +72,14 @@ export async function evaluateBadges(userId: string, sessionId: string): Promise
     const totalQuestions = allSessions.reduce((sum, s) => sum + s.questionCount, 0);
     if (totalQuestions >= 100) {
       toUnlock.push({ badgeId: "centurion", context: null });
+    }
+  }
+
+  // AC-004: Class Master — 7 distinct drugs correctly named in the same class
+  if (!earned.has("class-master")) {
+    const className = findClassMasterUnlock(allSessions);
+    if (className) {
+      toUnlock.push({ badgeId: "class-master", context: { className } });
     }
   }
 
@@ -153,4 +166,52 @@ export function computeStreakDays(completedAts: Date[]): number {
 
 function toUtcDayString(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+/**
+ * AC-004 helper: find the first class where the user has correctly named
+ * CLASS_MASTER_DRUGS_REQUIRED distinct drugs across all their sessions.
+ *
+ * Uses correctly-answered `name-the-class` MC questions as the signal:
+ * each such answer is ground truth (drug, class). Other quiz types are
+ * ignored for this badge to keep the rule simple and auditable.
+ *
+ * Returns the class name on unlock, or null.
+ */
+export function findClassMasterUnlock(
+  sessions: Array<{ quizType: string; answersJson: unknown }>,
+): string | null {
+  const classToDrugs = new Map<string, Set<string>>();
+
+  for (const session of sessions) {
+    if (session.quizType !== "name-the-class" && session.quizType !== "quick-5") continue;
+    const answers = session.answersJson;
+    if (!Array.isArray(answers)) continue;
+
+    for (const answer of answers) {
+      if (!answer || typeof answer !== "object") continue;
+      const a = answer as {
+        correct?: unknown;
+        question?: { kind?: unknown; drugName?: unknown; correctAnswer?: unknown };
+      };
+      if (a.correct !== true) continue;
+      const q = a.question;
+      if (!q || q.kind !== "multiple-choice") continue;
+      if (typeof q.drugName !== "string" || typeof q.correctAnswer !== "string") continue;
+
+      const drug = q.drugName.trim();
+      const className = q.correctAnswer.trim();
+      if (!drug || !className) continue;
+
+      const drugs = classToDrugs.get(className) ?? new Set<string>();
+      drugs.add(drug);
+      classToDrugs.set(className, drugs);
+
+      if (drugs.size >= CLASS_MASTER_DRUGS_REQUIRED) {
+        return className;
+      }
+    }
+  }
+
+  return null;
 }

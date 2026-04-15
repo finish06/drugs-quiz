@@ -232,3 +232,50 @@ describe("AC-016: network failure resilience", () => {
     expect(unlocked).toHaveLength(0);
   });
 });
+
+describe("Edge cases — malformed localStorage and saveGuestBadge", () => {
+  beforeEach(() => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: null, isAuthenticated: false, isLoading: false, login: vi.fn(), logout: vi.fn(),
+    });
+  });
+
+  it("treats malformed localStorage JSON as empty (no throw)", async () => {
+    localStorage.setItem(STORAGE_KEY, "not-valid-json{");
+    const { result } = renderHook(() => useAchievements());
+    await act(async () => { await Promise.resolve(); });
+    expect(result.current.earnedBadges).toHaveLength(0);
+  });
+
+  it("saveGuestBadge persists a new badge and de-duplicates", async () => {
+    const { result } = renderHook(() => useAchievements());
+    await act(async () => { await Promise.resolve(); });
+
+    const when = new Date("2026-04-14T00:00:00Z");
+    await act(async () => { result.current.saveGuestBadge("first-quiz", when); });
+    expect(result.current.earnedBadges.map((b) => b.badgeId)).toContain("first-quiz");
+
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    expect(stored["first-quiz"]).toBeDefined();
+
+    // Saving the same badge again should NOT duplicate
+    await act(async () => { result.current.saveGuestBadge("first-quiz", when); });
+    const count = result.current.earnedBadges.filter((b) => b.badgeId === "first-quiz").length;
+    expect(count).toBe(1);
+  });
+
+  it("checkAfterSession returns [] when server responds non-OK", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: "u1", email: "x", name: "x", avatarUrl: null },
+      isAuthenticated: true, isLoading: false, login: vi.fn(), logout: vi.fn(),
+    });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] });
+    const { result } = renderHook(() => useAchievements());
+    await act(async () => { await Promise.resolve(); });
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) });
+    let res: unknown[] = [{}];
+    await act(async () => { res = await result.current.checkAfterSession("sess-x"); });
+    expect(res).toEqual([]);
+  });
+});

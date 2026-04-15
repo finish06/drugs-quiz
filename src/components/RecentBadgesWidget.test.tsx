@@ -63,4 +63,50 @@ describe("AC-014: RecentBadgesWidget", () => {
     );
     expect(screen.getByText(/Recent Badges/i)).toBeInTheDocument();
   });
+
+  it("renders 'Today' when the earn date matches today's UTC date", () => {
+    const onViewAll = vi.fn();
+    const now = new Date().toISOString();
+    render(
+      <RecentBadgesWidget
+        badges={[{ badgeId: "first-quiz", earnedAt: now, context: null }]}
+        onViewAll={onViewAll}
+      />,
+    );
+    expect(screen.getByText("Today")).toBeInTheDocument();
+  });
+
+  it("renders a short date when the earn date is in the past", () => {
+    const onViewAll = vi.fn();
+    render(
+      <RecentBadgesWidget
+        badges={[{ badgeId: "first-quiz", earnedAt: "2024-01-15T10:00:00Z", context: null }]}
+        onViewAll={onViewAll}
+      />,
+    );
+    expect(screen.queryByText("Today")).not.toBeInTheDocument();
+  });
+
+  it("falls back gracefully when badgeId is not in the catalog", () => {
+    const onViewAll = vi.fn();
+    render(
+      <RecentBadgesWidget
+        badges={[{ badgeId: "unknown-xyz", earnedAt: "2026-04-14T10:00:00Z", context: null }]}
+        onViewAll={onViewAll}
+      />,
+    );
+    expect(screen.getByText(/Recent Badges/i)).toBeInTheDocument();
+  });
+
+  it("renders empty string for the date when earnedAt is invalid", () => {
+    const onViewAll = vi.fn();
+    const { container } = render(
+      <RecentBadgesWidget
+        badges={[{ badgeId: "first-quiz", earnedAt: "not-a-date", context: null }]}
+        onViewAll={onViewAll}
+      />,
+    );
+    // The component should still render without throwing
+    expect(container.querySelector("h3")).toBeInTheDocument();
+  });
 });

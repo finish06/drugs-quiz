@@ -7,12 +7,16 @@
  * use POST /api/achievements/check (server is authoritative).
  */
 
+export const CLASS_MASTER_DRUGS_REQUIRED = 7;
+
 export interface GuestSession {
   id: string;
   questionCount: number;
   correctCount: number;
   percentage: number;
   completedAt: string; // ISO string (UTC from server or local save)
+  quizType?: string;
+  answersJson?: unknown;
 }
 
 export interface GuestBadgeUnlock {
@@ -56,6 +60,14 @@ export function evaluateGuestBadges(
     const total = sessions.reduce((sum, s) => sum + s.questionCount, 0);
     if (total >= 100) {
       unlocked.push({ badgeId: "centurion", earnedAt: now, context: null });
+    }
+  }
+
+  // AC-004: Class Master — 7 distinct drugs correctly named in the same class
+  if (!earned.has("class-master")) {
+    const className = findGuestClassMasterUnlock(sessions);
+    if (className) {
+      unlocked.push({ badgeId: "class-master", earnedAt: now, context: { className } });
     }
   }
 
@@ -105,4 +117,40 @@ function computeGuestStreakDays(completedAts: Date[]): number {
 
 function toUtcDayString(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+export function findGuestClassMasterUnlock(sessions: GuestSession[]): string | null {
+  const classToDrugs = new Map<string, Set<string>>();
+
+  for (const session of sessions) {
+    if (session.quizType !== "name-the-class" && session.quizType !== "quick-5") continue;
+    const answers = session.answersJson;
+    if (!Array.isArray(answers)) continue;
+
+    for (const answer of answers) {
+      if (!answer || typeof answer !== "object") continue;
+      const a = answer as {
+        correct?: unknown;
+        question?: { kind?: unknown; drugName?: unknown; correctAnswer?: unknown };
+      };
+      if (a.correct !== true) continue;
+      const q = a.question;
+      if (!q || q.kind !== "multiple-choice") continue;
+      if (typeof q.drugName !== "string" || typeof q.correctAnswer !== "string") continue;
+
+      const drug = q.drugName.trim();
+      const className = q.correctAnswer.trim();
+      if (!drug || !className) continue;
+
+      const drugs = classToDrugs.get(className) ?? new Set<string>();
+      drugs.add(drug);
+      classToDrugs.set(className, drugs);
+
+      if (drugs.size >= CLASS_MASTER_DRUGS_REQUIRED) {
+        return className;
+      }
+    }
+  }
+
+  return null;
 }

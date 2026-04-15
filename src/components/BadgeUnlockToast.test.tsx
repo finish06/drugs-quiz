@@ -94,3 +94,22 @@ describe("AC-018: Toast accessibility", () => {
     expect(text).toBeVisible();
   });
 });
+
+describe("Fallbacks for unknown badge ids", () => {
+  it("renders the raw badgeId as the name when the catalog has no match", () => {
+    const onDismiss = vi.fn();
+    render(
+      <BadgeUnlockToast
+        badges={[{ badgeId: "unknown-badge-xyz", earnedAt: "2026-04-14T12:00:00Z", context: null }]}
+        onDismiss={onDismiss}
+      />,
+    );
+    expect(screen.getByText(/unknown-badge-xyz/i)).toBeInTheDocument();
+  });
+
+  it("renders nothing when badges array is empty (guards hook deps)", () => {
+    const onDismiss = vi.fn();
+    const { container } = render(<BadgeUnlockToast badges={[]} onDismiss={onDismiss} />);
+    expect(container.firstChild).toBeNull();
+  });
+});

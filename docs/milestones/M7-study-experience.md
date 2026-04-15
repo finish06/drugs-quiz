@@ -31,7 +31,7 @@ naplex-ptce-mode       ██░░░░░░░░░░░░░░░░░
 | keyboard-hints | TBD | SHAPED | 12 | First-visit overlay showing 1-4 answer, Enter continue, Esc exit |
 | quiz-confetti | TBD | SHAPED | 12 | Canvas confetti animation on 100% quiz completion |
 | progress-dashboard | TBD | SHAPED | 13 | Accuracy trends over time, weak drug classes, time-per-question, streak count |
-| achievements-badges | specs/achievements-badges.md | VERIFIED | 13 | 5 badges implemented (first-quiz, perfect-score, class-master, centurion, streak-seeker). Toast, BadgesPage, dashboard widget, guest localStorage path, migration to server on auth. AC-004 (class-master server eval) deferred — needs JSONB query. |
+| achievements-badges | specs/achievements-badges.md | VERIFIED | 13 | 5 badges implemented (first-quiz, perfect-score, class-master, centurion, streak-seeker). Toast, BadgesPage, dashboard widget, guest + server paths, migration on auth. AC-004 class-master uses 7-distinct-drugs-per-class heuristic (spec v0.1.2). AC-019 aligned to 75% project threshold. |
 | custom-quiz | TBD | SHAPED | 14 | Let users select specific drug classes to quiz on (multi-select UI, API param) |
 | naplex-ptce-mode | TBD | SHAPED | 15 | Quiz generator weighted by NAPLEX/PTCE exam blueprint percentages |
 

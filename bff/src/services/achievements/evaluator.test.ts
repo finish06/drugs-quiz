@@ -354,3 +354,74 @@ describe("AC-007: evaluateBadges return shape", () => {
     }
   });
 });
+
+import { findClassMasterUnlock, CLASS_MASTER_DRUGS_REQUIRED } from "./evaluator.js";
+
+describe("AC-004: Class Master — findClassMasterUnlock", () => {
+  function mcSession(quizType: string, pairs: Array<[string, string, boolean]>) {
+    return {
+      quizType,
+      answersJson: pairs.map(([drug, className, correct]) => ({
+        correct,
+        question: { kind: "multiple-choice", drugName: drug, correctAnswer: className },
+      })),
+    };
+  }
+
+  it("returns null when no session data is present", () => {
+    expect(findClassMasterUnlock([])).toBeNull();
+  });
+
+  it("returns null when fewer than the required distinct drugs are correct", () => {
+    const pairs: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED - 1 })
+      .map((_, i) => [`drug-${i}`, "Beta Blocker", true]);
+    expect(findClassMasterUnlock([mcSession("name-the-class", pairs)])).toBeNull();
+  });
+
+  it(`returns the class name when ${CLASS_MASTER_DRUGS_REQUIRED} distinct correct drugs land in one class`, () => {
+    const pairs: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED })
+      .map((_, i) => [`drug-${i}`, "Beta Blocker", true]);
+    expect(findClassMasterUnlock([mcSession("name-the-class", pairs)])).toBe("Beta Blocker");
+  });
+
+  it("does not count duplicate drug names within the same class", () => {
+    const pairs: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED })
+      .map(() => ["same-drug", "Beta Blocker", true]);
+    expect(findClassMasterUnlock([mcSession("name-the-class", pairs)])).toBeNull();
+  });
+
+  it("ignores incorrect answers", () => {
+    const pairs: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED })
+      .map((_, i) => [`drug-${i}`, "Beta Blocker", false]);
+    expect(findClassMasterUnlock([mcSession("name-the-class", pairs)])).toBeNull();
+  });
+
+  it("ignores unrelated quiz types (e.g., brand-generic-match)", () => {
+    const pairs: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED })
+      .map((_, i) => [`drug-${i}`, "Beta Blocker", true]);
+    expect(findClassMasterUnlock([mcSession("brand-generic-match", pairs)])).toBeNull();
+  });
+
+  it("counts name-the-class MC answers inside a quick-5 session", () => {
+    const pairs: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED })
+      .map((_, i) => [`drug-${i}`, "ACE Inhibitor", true]);
+    expect(findClassMasterUnlock([mcSession("quick-5", pairs)])).toBe("ACE Inhibitor");
+  });
+
+  it("aggregates distinct drugs across multiple sessions", () => {
+    const sessions = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED }).map((_, i) =>
+      mcSession("name-the-class", [[`drug-${i}`, "Statin", true]]),
+    );
+    expect(findClassMasterUnlock(sessions)).toBe("Statin");
+  });
+
+  it("tolerates malformed answersJson (non-array, missing fields)", () => {
+    const bad = [
+      { quizType: "name-the-class", answersJson: null },
+      { quizType: "name-the-class", answersJson: [{ correct: true }] },
+      { quizType: "name-the-class", answersJson: [{ correct: true, question: { kind: "matching" } }] },
+      { quizType: "name-the-class", answersJson: [{ correct: true, question: { kind: "multiple-choice", drugName: "", correctAnswer: "" } }] },
+    ];
+    expect(findClassMasterUnlock(bad)).toBeNull();
+  });
+});

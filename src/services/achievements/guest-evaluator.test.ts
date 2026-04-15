@@ -96,3 +96,57 @@ describe("AC-010: evaluateGuestBadges", () => {
     expect(result).toHaveLength(0);
   });
 });
+
+import { findGuestClassMasterUnlock, CLASS_MASTER_DRUGS_REQUIRED } from "./guest-evaluator";
+
+describe("AC-004: Class Master — findGuestClassMasterUnlock", () => {
+  function mcSession(quizType: string, pairs: Array<[string, string, boolean]>): GuestSession {
+    return {
+      id: `s-${Math.random()}`,
+      questionCount: pairs.length,
+      correctCount: pairs.filter(([,, c]) => c).length,
+      percentage: 100,
+      completedAt: new Date().toISOString(),
+      quizType,
+      answersJson: pairs.map(([drug, className, correct]) => ({
+        correct,
+        question: { kind: "multiple-choice", drugName: drug, correctAnswer: className },
+      })),
+    };
+  }
+
+  it("returns null when no sessions", () => {
+    expect(findGuestClassMasterUnlock([])).toBeNull();
+  });
+
+  it(`unlocks at exactly ${CLASS_MASTER_DRUGS_REQUIRED} distinct correct drugs in one class`, () => {
+    const pairs: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED })
+      .map((_, i) => [`drug-${i}`, "Beta Blocker", true]);
+    expect(findGuestClassMasterUnlock([mcSession("name-the-class", pairs)])).toBe("Beta Blocker");
+  });
+
+  it("does not unlock when threshold is not met", () => {
+    const pairs: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED - 1 })
+      .map((_, i) => [`drug-${i}`, "Beta Blocker", true]);
+    expect(findGuestClassMasterUnlock([mcSession("name-the-class", pairs)])).toBeNull();
+  });
+
+  it("ignores incorrect answers and non-MC quiz types", () => {
+    const wrongAnswers: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED })
+      .map((_, i) => [`drug-${i}`, "Statin", false]);
+    const brandGeneric: Array<[string, string, boolean]> = Array.from({ length: CLASS_MASTER_DRUGS_REQUIRED })
+      .map((_, i) => [`drug-${i}`, "Statin", true]);
+    expect(findGuestClassMasterUnlock([
+      mcSession("name-the-class", wrongAnswers),
+      mcSession("brand-generic-match", brandGeneric),
+    ])).toBeNull();
+  });
+
+  it("tolerates sessions without answersJson", () => {
+    const session: GuestSession = {
+      id: "s-1", questionCount: 0, correctCount: 0, percentage: 0,
+      completedAt: new Date().toISOString(), quizType: "name-the-class",
+    };
+    expect(findGuestClassMasterUnlock([session])).toBeNull();
+  });
+});
