@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { evaluateGuestBadges } from "./guest-evaluator";
+import { evaluateGuestBadges, type GuestSession } from "./guest-evaluator";
 
 /**
  * Tests for client-side guest badge evaluator.
