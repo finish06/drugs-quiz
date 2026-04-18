@@ -7,6 +7,15 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-04-18
+
+### Added
+- **Achievement Badges** — Earn badges for quiz milestones: First Quiz, Perfect Score, Class Master, Centurion (100 questions), and Streak Seeker (7-day streak)
+- **Badges Page** — View all earned and locked badges with criteria from the user menu
+- **Recent Badges Widget** — See your latest badges on the progress dashboard
+- **Badge Notifications** — Toast celebration when you earn a new badge
+- **Badge Analytics** — Track badge views and unlocks via Umami
+
 ## [0.6.0] - 2026-04-12
 
 ### Added
