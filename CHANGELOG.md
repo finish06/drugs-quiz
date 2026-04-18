@@ -16,6 +16,11 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 - **Badge Notifications** — Toast celebration when you earn a new badge
 - **Badge Analytics** — Track badge views and unlocks via Umami
 
+### Fixed
+- **Session Saving** — Quiz sessions now correctly save to the database for authenticated users (AuthProvider was rendering below hooks instead of above them)
+- **Badge Unlocking** — Badge evaluation now triggers after each quiz (requires session save to work)
+- **Database Migration** — Achievements table auto-creates on startup (fixed Drizzle migration timestamp ordering)
+
 ## [0.6.0] - 2026-04-12
 
 ### Added
