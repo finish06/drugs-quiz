@@ -325,6 +325,17 @@ In-app changelog notification with version tracking. Build-time CHANGELOG.md par
 | Community seeding (Reddit/Discord) | Ops play, not engineering. Do organically alongside M5 launch. |
 | Referral program | Premature before proving Pro conversion. Revisit in M7. |
 
+### Future Ideas
+
+| Idea | Context | When |
+|------|---------|------|
+| Badge sharing | Share earned badges to social media ("I just earned the Perfect Score badge on Rx Drill!") | After badges ship, if engagement warrants it |
+| Badge tiers | Bronze/silver/gold levels per badge (e.g., 50/500/5000 questions) | After initial 10 badges prove the system works |
+| Daily quiz | One curated Quick 5 per day with a dedicated leaderboard | M8+ |
+| Study groups | Private groups with shared leaderboards (precursor to school leaderboards) | M6 or M8 |
+| Drug pronunciation audio | Tap a drug name to hear it pronounced | Post-M7 |
+| Mnemonic generator | AI-generated memory aids for drug-class pairings | Post-M7 |
+
 ## 9. Open Questions
 
 - ~~How should the API key be handled for the frontend?~~ **Resolved:** Build-time env var for now; BFF proxy in M4.
@@ -342,3 +353,4 @@ In-app changelog notification with version tracking. Build-time CHANGELOG.md par
 | 2026-03-29 | 0.3.0 | Caleb Dunn | M5 marked DONE (v0.5.0 tagged), M6 promoted to NOW, updated M5 success criteria and feature status |
 | 2026-04-03 | 0.4.0 | Caleb Dunn | Rebrand to Rx Drill, production at rxdrill.com, GCP infrastructure (e2-micro + IAP), updated tech stack (Hono BFF, Drizzle ORM, Postgres, Google OAuth), config-driven URLs, all M3/M4 criteria checked, resolved hosting and URL questions |
 | 2026-04-11 | 0.5.0 | Caleb Dunn | Added M7 Study Experience milestone (progress dashboard, badges, custom quiz, NAPLEX mode, polish, ops). M6 moved to NEXT, M7 promoted to NOW |
+| 2026-04-14 | 0.5.1 | Caleb Dunn | roadmap sync — config.planning.current_milestone corrected to M7-Study-Experience; M4 milestone status normalized COMPLETE → DONE |
