@@ -172,4 +172,154 @@ describe("MultipleChoice", () => {
     // onAnswer should only be called once
     expect(onAnswer).toHaveBeenCalledOnce();
   });
+
+  describe("Keyboard shortcuts", () => {
+    it("selects answer with number keys 1-4", async () => {
+      const user = userEvent.setup();
+      const onAnswer = vi.fn();
+      render(
+        <MultipleChoice
+          question={mockQuestion}
+          onAnswer={onAnswer}
+          onNext={vi.fn()}
+          questionNumber={1}
+          totalQuestions={10}
+        />,
+      );
+
+      await user.keyboard("2");
+
+      expect(onAnswer).toHaveBeenCalledWith(true, "HMG-CoA Reductase Inhibitor", undefined, false);
+    });
+
+    it("advances with Enter after answering", async () => {
+      const user = userEvent.setup();
+      const onNext = vi.fn();
+      render(
+        <MultipleChoice
+          question={mockQuestion}
+          onAnswer={vi.fn()}
+          onNext={onNext}
+          questionNumber={1}
+          totalQuestions={10}
+        />,
+      );
+
+      await user.keyboard("1");
+      await user.keyboard("{Enter}");
+
+      expect(onNext).toHaveBeenCalledOnce();
+    });
+
+    it("calls onExit with Escape", async () => {
+      const user = userEvent.setup();
+      const onExit = vi.fn();
+      render(
+        <MultipleChoice
+          question={mockQuestion}
+          onAnswer={vi.fn()}
+          onNext={vi.fn()}
+          onExit={onExit}
+          questionNumber={1}
+          totalQuestions={10}
+        />,
+      );
+
+      await user.keyboard("{Escape}");
+
+      expect(onExit).toHaveBeenCalledOnce();
+    });
+
+    it("ignores number keys after answering", async () => {
+      const user = userEvent.setup();
+      const onAnswer = vi.fn();
+      render(
+        <MultipleChoice
+          question={mockQuestion}
+          onAnswer={onAnswer}
+          onNext={vi.fn()}
+          questionNumber={1}
+          totalQuestions={10}
+        />,
+      );
+
+      await user.keyboard("1");
+      await user.keyboard("3");
+
+      expect(onAnswer).toHaveBeenCalledOnce();
+    });
+
+    it("ignores keys with modifiers held", async () => {
+      const user = userEvent.setup();
+      const onAnswer = vi.fn();
+      render(
+        <MultipleChoice
+          question={mockQuestion}
+          onAnswer={onAnswer}
+          onNext={vi.fn()}
+          questionNumber={1}
+          totalQuestions={10}
+        />,
+      );
+
+      await user.keyboard("{Meta>}1{/Meta}");
+
+      expect(onAnswer).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Timed mode", () => {
+    it("shows timer bar when timeLimitSeconds is provided", () => {
+      render(
+        <MultipleChoice
+          question={mockQuestion}
+          onAnswer={vi.fn()}
+          onNext={vi.fn()}
+          questionNumber={1}
+          totalQuestions={10}
+          timeLimitSeconds={30}
+        />,
+      );
+
+      // TimerBar renders a visible time indicator
+      expect(screen.getByText(/\d+s/)).toBeInTheDocument();
+    });
+
+    it("includes timeSpent in onAnswer when timed", async () => {
+      const user = userEvent.setup();
+      const onAnswer = vi.fn();
+      render(
+        <MultipleChoice
+          question={mockQuestion}
+          onAnswer={onAnswer}
+          onNext={vi.fn()}
+          questionNumber={1}
+          totalQuestions={10}
+          timeLimitSeconds={30}
+        />,
+      );
+
+      await user.click(screen.getByText("ACE Inhibitor"));
+
+      expect(onAnswer).toHaveBeenCalledWith(false, "ACE Inhibitor", expect.any(Number), false);
+    });
+  });
+
+  describe("Flag button", () => {
+    it("renders flag button when onToggleFlag is provided", () => {
+      render(
+        <MultipleChoice
+          question={mockQuestion}
+          onAnswer={vi.fn()}
+          onNext={vi.fn()}
+          questionNumber={1}
+          totalQuestions={10}
+          flagged={false}
+          onToggleFlag={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByLabelText("Flag this question")).toBeInTheDocument();
+    });
+  });
 });
