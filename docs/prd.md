@@ -325,6 +325,17 @@ In-app changelog notification with version tracking. Build-time CHANGELOG.md par
 | Community seeding (Reddit/Discord) | Ops play, not engineering. Do organically alongside M5 launch. |
 | Referral program | Premature before proving Pro conversion. Revisit in M7. |
 
+### Future Ideas
+
+| Idea | Context | When |
+|------|---------|------|
+| Badge sharing | Share earned badges to social media ("I just earned the Perfect Score badge on Rx Drill!") | After badges ship, if engagement warrants it |
+| Badge tiers | Bronze/silver/gold levels per badge (e.g., 50/500/5000 questions) | After initial 10 badges prove the system works |
+| Daily quiz | One curated Quick 5 per day with a dedicated leaderboard | M8+ |
+| Study groups | Private groups with shared leaderboards (precursor to school leaderboards) | M6 or M8 |
+| Drug pronunciation audio | Tap a drug name to hear it pronounced | Post-M7 |
+| Mnemonic generator | AI-generated memory aids for drug-class pairings | Post-M7 |
+
 ## 9. Open Questions
 
 - ~~How should the API key be handled for the frontend?~~ **Resolved:** Build-time env var for now; BFF proxy in M4.
