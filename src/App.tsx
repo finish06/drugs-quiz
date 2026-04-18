@@ -32,6 +32,14 @@ const QUIZ_TYPE_LABELS: Record<string, string> = {
 };
 
 function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+function AppContent() {
   const { session, results, error, loadingProgress, startQuiz, submitAnswer, nextQuestion, resetQuiz } =
     useQuizSession();
   const { theme, toggleTheme } = useTheme();
@@ -392,7 +400,6 @@ function App() {
   }
 
   return (
-    <AuthProvider>
     <ErrorBoundary>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-150">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors duration-150">
@@ -495,7 +502,6 @@ function App() {
       )}
     </div>
     </ErrorBoundary>
-    </AuthProvider>
   );
 }
 
