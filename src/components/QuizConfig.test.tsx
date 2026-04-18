@@ -215,5 +215,11 @@ describe("QuizConfig", () => {
       await user.click(screen.getByText("30s"));
       expect(button).toHaveAttribute("data-umami-event-timed", "30s");
     });
+
+    it("AC-004 (analytics-events): My Progress button has view-progress umami event", () => {
+      render(<QuizConfig onStart={vi.fn()} onViewProgress={vi.fn()} />);
+      const button = screen.getByText("My Progress").closest("button")!;
+      expect(button).toHaveAttribute("data-umami-event", "view-progress");
+    });
   });
 });

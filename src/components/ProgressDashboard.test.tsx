@@ -125,4 +125,11 @@ describe("ProgressDashboard — AC-002 through AC-013, AC-017, AC-020", () => {
     render(<ProgressDashboard stats={mockStats} onBack={vi.fn()} badges={[]} onViewBadges={vi.fn()} />);
     expect(screen.queryByText(/Recent Badges/i)).not.toBeInTheDocument();
   });
+
+  it("AC-003 (analytics-events): sign-in CTA has sign-in-click umami event with source", () => {
+    render(<ProgressDashboard stats={mockStats} onBack={vi.fn()} showSignInCta onSignIn={vi.fn()} />);
+    const signInBtn = screen.getByRole("button", { name: /sign in with google/i });
+    expect(signInBtn).toHaveAttribute("data-umami-event", "sign-in-click");
+    expect(signInBtn).toHaveAttribute("data-umami-event-source", "progress-dashboard");
+  });
 });

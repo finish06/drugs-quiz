@@ -4,7 +4,7 @@
 **Created:** 2026-04-12
 **PRD Reference:** docs/prd.md
 **Milestone:** M7 — Study Experience
-**Status:** Implementing
+**Status:** Complete
 
 ## 1. Overview
 

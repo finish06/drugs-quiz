@@ -4,7 +4,7 @@
 **Created:** 2026-04-12
 **PRD Reference:** docs/prd.md (M7: Study Experience)
 **Milestone:** M7 — Study Experience
-**Status:** Draft
+**Status:** Complete
 
 ## 1. Overview
 

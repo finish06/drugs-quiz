@@ -83,6 +83,23 @@ describe("AC-005: Header shows user info when authenticated", () => {
   });
 });
 
+describe("AC-003 (analytics-events): Sign in umami event attribute", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should have sign-in-click umami event on Sign in button", async () => {
+    renderWithAuth(
+      new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 })
+    );
+
+    await waitFor(() => {
+      const button = screen.getByText("Sign in");
+      expect(button).toHaveAttribute("data-umami-event", "sign-in-click");
+    });
+  });
+});
+
 describe("AC-008: Sign out flow", () => {
   const mockUser = {
     id: "user-123",

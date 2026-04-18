@@ -4,7 +4,7 @@
 **Created:** 2026-04-14
 **PRD Reference:** docs/prd.md (M7 — Study Experience)
 **Milestone:** M7-Study-Experience (cycle 13)
-**Status:** Approved (UX signed off — see specs/ux/achievements-badges-ux.md)
+**Status:** Complete
 
 ## 1. Overview
 
