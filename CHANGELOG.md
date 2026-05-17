@@ -7,6 +7,14 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-05-16
+
+### Fixed
+- **Dark Mode Visibility** — Fixed a regression where dark-mode visitors landed on a page where most text was invisible (white-on-white). The theme class is now applied before first paint so dark backgrounds resolve on the wrapper's initial render (M8 bug #1).
+
+### Changed
+- **Search Engine Indexing** — Non-production builds now serve `Disallow: /` and a `noindex` meta tag, preventing staging environments from being crawled. Production builds explicitly opt back in to indexing (M8 bug #4).
+
 ## [0.6.1] - 2026-04-18
 
 ### Added
