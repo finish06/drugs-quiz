@@ -1,30 +1,36 @@
 # Session Handoff
-**Written:** 2026-04-14 21:40
+**Written:** 2026-05-16 20:15
 
 ## In Progress
-- Nothing currently in-flight
+- M8 Cycle A (fix/m8-cycle-a-hotfix branch). Bug #1 + Bug #4 committed locally; Bug #2 (staging BFF 502) deferred — needs SSH to homelab staging VM.
 
-## Completed This Session (achievements-badges TDD cycle)
-- T-40 RED + T-41 GREEN: Wired useAchievements into QuizResults.tsx — calls checkAfterSession on mount (sessionId + auth), renders BadgeUnlockToast, StrictMode guard via useRef (AC-007, AC-012)
-- T-42 GREEN: Umami analytics — badge_unlocked in QuizResults, badges_viewed in BadgesPage (AC-017)
-- AC-014 GREEN: RecentBadgesWidget wired into ProgressDashboard + App.tsx passes earnedBadges
-- Typecheck + lint clean (minus pre-existing @/generated/changelog error)
-- E2E stubs: tests/e2e/achievements.spec.ts (TC-001, TC-002, TC-005 — skipped)
-- M7 milestone: achievements-badges → VERIFIED
-- Commits: d33f3a6, 69130ad, 312dc73, d46aedf, c15947d
-- Previous session completed: DB schema, evaluator service, routes, useAchievements hook, guest evaluator, BadgeUnlockToast, BadgesPage, RecentBadgesWidget, AuthContext migration logic
+## Completed This Session
+- **M8 milestone + Cycle A/B plan** — docs/milestones/M8-qa-hardening.md, docs/plans/m8-qa-hardening-plan.md, PRD roadmap update
+- **QA staging eval** — reports/qa-staging-2026-05-16.md (8 numbered bugs, S0-S3)
+- **Bug #1 (M8 dark-mode) fixed** — pre-paint inline script in index.html ensures html.dark is set before React mounts. 4 Playwright tests cover it (chromium + Pixel 7). Root cause: wrapper's first-paint light bg got stuck after useEffect added .dark post-paint; recompute didn't pick up `dark:bg-gray-900`.
+- **Bug #4 (M8 staging indexable) fixed** — VITE_ALLOW_INDEXING / VITE_ROBOTS_CONTENT env gate. Dockerfile defaults to deindexed; release.yml opts prod back in AND asserts dist/robots.txt + dist/index.html don't carry Disallow/noindex. 4 vitest tests on renderRobotsTxt/renderSitemapXml.
+- **CHANGELOG v0.6.2** drafted, package.json bumped 0.6.1 → 0.6.2
+- **eslint config** now ignores .claire/.claude/worktrees/.add/security — sibling-agent workspaces leaking lint errors
+- **playwright.config** honors PLAYWRIGHT_DEV_PORT for running alongside other dev servers (resume project owns 5173)
+- 414 vitest + 24 Playwright tests green locally
 
 ## Decisions Made
-- vi.mock() hoisting requires top-level mock for ALL hooks a component imports
-- class-master badge AC-004 server-side evaluation deferred (needs JSONB query for per-class drug accuracy)
-- EarnedBadge interface defined locally in ProgressDashboard (not shared type — acceptable for now)
+- Inline pre-paint script over moving the bg class up to body/html — standard SPA pattern, also eliminates FOUC
+- Two env vars for indexing (VITE_ALLOW_INDEXING and VITE_ROBOTS_CONTENT) — Vite's HTML substitution only does value replacement, so the meta tag needs its own content var
+- Production grep assertion lives in release.yml job step (not a Vite plugin) to keep blast radius small
+- Bug #5 (light-mode contrast) provisionally folded into Bug #1; re-verify in Cycle B
+- Deferred TASK-A01/A02 (BFF triage) to Caleb's SSH session
 
 ## Blockers
-- AC-004 (class-master server-side eval): Not implemented in bff/src/services/achievements/evaluator.ts
-- Coverage report generation fails with PARSE_ERROR in V8CoverageProvider — pre-existing issue, 361/361 tests pass
+- **Bug #2** — staging BFF 502; needs SSH (`docker compose logs bff --tail=200` on homelab staging VM) before fix can be applied. All other Cycle A work waits on this for the v0.6.2 tag.
 
 ## Next Steps
-1. Human review: PR for feature/m7-achievements-badges → main
-2. TC-003 (Class Master) and TC-004 (Streak Seeker) manual smoke with fixture seeding
-3. Future: AC-004 server-side class-master implementation (JSONB query)
-4. Continue M7: next features are custom-quiz or progress-dashboard enhancements
+1. Caleb: SSH staging, diagnose + restart BFF (run `docker compose pull bff && docker compose up -d bff` if image is healthy; otherwise check env / DB)
+2. Push branch + open PR (autonomy_level=balanced + memory says never push main, so this needs explicit OK before push)
+3. Tag v0.6.2 after merge — release.yml deploys to prod
+4. Smoke prod dark-mode on iPhone / Android post-deploy (TASK-A22)
+5. Begin Cycle B (api-error-ux, contrast, quiztype-fallback, progress-empty-state)
+
+## Notes
+- Background dev server: `npm run dev` on port 5174 (started during session)
+- /tmp/qa-screenshots/ has before/after screenshots from the fix

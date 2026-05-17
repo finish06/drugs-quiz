@@ -192,6 +192,56 @@
       "date": "2026-04-14",
       "classified_by": "agent",
       "checkpoint_type": "verification-catch"
+    },
+    {
+      "id": "L-013",
+      "title": "Tailwind v4 dark mode: html.dark must be applied BEFORE first paint or wrapper backgrounds stick at the light value",
+      "body": "useTheme adding html.dark in a useEffect (post first paint) works for text colors but WebKit and at least some Chromium states leave bg-gray-50 wrappers stuck at the light value even though dark:bg-gray-900 should win. Forcing a DOM re-attach recomputes correctly, so the rules and selector specificity are fine — the issue is a paint/style cache against the wrapper's initial light paint. Fix: inline <script> in <head> that reads localStorage.theme (fallback to prefers-color-scheme) and toggles html.dark synchronously before bundle loads. This is the standard SPA dark-mode pattern (Vercel, Tailwind docs) and also eliminates FOUC. Surfaced as M8 bug #1 by staging QA; the same bug was live on rxdrill.com.",
+      "scope": "workstation",
+      "stack": [
+        "tailwindcss",
+        "react",
+        "vite"
+      ],
+      "category": "anti-pattern",
+      "severity": "critical",
+      "source": "drugs-quiz",
+      "date": "2026-05-16",
+      "classified_by": "agent",
+      "checkpoint_type": "verification-catch"
+    },
+    {
+      "id": "L-014",
+      "title": "Default to deindex for non-prod builds; assert in CI that prod never ships noindex",
+      "body": "Staging at drug-quiz.staging.calebdunn.tech was serving Allow: / and a sitemap pointing at staging URLs (M8 bug #4). Indexing is now gated by VITE_ALLOW_INDEXING / VITE_ROBOTS_CONTENT at build time. Dockerfile defaults both to the deindexed value; only the production release workflow opts back in. release.yml has a post-build assertion that fails the job if dist/robots.txt contains Disallow or dist/index.html contains a noindex meta — prevents the reverse leak. Pattern: any env-controlled SEO knob needs a positive assertion guarding the high-stakes setting, not just the low-stakes default.",
+      "scope": "workstation",
+      "stack": [
+        "vite",
+        "docker",
+        "github-actions"
+      ],
+      "category": "process",
+      "severity": "high",
+      "source": "drugs-quiz",
+      "date": "2026-05-16",
+      "classified_by": "agent",
+      "checkpoint_type": "post-tdd"
+    },
+    {
+      "id": "L-015",
+      "title": "Cycle A hotfix: dark-mode + staging-deindex shipped in one session; staging BFF deferred to user SSH",
+      "body": "M8 Cycle A took ~2h: TDD cycle for Bug #1 (RED Playwright lightness assertion, GREEN head-time inline script), TDD cycle for Bug #4 (RED renderRobotsTxt/renderSitemapXml tests, GREEN refactor + Dockerfile/release.yml plumbing). 414 vitest tests + 24 Playwright tests green. Branch fix/m8-cycle-a-hotfix has 4 commits. Two gotchas surfaced: (1) other repos' dev servers grab port 5173, so playwright.config now honors PLAYWRIGHT_DEV_PORT; (2) git stash + checkout main -- . reverted my committed branch changes into the staging area — recovered via git reset HEAD + restore --source=HEAD. Bug #2 (staging BFF 502) deferred — requires user SSH to the homelab staging VM.",
+      "scope": "project",
+      "stack": [
+        "typescript",
+        "react"
+      ],
+      "category": "process",
+      "severity": "medium",
+      "source": "drugs-quiz",
+      "date": "2026-05-16",
+      "classified_by": "agent",
+      "checkpoint_type": "post-tdd"
     }
   ]
 }
