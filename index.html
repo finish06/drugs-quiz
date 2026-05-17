@@ -40,6 +40,20 @@
     }
     </script>
     <title>Rx Drill — Free Pharmacy Exam Prep | NAPLEX & PTCE Practice</title>
+    <script>
+      // Apply theme class before first paint so dark backgrounds resolve on the wrapper's
+      // initial paint. Otherwise React adds .dark in a useEffect after first paint and
+      // WebKit/Chromium can leave the wrapper stuck on the gray-50 background (M8 bug #1).
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          var d = t === "dark" || (!t && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (d) document.documentElement.classList.add("dark");
+        } catch (e) {
+          // localStorage may throw in Safari private mode; fall through to React's default.
+        }
+      })();
+    </script>
     <script defer src="https://umami.calebdunn.tech/script.js" data-website-id="%VITE_UMAMI_WEBSITE_ID%"></script>
   </head>
   <body>
