@@ -34,6 +34,7 @@ jobs:
         run: npx tsx scripts/generate-seo.ts
         env:
           VITE_APP_URL: ${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}
+          VITE_ALLOW_INDEXING: "true"
 
       - name: Lint
         run: npx eslint .
@@ -49,6 +50,18 @@ jobs:
         env:
           VITE_APP_URL: ${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}
           VITE_UMAMI_WEBSITE_ID: ${{ secrets.VITE_UMAMI_WEBSITE_ID || 'cc17e5e2-cfdb-4026-81d5-8f8306a673b6' }}
+          VITE_ROBOTS_CONTENT: "all"
+
+      - name: Assert production robots/meta are not deindexed (M8 bug #4 guard)
+        run: |
+          if grep -q "Disallow: /" dist/robots.txt; then
+            echo "::error::Production robots.txt contains 'Disallow: /'. Refusing to ship a deindexed prod build."
+            exit 1
+          fi
+          if grep -q 'name="robots" content="noindex' dist/index.html; then
+            echo "::error::Production index.html contains a noindex meta. Refusing to ship a deindexed prod build."
+            exit 1
+          fi
 
   docker-personal:
     name: Push to Personal Registry
@@ -71,6 +84,8 @@ jobs:
         run: |
           docker build --build-arg VITE_APP_URL="${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}" \
             --build-arg VITE_UMAMI_WEBSITE_ID="${{ secrets.VITE_UMAMI_WEBSITE_ID || 'cc17e5e2-cfdb-4026-81d5-8f8306a673b6' }}" \
+            --build-arg VITE_ALLOW_INDEXING="true" \
+            --build-arg VITE_ROBOTS_CONTENT="all" \
             -t "dockerhub.calebdunn.tech/drugs-quiz:$VERSION" \
             -t "dockerhub.calebdunn.tech/drugs-quiz:latest" \
             .
@@ -113,6 +128,8 @@ jobs:
           IMAGE="ghcr.io/${{ github.repository_owner }}/drugs-quiz"
           docker build --build-arg VITE_APP_URL="${{ secrets.VITE_APP_URL || 'https://rxdrill.com' }}" \
             --build-arg VITE_UMAMI_WEBSITE_ID="${{ secrets.VITE_UMAMI_WEBSITE_ID || 'cc17e5e2-cfdb-4026-81d5-8f8306a673b6' }}" \
+            --build-arg VITE_ALLOW_INDEXING="true" \
+            --build-arg VITE_ROBOTS_CONTENT="all" \
             -t "$IMAGE:$VERSION" \
             -t "$IMAGE:latest" \
             .

@@ -100,8 +100,9 @@ SSH access: staging via direct SSH, production via GCP IAP tunnel. No URLs are h
 | M3: Close the Learning Loop | Transform quiz into a study tool — answer review, spaced repetition, session history, Quick 5 | Alpha | DONE | Daily active usage, 30%+ 7-day return rate, users learn from mistakes |
 | M4: Infrastructure + Quality Hardening | BFF proxy, automated staging deploy, full E2E, batched pre-fetching | Beta | DONE | Automated staging deploys, full E2E coverage, sub-1s quiz load on warm cache |
 | M5: Go Social — Accounts + Viral Distribution | Google OAuth, shareable score cards, v0.5.0 | Beta | DONE | 20%+ account signup rate, 1K organic MAU within 60 days |
+| M8: QA Hardening | Fix every defect from the 2026-05-16 staging QA pass (S0 prod dark-mode, S0 staging BFF 502, plus S1-S3 followups) | Beta | NOW | Production dark mode renders correctly, staging BFF healthy, friendly API-failure UX, staging deindexed, session-history contrast fixed |
 | M6: Compete + Go Native | Exam countdown, school leaderboards, PWA + offline, Capacitor iOS, v1.0.0 | Beta | NEXT | App Store listing, school leaderboard adoption, PWA installs, exam mode completion >60% |
-| M7: Study Experience | Progress dashboard, badges, custom quiz, NAPLEX mode, polish | Beta | NOW | Daily active users, study session depth, exam mode adoption |
+| M7: Study Experience | Progress dashboard, badges, custom quiz, NAPLEX mode, polish | Beta | NEXT (paused for M8) | Daily active users, study session depth, exam mode adoption |
 | Backlog: Monetization | Pro tier, advanced analytics, referral program | — | LATER | Free-first strategy — revisit when MAU justifies it |
 
 ### Milestone Detail
@@ -208,7 +209,26 @@ SSH access: staging via direct SSH, production via GCP IAP tunnel. No URLs are h
 - [ ] 20%+ account signup rate (measuring)
 - [ ] 1,000 organic MAU within 60 days (measuring)
 
-#### M7: Study Experience [NOW]
+#### M8: QA Hardening [NOW]
+**Goal:** Close every defect uncovered in the 2026-05-16 staging QA pass — most urgently the production dark-mode regression and the staging BFF 502 outage.
+
+**Appetite:** 4 days (Cycle A hotfix in ≤1 day, Cycle B hardening in 2-3 days)
+
+**Target maturity:** Beta (no maturity change — reliability work on an existing Beta product)
+
+**Features:** See `docs/milestones/M8-qa-hardening.md` and source report `reports/qa-staging-2026-05-16.md`.
+- **Cycle A (Hotfix):** prod-dark-mode-fix, staging-bff-restore, staging-noindex
+- **Cycle B (Hardening):** api-error-ux, session-list-contrast, quiztype-fallback, progress-empty-state
+
+**Success metrics:**
+- [ ] Dark mode renders correctly on rxdrill.com across major browsers
+- [ ] Staging BFF returns non-5xx on `/api/auth/me`, `/api/v1/drugs/classes`, `/api/auth/google`
+- [ ] Quiz playthrough completes end-to-end on staging for all 4 modes
+- [ ] BFF-down failure mode shows a friendly retry card (no raw SyntaxError text)
+- [ ] Staging emits `Disallow: /` and `noindex` meta; production unaffected
+- [ ] WCAG AA contrast on every session-history row in light mode
+
+#### M7: Study Experience [NEXT — paused for M8]
 **Goal:** Turn Rx Drill from a quiz app into a focused study tool. Help users see progress, celebrate wins, and control what they study.
 
 **Appetite:** 2 weeks

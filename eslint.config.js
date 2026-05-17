@@ -4,7 +4,17 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "coverage"] },
+  {
+    ignores: [
+      "dist",
+      "node_modules",
+      "coverage",
+      // Sibling-agent / IDE workspaces — not part of the project's lint surface
+      ".claire/**",
+      ".claude/worktrees/**",
+      ".add/security/**",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
